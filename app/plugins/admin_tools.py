@@ -1,4 +1,4 @@
-from typing import Awaitable
+﻿from typing import Awaitable
 
 from pyrogram.types import ChatPermissions, ChatPrivileges, User
 
@@ -50,11 +50,14 @@ async def promote_or_demote(bot: bot, message: Message) -> None:
             chat_id=message.chat.id, user_id=user.id, privileges=privileges
         )
         if not demote:
+            # Let server promote admin before setting title
+            # Bot is too fast moment 😂😂😂
+            await asyncio.sleep(3)
             await bot.set_administrator_title(
                 chat_id=message.chat.id, user_id=user.id, title=title or "Admin"
             )
             if title:
-                response += f"\nTitle: {title}."
+                response += f"\nTitle: {title}"
         await message.reply(text=response)
     except Exception as e:
         await message.reply(text=e, del_in=10, block=True)

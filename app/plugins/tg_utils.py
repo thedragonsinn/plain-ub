@@ -55,9 +55,10 @@ async def join_chat(bot: bot, message: Message) -> None:
     except (KeyError, BadRequest):
         try:
             await bot.join_chat(os.path.basename(chat).strip())
-            await message.reply("Joined")
         except Exception as e:
             await message.reply(str(e))
+            return 
+    await message.reply("Joined")
 
 
 @bot.add_cmd(cmd="leave")

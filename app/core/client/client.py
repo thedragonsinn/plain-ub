@@ -87,7 +87,7 @@ class BOT(Client):
         parse_mode=ParseMode.HTML,
     ) -> Message | Msg:
         if message:
-            return await message.copy(chat_id=Config.LOG_CHAT)
+            return (await message.copy(chat_id=Config.LOG_CHAT))
         if traceback:
             text = f"""
 #Traceback

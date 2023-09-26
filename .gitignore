@@ -3,3 +3,4 @@ config*.env
 venv/
 __pycache__
 .idea/
+conf_backup/
