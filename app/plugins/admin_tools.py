@@ -1,4 +1,5 @@
-﻿from typing import Awaitable
+﻿import asyncio
+from typing import Awaitable
 
 from pyrogram.types import ChatPermissions, ChatPrivileges, User
 

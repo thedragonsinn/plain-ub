@@ -8,6 +8,8 @@ class Config:
 
     CALLBACK_DICT: dict["str", Coroutine] = {}
 
+    CONVO_DICT = {}
+
     DEV_MODE: int = int(os.environ.get("DEV_MODE", 0))
 
     DB_URL: str = os.environ.get("DB_URL")
