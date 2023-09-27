@@ -18,7 +18,10 @@ async def import_modules():
     for py_module in glob.glob(pathname="app/**/*.py", recursive=True):
         name = os.path.splitext(py_module)[0]
         py_name = name.replace("/", ".")
-        importlib.import_module(py_name)
+        try:
+            importlib.import_module(py_name)
+        except Exception as e:
+            print(e)
 
 
 class BOT(Client):
