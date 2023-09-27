@@ -57,7 +57,7 @@ async def join_chat(bot: bot, message: Message) -> None:
             await bot.join_chat(os.path.basename(chat).strip())
         except Exception as e:
             await message.reply(str(e))
-            return 
+            return
     await message.reply("Joined")
 
 

@@ -20,3 +20,7 @@ def dynamic_cmd_filter(_, __, message) -> bool:
 
 
 cmd_filter = _filters.create(dynamic_cmd_filter)
+convo_filter = _filters.create(
+    lambda _, __, message: (message.chat.id in Config.CONVO_DICT)
+    and (not message.reactions)
+)

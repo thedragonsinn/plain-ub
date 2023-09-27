@@ -1,14 +1,18 @@
 import json
 import os
-from typing import Coroutine
+from typing import Callable
+
+from pyrogram.filters import Filter
+from pyrogram.types import Message
 
 
-class Config:
-    CMD_DICT: dict["str", Coroutine] = {}
+class _Config:
+    def __str__(self):
+        return json.dumps(self.__dict__, indent=4, ensure_ascii=False)
 
-    CALLBACK_DICT: dict["str", Coroutine] = {}
+    CMD_DICT: dict["str", Callable] = {}
 
-    CONVO_DICT = {}
+    CONVO_DICT: dict[int, dict[str | int, Message | Filter | None]] = {}
 
     DEV_MODE: int = int(os.environ.get("DEV_MODE", 0))
 
@@ -23,3 +27,6 @@ class Config:
     UPSTREAM_REPO: str = os.environ.get(
         "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"
     )
+
+
+Config = _Config()

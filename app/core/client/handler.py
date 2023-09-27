@@ -1,15 +1,14 @@
 import asyncio
 import traceback
-from datetime import datetime
 
-from pyrogram.enums import ChatType
+from pyrogram.types import Message as Msg
 
-from app import DB, Config, bot
-from app.core import CallbackQuery, Message, filters
+from app import Config, bot
+from app.core import Message, filters
 
 
-@bot.on_message(filters.cmd_filter)
-@bot.on_edited_message(filters.cmd_filter)
+@bot.on_message(filters.cmd_filter, group=1)
+@bot.on_edited_message(filters.cmd_filter, group=1)
 async def cmd_dispatcher(bot, message) -> None:
     message = Message.parse_message(message)
     func = Config.CMD_DICT[message.cmd]
@@ -17,22 +16,19 @@ async def cmd_dispatcher(bot, message) -> None:
     await run_coro(coro, message)
 
 
-@bot.on_callback_query()
-async def callback_handler(bot: bot, cb):
-    if (
-        cb.message.chat.type == ChatType.PRIVATE
-        and (datetime.now() - cb.message.date).total_seconds() > 30
-    ):
-        return await cb.edit_message_text(f"Query Expired. Try again.")
-    banned = await DB.BANNED.find_one({"_id": cb.from_user.id})
-    if banned:
-        return
-    cb = CallbackQuery.parse_cb(cb)
-    func = Config.CALLBACK_DICT.get(cb.cmd)
-    if not func:
-        return
-    coro = func(bot, cb)
-    await run_coro(coro, Message.parse_message(cb.message))
+@bot.on_message(filters.convo_filter, group=0)
+@bot.on_edited_message(filters.convo_filter, group=0)
+async def convo_handler(bot: bot, message: Msg):
+    conv_dict: dict = Config.CONVO_DICT[message.chat.id]
+    conv_filters = conv_dict.get("filters")
+    if conv_filters:
+        check = await conv_filters(bot, message)
+        if not check:
+            message.continue_propagation()
+        conv_dict["response"] = message
+        message.continue_propagation()
+    conv_dict["response"] = message
+    message.continue_propagation()
 
 
 async def run_coro(coro, message) -> None:
