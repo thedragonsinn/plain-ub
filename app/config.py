@@ -6,10 +6,7 @@ from pyrogram.filters import Filter
 from pyrogram.types import Message
 
 
-class _Config:
-    def __str__(self):
-        return json.dumps(self.__dict__, indent=4, ensure_ascii=False)
-
+class Config:
     CMD_DICT: dict["str", Callable] = {}
 
     CONVO_DICT: dict[int, dict[str | int, Message | Filter | None]] = {}
@@ -27,6 +24,3 @@ class _Config:
     UPSTREAM_REPO: str = os.environ.get(
         "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"
     )
-
-
-Config = _Config()
