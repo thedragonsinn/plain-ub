@@ -46,7 +46,7 @@ async def remove_fed(bot: bot, message: Message):
     if isinstance(chat, Chat):
         name = f"Chat: {chat.title}\n"
         chat = chat.id
-    elif chat.isdigit():
+    elif chat.lstrip("-").isdigit():
         chat = int(chat)
     deleted: bool | None = await delete_data(collection=FEDS, id=chat)
     if deleted:
@@ -79,7 +79,7 @@ async def fed_ban(bot: bot, message: Message):
         total += 1
         cmd: Message = await bot.send_message(
             chat_id=chat_id,
-            text=f"!fban {user.mention} {reason}",
+            text=f"/fban {user.mention} {reason}",
             disable_web_page_preview=True,
         )
         response: Message | None = await cmd.get_response(
