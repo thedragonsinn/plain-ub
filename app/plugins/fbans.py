@@ -28,7 +28,7 @@ class _User(User):
 @bot.add_cmd(cmd="addf")
 async def add_fed(bot: bot, message: Message):
     data = dict(
-        name=message.flt_input or message.chat.title, type=str(message.chat.type)
+        name=message.input or message.chat.title, type=str(message.chat.type)
     )
     await add_data(collection=FEDS, id=message.chat.id, data=data)
     await message.reply(f"<b>{data['name']}</b> added to FED LIST.", del_in=5, block=False)
@@ -41,7 +41,7 @@ async def remove_fed(bot: bot, message: Message):
         await FEDS.drop()
         await message.reply("FED LIST cleared.")
         return
-    chat: int | str | Chat = message.flt_input or message.chat
+    chat: int | str | Chat = message.input or message.chat
     name = ""
     if isinstance(chat, Chat):
         name = f"Chat: {chat.title}\n"
