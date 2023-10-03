@@ -2,10 +2,12 @@ import asyncio
 from functools import cached_property
 
 from pyrogram.errors import MessageDeleteForbidden
+from pyrogram.filters import Filter
 from pyrogram.types import Message as Msg
 from pyrogram.types import User
 
 from app import Config
+from app.core import Conversation
 
 
 class Message(Msg):
@@ -111,6 +113,16 @@ class Message(Msg):
             return [await self._client.get_users(user_ids=user), reason]
         except Exception as e:
             return [e, reason]
+
+    async def get_response(self, filters: Filter = None, timeout: int = 8):
+        try:
+            async with Conversation(
+                chat_id=self.chat.id, filters=filters, timeout=timeout
+            ) as convo:
+                response: Message | None = await convo.get_response()
+                return response
+        except Conversation.TimeOutError:
+            return
 
     async def reply(
         self, text, del_in: int = 0, block: bool = True, **kwargs

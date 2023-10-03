@@ -4,7 +4,7 @@ import json
 from pyrogram.filters import Filter
 from pyrogram.types import Message
 
-from app import Config, bot
+from app import Config
 
 
 class Conversation:
@@ -20,7 +20,6 @@ class Conversation:
             super().__init__("Conversation Timeout")
 
     def __init__(self, chat_id: int, filters: Filter | None = None, timeout: int = 10):
-        self._client = bot
         self.chat_id = chat_id
         self.filters = filters
         self.timeout = timeout

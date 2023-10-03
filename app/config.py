@@ -15,6 +15,10 @@ class Config:
 
     DB_URL: str = os.environ.get("DB_URL")
 
+    FBAN_LOG_CHANNEL: int = int(
+        os.environ.get("FBAN_LOG_CHANNEL", os.environ.get("LOG_CHAT"))
+    )
+
     LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
 
     TRIGGER: str = os.environ.get("TRIGGER", ".")

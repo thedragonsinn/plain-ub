@@ -14,5 +14,3 @@ if "com.termux" not in os.environ.get("PATH", ""):
     uvloop.install()
 
 bot = BOT()
-
-from app.core.client.conversation import Conversation as Convo  # NOQA

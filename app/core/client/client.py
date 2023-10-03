@@ -5,12 +5,12 @@ import sys
 from functools import wraps
 from io import BytesIO
 
-from pyrogram import Client, idle
+from pyrogram import Client, filters, idle
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
 
 from app import DB, Config
-from app.core import Message
+from app.core import Conversation, Message
 from app.utils import aiohttp_tools
 
 
@@ -38,13 +38,11 @@ class BOT(Client):
         )
 
     @staticmethod
-    def add_cmd(cmd: str, cb: bool = False):
+    def add_cmd(cmd: str):
         def the_decorator(func):
             @wraps(func)
             def wrapper():
                 config_dict = Config.CMD_DICT
-                if cb:
-                    config_dict = Config.CALLBACK_DICT
                 if isinstance(cmd, list):
                     for _cmd in cmd:
                         config_dict[_cmd] = func
@@ -55,6 +53,19 @@ class BOT(Client):
             return func
 
         return the_decorator
+
+    @staticmethod
+    async def get_response(
+        chat_id: int, filters: filters.Filter = None, timeout: int = 8
+    ) -> Message | None:
+        try:
+            async with Conversation(
+                chat_id=chat_id, filters=filters, timeout=timeout
+            ) as convo:
+                response: Message | None = await convo.get_response()
+                return response
+        except Conversation.TimeOutError:
+            return
 
     async def boot(self) -> None:
         await super().start()
@@ -90,7 +101,7 @@ class BOT(Client):
         parse_mode=ParseMode.HTML,
     ) -> Message | Msg:
         if message:
-            return (await message.copy(chat_id=Config.LOG_CHAT))
+            return await message.copy(chat_id=Config.LOG_CHAT)
         if traceback:
             text = f"""
 #Traceback
