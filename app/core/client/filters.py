@@ -2,6 +2,7 @@ from pyrogram import filters as _filters
 
 from app import Config
 
+recent_texts=[]
 
 def dynamic_cmd_filter(_, __, message) -> bool:
     if (
@@ -9,9 +10,10 @@ def dynamic_cmd_filter(_, __, message) -> bool:
         or not message.text.startswith(Config.TRIGGER)
         or not message.from_user
         or message.from_user.id not in Config.USERS
+        or message.id in recent_texts
     ):
         return False
-
+    recent_texts.append(message.id)
     start_str = message.text.split(maxsplit=1)[0]
     cmd = start_str.replace(Config.TRIGGER, "", 1)
     cmd_check = cmd in Config.CMD_DICT
