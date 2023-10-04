@@ -23,7 +23,7 @@ class Config:
 
     TRIGGER: str = os.environ.get("TRIGGER", ".")
 
-    OWNER_ID = os.environ.get("OWNER_ID")
+    OWNER_ID = int(os.environ.get("OWNER_ID"))
 
     USERS: list[int] = json.loads(os.environ.get("USERS", "[]"))
 
