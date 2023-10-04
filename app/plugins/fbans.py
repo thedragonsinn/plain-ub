@@ -121,7 +121,7 @@ async def un_fban(bot: bot, message: Message):
 
 @bot.add_cmd(cmd="listf")
 async def fed_list(bot: bot, message: Message):
-    output: str = "List of Connected Feds:\n\n"
+    output: str = "List of <b>{}</b> Connected Feds:\n\n"
     total = 0
     async for fed in DB.FED_LIST.find():
         output += f'<b>• {fed["name"]}</b>\n'
@@ -131,4 +131,4 @@ async def fed_list(bot: bot, message: Message):
     if not total:
         await message.reply("You don't have any Feds Connected.")
         return
-    await message.reply(output, del_in=30, block=False)
+    await message.reply(output.format(total), del_in=30, block=False)
