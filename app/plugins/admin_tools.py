@@ -37,15 +37,16 @@ def get_privileges(
 
 @bot.add_cmd(cmd=["promote", "demote"])
 async def promote_or_demote(bot: bot, message: Message) -> None:
+    response: Message = await message.reply(f"Trying to {message.cmd.capitalize()}.....")
     user, title = await message.extract_user_n_reason()
     if not isinstance(user, User):
-        await message.reply(user, del_in=10)
+        await response.edit(user, del_in=10)
         return
     full: bool = "-f" in message.flags
     anon: bool = "-anon" in message.flags
     demote = message.cmd == "demote"
     privileges: ChatPrivileges = get_privileges(full=full, anon=anon, demote=demote)
-    response = f"{message.cmd.capitalize()}d: {user.mention}"
+    response_text = f"{message.cmd.capitalize()}d: {user.mention}"
     try:
         await bot.promote_chat_member(
             chat_id=message.chat.id, user_id=user.id, privileges=privileges
@@ -58,10 +59,10 @@ async def promote_or_demote(bot: bot, message: Message) -> None:
                 chat_id=message.chat.id, user_id=user.id, title=title or "Admin"
             )
             if title:
-                response += f"\nTitle: {title}"
-        await message.reply(text=response)
+                response_text += f"\nTitle: {title}"
+        await response.edit(text=response_text)
     except Exception as e:
-        await message.reply(text=e, del_in=10, block=True)
+        await response.edit(text=e, del_in=10, block=True)
 
 
 @bot.add_cmd(cmd=["ban", "unban"])
