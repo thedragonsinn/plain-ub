@@ -23,6 +23,8 @@ class Config:
 
     TRIGGER: str = os.environ.get("TRIGGER", ".")
 
+    OWNER_ID = os.environ.get("OWNER_ID")
+
     USERS: list[int] = json.loads(os.environ.get("USERS", "[]"))
 
     UPSTREAM_REPO: str = os.environ.get(
