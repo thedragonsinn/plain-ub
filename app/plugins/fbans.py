@@ -87,12 +87,12 @@ async def fed_ban(bot: bot, message: Message):
     await progress.edit("❯❯")
     total: int = 0
     failed: list[str] = []
-    cmd: str = f"/fban {user.mention} {reason}\n{proof_str}"
+    fban_cmd: str = f"/fban {user.mention} {reason}\n{proof_str}"
     async for fed in FEDS.find():
         chat_id = int(fed["_id"])
         total += 1
         cmd: Message = await bot.send_message(
-            chat_id=chat_id, text=cmd, disable_web_page_preview=True
+            chat_id=chat_id, text=fban_cmd, disable_web_page_preview=True
         )
         response: Message | None = await cmd.get_response(filters=(FILTERS), timeout=8)
         if not response or not (await FBAN_REGEX(bot, response)):
