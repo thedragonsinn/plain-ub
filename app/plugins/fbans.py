@@ -87,7 +87,8 @@ async def fed_ban(bot: bot, message: Message):
     await progress.edit("❯❯")
     total: int = 0
     failed: list[str] = []
-    fban_cmd: str = f"/fban {user.mention} {reason}\n{proof_str}"
+    reason = f"{reason}\n{proof_str}"
+    fban_cmd: str = f"/fban {user.mention} {reason}"
     async for fed in FEDS.find():
         chat_id = int(fed["_id"])
         total += 1
