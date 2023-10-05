@@ -14,7 +14,8 @@ async def cmd_dispatcher(bot, message) -> None:
     func = Config.CMD_DICT[message.cmd]
     coro = func(bot, message)
     await run_coro(coro, message)
-
+    if message.is_from_owner:
+        await message.delete()
 
 @bot.on_message(filters.convo_filter, group=0)
 @bot.on_edited_message(filters.convo_filter, group=0)

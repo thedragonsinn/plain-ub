@@ -40,6 +40,12 @@ class Message(Msg):
         return ""
 
     @cached_property
+    def is_from_owner(self) -> bool:
+        if self.from_user and self.from_user.id == Config.OWNER_ID:
+            return True
+        return False
+
+    @cached_property
     def replied(self) -> "Message":
         if self.reply_to_message:
             return Message.parse_message(self.reply_to_message)

@@ -66,7 +66,6 @@ async def remove_fed(bot: bot, message: Message):
 
 @bot.add_cmd(cmd=["fban", "fbanp"])
 async def fed_ban(bot: bot, message: Message):
-    await message.delete()
     progress: Message = await message.reply("❯")
     user, reason = await message.extract_user_n_reason()
     if isinstance(user, str):
