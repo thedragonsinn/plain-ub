@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import datetime
 
 from git import Repo
 from pyrogram.enums import ChatType
@@ -13,7 +14,19 @@ async def cmd_list(bot: bot, message: Message) -> None:
     commands: str = "\n".join(
         [f"<code>{Config.TRIGGER}{i}</code>" for i in Config.CMD_DICT.keys()]
     )
-    await message.reply(f"<b>Available Commands:</b>\n\n{commands}", del_in=30)
+    await message.reply(
+        f"<b>Available Commands:</b>\n\n{commands}", del_in=30, block=False
+    )
+
+
+# Not my Code
+# Prolly from Userge/UX/VenomX idk
+@bot.add_cmd(cmd="ping")
+async def ping_bot(bot: bot, message: Message):
+    start = datetime.now()
+    resp: Message = await message.reply("Checking Ping.....")
+    end = (datetime.now() - start).microseconds / 1000
+    await resp.edit(f"Pong! {end} ms.")
 
 
 @bot.add_cmd(cmd="restart")
