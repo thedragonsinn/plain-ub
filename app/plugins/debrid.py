@@ -131,7 +131,7 @@ async def torrents(bot: bot, message: Message):
         await message.reply(ret_str)
     else:
         await message.reply(
-            post_tgh("Magnets", ret_str.replace("\n", "<br>")),
+            (await post_tgh("Magnets", ret_str.replace("\n", "<br>"))),
             disable_web_page_preview=True,
         )
 
