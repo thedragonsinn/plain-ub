@@ -4,7 +4,7 @@ import os
 
 from app import bot
 from app.core import Message
-from app.utils.aiohttp_tools import SESSION
+from app.utils import aiohttp_tools
 from app.utils.helpers import post_to_telegraph as post_tgh
 
 # Your Alldbrid App token
@@ -25,7 +25,7 @@ async def get_json(endpoint: str, query: dict):
         return "API key not found."
     api = "https://api.alldebrid.com/v4" + endpoint
     params = {"agent": "bot", "apikey": KEY, **query}
-    async with SESSION.get(url=api, params=params) as ses:
+    async with aiohttp_tools.SESSION.get(url=api, params=params) as ses:
         try:
             json = await ses.json()
             return json
