@@ -36,7 +36,7 @@ async def get_json(endpoint: str, query: dict):
 # Unlock Links or magnets
 @bot.add_cmd("unrestrict")
 async def debrid(bot: bot, message: Message):
-    if not message.flt_inp:
+    if not message.flt_input:
         return await message.reply("Give a magnet or link to unrestrict.")
     for i in message.text_list[1:]:
         link = i
@@ -81,7 +81,7 @@ async def torrents(bot: bot, message: Message):
         return await message.reply("can't use two flags at once", quote=True)
 
     if "-s" in message.flags:
-        if not (input_ := message.flt_inp):
+        if not (input_ := message.flt_input):
             return await message.reply("ID required with -s flag", quote=True)
         query = {"id": input_}
 
@@ -98,7 +98,7 @@ async def torrents(bot: bot, message: Message):
     ret_str_list = []
     limit = 1
     if "-l" in message.flags:
-        limit = int(message.flt_inp)
+        limit = int(message.flt_input)
 
     for i in data[0:limit]:
         status = i.get("status")
@@ -141,7 +141,7 @@ async def torrents(bot: bot, message: Message):
 @bot.add_cmd("del_t")
 async def delete_torrent(bot: bot, message: Message):
     endpoint = "/magnet/delete"
-    if not (id := message.flt_inp):
+    if not (id := message.flt_input):
         return await message.reply("Enter an ID to delete")
     for i in message.text_list[1:]:
         json = await get_json(endpoint=endpoint, query={"id": i})
