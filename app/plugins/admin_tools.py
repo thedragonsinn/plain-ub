@@ -8,11 +8,11 @@ from app.core import Message
 
 
 def get_privileges(
-    anon: bool = False, full: bool = False, demote: bool = False
+    anon: bool = False, full: bool = False, without_rights: bool = False
 ) -> ChatPrivileges:
-    if demote:
+    if without_rights:
         return ChatPrivileges(
-            can_manage_chat=False,
+            can_manage_chat=True,
             can_manage_video_chats=False,
             can_pin_messages=False,
             can_delete_messages=False,
@@ -37,29 +37,39 @@ def get_privileges(
 
 @bot.add_cmd(cmd=["promote", "demote"])
 async def promote_or_demote(bot: bot, message: Message) -> None:
-    response: Message = await message.reply(f"Trying to {message.cmd.capitalize()}.....")
+    response: Message = await message.reply(
+        f"Trying to {message.cmd.capitalize()}....."
+    )
     user, title = await message.extract_user_n_reason()
     if not isinstance(user, User):
         await response.edit(user, del_in=10)
         return
     full: bool = "-f" in message.flags
     anon: bool = "-anon" in message.flags
-    demote = message.cmd == "demote"
-    privileges: ChatPrivileges = get_privileges(full=full, anon=anon, demote=demote)
+    without_rights = "-wr" in message.flags
+    promote = message.cmd == "promote"
+    if promote:
+        privileges: ChatPrivileges = get_privileges(
+            full=full, anon=anon, without_rights=without_rights
+        )
+    else:
+        privileges = ChatPrivileges(can_manage_chat=False)
     response_text = f"{message.cmd.capitalize()}d: {user.mention}"
     try:
         await bot.promote_chat_member(
             chat_id=message.chat.id, user_id=user.id, privileges=privileges
         )
-        if not demote:
+        if promote:
             # Let server promote admin before setting title
             # Bot is too fast moment 😂😂😂
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
             await bot.set_administrator_title(
                 chat_id=message.chat.id, user_id=user.id, title=title or "Admin"
             )
             if title:
                 response_text += f"\nTitle: {title}"
+            if without_rights:
+                response_text += "Without Rights: True"
         await response.edit(text=response_text)
     except Exception as e:
         await response.edit(text=e, del_in=10, block=True)
@@ -82,7 +92,7 @@ async def ban_or_unban(bot: bot, message: Message) -> None:
     try:
         await action
         await message.reply(
-            text=f"{message.cmd.capitalize()}ed: {user.mention}\nReason: {reason}."
+            text=f"{message.cmd.capitalize()}ned: {user.mention}\nReason: {reason}."
         )
     except Exception as e:
         await message.reply(text=e, del_in=10)
@@ -95,7 +105,6 @@ async def mute_or_unmute(bot: bot, message: Message):
         await message.reply(user, del_in=10)
         return
     perms = message.chat.permissions
-    word = "Unmuted"
     if message.cmd == "mute":
         perms = ChatPermissions(
             can_send_messages=False,
@@ -107,11 +116,12 @@ async def mute_or_unmute(bot: bot, message: Message):
             can_send_other_messages=False,
             can_add_web_page_previews=False,
         )
-        word = "Muted"
     try:
         await bot.restrict_chat_member(
             chat_id=message.chat.id, user_id=user.id, permissions=perms
         )
-        await message.reply(text=f"{word}: {user.mention}\nReason: {reason}.")
+        await message.reply(
+            text=f"{message.cmd.capitalize()}d: {user.mention}\nReason: {reason}."
+        )
     except Exception as e:
         await message.reply(text=e, del_in=10)

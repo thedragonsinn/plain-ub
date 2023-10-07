@@ -8,10 +8,11 @@ from io import BytesIO
 from pyrogram import Client, filters, idle
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
+from telegraph.aio import Telegraph
 
 from app import DB, Config
 from app.core import Conversation, Message
-from app.utils import aiohttp_tools
+from app.utils import aiohttp_tools, helpers
 
 
 async def import_modules():
@@ -72,6 +73,12 @@ class BOT(Client):
         await import_modules()
         await aiohttp_tools.session_switch()
         await self.edit_restart_msg()
+        helpers.TELEGRAPH = Telegraph()
+        await helpers.TELEGRAPH.create_account(
+            short_name="Plain-UB",
+            author_name="Plain-UB",
+            author_url=Config.UPSTREAM_REPO,
+        )
         print("started")
         await self.log(text="<i>Started</i>")
         await idle()

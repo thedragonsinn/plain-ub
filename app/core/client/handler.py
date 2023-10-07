@@ -17,6 +17,7 @@ async def cmd_dispatcher(bot, message) -> None:
     if message.is_from_owner:
         await message.delete()
 
+
 @bot.on_message(filters.convo_filter, group=0)
 @bot.on_edited_message(filters.convo_filter, group=0)
 async def convo_handler(bot: bot, message: Msg):

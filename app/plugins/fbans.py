@@ -80,7 +80,7 @@ async def fed_ban(bot: bot, message: Message):
     if message.cmd == "fbanp":
         if not message.replied:
             await message.reply("Reply to a proof")
-            return 
+            return
         proof = await message.replied.forward(Config.FBAN_LOG_CHANNEL)
         proof_str = "".join(["{ ", proof.link, " }"])
 
