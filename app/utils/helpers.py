@@ -8,7 +8,7 @@ TELEGRAPH = None
 async def post_to_telegraph(title: str, text: str):
     telegraph = await TELEGRAPH.create_page(
         title=title,
-        content_html=f"<p>{text}</p>",
+        html_content=f"<p>{text}</p>",
         author_name="Plain-UB",
         author_url=Config.UPSTREAM_REPO,
     )
