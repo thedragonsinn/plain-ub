@@ -44,7 +44,7 @@ async def promote_or_demote(bot: bot, message: Message) -> None:
     if not isinstance(user, User):
         await response.edit(user, del_in=10)
         return
-    full: bool = "-f" in message.flags
+    full: bool = "-full" in message.flags
     anon: bool = "-anon" in message.flags
     without_rights = "-wr" in message.flags
     promote = message.cmd == "promote"
@@ -69,7 +69,7 @@ async def promote_or_demote(bot: bot, message: Message) -> None:
             if title:
                 response_text += f"\nTitle: {title}"
             if without_rights:
-                response_text += "Without Rights: True"
+                response_text += "\nWithout Rights: True"
         await response.edit(text=response_text)
     except Exception as e:
         await response.edit(text=e, del_in=10, block=True)
