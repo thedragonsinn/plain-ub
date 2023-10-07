@@ -52,10 +52,10 @@ async def debrid(bot: bot, message: Message):
             query = {"magnets[]": link}
         unrestrict = await get_json(endpoint=endpoint, query=query)
         if not isinstance(unrestrict, dict) or "error" in unrestrict:
-            await message.reply(unrestrict, quote=True)
+            await message.reply(unrestrict)
             continue
         if "-save" in message.flags:
-            await message.reply("Link Successfully Saved.", quote=True)
+            await message.reply("Link Successfully Saved.")
             continue
         if not link.startswith("http"):
             data = unrestrict["data"]["magnets"][0]
@@ -68,7 +68,7 @@ async def debrid(bot: bot, message: Message):
         ret_str = (
             f"""Name: **{name}**\nID: `{id}`\nSize: **{size} mb**\nReady: __{ready}__"""
         )
-        await message.reply(ret_str, quote=True)
+        await message.reply(ret_str)
 
 
 # Get Status via id or Last 5 torrents
@@ -78,17 +78,17 @@ async def torrents(bot: bot, message: Message):
     query = {}
 
     if "-s" in message.flags and "-l" in message.flags:
-        return await message.reply("can't use two flags at once", quote=True)
+        return await message.reply("can't use two flags at once")
 
     if "-s" in message.flags:
         if not (input_ := message.flt_input):
-            return await message.reply("ID required with -s flag", quote=True)
+            return await message.reply("ID required with -s flag")
         query = {"id": input_}
 
     json = await get_json(endpoint=endpoint, query=query)
 
     if not isinstance(json, dict) or "error" in json:
-        return await message.reply(json, quote=True)
+        return await message.reply(json)
 
     data = json["data"]["magnets"]
 
@@ -128,12 +128,11 @@ async def torrents(bot: bot, message: Message):
 
     ret_str = "<br>".join(ret_str_list)
     if len(ret_str) < 4096:
-        await message.reply(ret_str, quote=True)
+        await message.reply(ret_str)
     else:
         await message.reply(
             post_tgh("Magnets", ret_str.replace("\n", "<br>")),
             disable_web_page_preview=True,
-            quote=True,
         )
 
 
@@ -145,4 +144,4 @@ async def delete_torrent(bot: bot, message: Message):
         return await message.reply("Enter an ID to delete")
     for i in message.text_list[1:]:
         json = await get_json(endpoint=endpoint, query={"id": i})
-        await message.reply(str(json), quote=True)
+        await message.reply(str(json))

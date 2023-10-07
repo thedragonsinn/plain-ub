@@ -109,7 +109,7 @@ async def fed_ban(bot: bot, message: Message):
         resp_str += f"Failed in: {len(failed)}/{total}\n• " + "\n• ".join(failed)
     else:
         resp_str += f"Success! Fbanned in {total} feds."
-    await bot.send_message(chat_id=Config.FBAN_LOG_CHANNEL, text=resp_str)
+    await bot.send_message(chat_id=Config.FBAN_LOG_CHANNEL, text=resp_str, disable_web_page_preview=True)
     await progress.edit(
         text=resp_str, del_in=8, block=False, disable_web_page_preview=True
     )
