@@ -76,6 +76,7 @@ async def add_scmd(bot: bot, message: Message):
     if "-all" in message.flags:
         cmds = [{"_id": cmd} for cmd in Config.CMD_DICT.keys()]
         Config.SUDO_CMD_LIST = list(Config.CMD_DICT.keys())
+        await DB.SUDO_CMD_LIST.drop()
         await DB.SUDO_CMD_LIST.insert_many(cmds)
         await message.reply("All Commands Added to Sudo!")
         await bot.log(text="All Commands Added to Sudo!")
@@ -93,6 +94,12 @@ async def add_scmd(bot: bot, message: Message):
 
 @bot.add_cmd(cmd="delscmd")
 async def del_scmd(bot: bot, message: Message):
+    if "-all" in message.flags:
+        Config.SUDO_CMD_LIST = []
+        await DB.SUDO_CMD_LIST.drop()
+        await message.reply("All Commands Removed from Sudo!")
+        await bot.log(text="All Commands Removed from Sudo!")
+        return
     cmd = message.flt_input
     response = await message.reply(f"Removing <b>{cmd}</b> from sudo....")
     if cmd not in Config.SUDO_CMD_LIST:
