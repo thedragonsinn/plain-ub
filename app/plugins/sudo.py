@@ -33,6 +33,7 @@ async def add_sudo(bot: bot, message: Message) -> Message | None:
     Config.SUDO_USERS.append(user.id)
     await add_data(collection=DB.SUDO_USERS, id=user.id, data=extract_user_data(user))
     await response.edit(text=f"{user.mention} added to Sudo List.", del_in=5)
+    await bot.log(text=f"{user.mention} added to the Sudo List.")
 
 
 @bot.add_cmd(cmd="delsudo")
@@ -51,6 +52,7 @@ async def remove_sudo(bot: bot, message: Message) -> Message | None:
     Config.SUDO_USERS.remove(user.id)
     await delete_data(collection=DB.SUDO_USERS, id=user.id)
     await response.edit(text=f"{user.mention} removed from Sudo List.", del_in=5)
+    await bot.log(text=f"{user.mention} removed from Sudo List.")
 
 
 @bot.add_cmd(cmd="vsudo")
@@ -77,7 +79,9 @@ async def add_scmd(bot: bot, message: Message):
         await response.edit(f"<b>{cmd}</b> already in Sudo!")
         return
     await DB.SUDO_CMD_LIST.insert_one({"_id": cmd})
+    Config.SUDO_CMD_LIST.append(cmd)
     await response.edit(f"<b>{cmd}</b> added to Sudo!")
+    await bot.log(f"<b>{cmd}</b> added to Sudo!")
 
 
 @bot.add_cmd(cmd="delscmd")
@@ -88,7 +92,9 @@ async def del_scmd(bot: bot, message: Message):
         await response.edit(f"<b>{cmd}</b> not in Sudo!")
         return
     await DB.SUDO_CMD_LIST.delete_one({"_id": cmd})
-    await response.edit(f"<b>{cmd}</b> added to Sudo!")
+    Config.SUDO_CMD_LIST.remove(cmd)
+    await response.edit(f"<b>{cmd}</b> removed from Sudo!")
+    await bot.log(f"<b>{cmd}</b> removed from Sudo!")
 
 
 @bot.add_cmd(cmd="vscmd")
@@ -98,5 +104,7 @@ async def view_sudo_cmd(bot: bot, message: Message):
         await message.reply("No Commands in SUDO!")
         return
     await message.reply(
-        f"List of <b>{len(cmds)}</b> SUDO CMDS:\n\n{cmds}", del_in=30, block=False
+        f"List of <b>{len(Config.SUDO_CMD_LIST)}</b> SUDO CMDS:\n\n{cmds}",
+        del_in=30,
+        block=False,
     )
