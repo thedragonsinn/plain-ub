@@ -1,3 +1,4 @@
+import asyncio
 import glob
 import importlib
 import os
@@ -15,7 +16,7 @@ from app.core import Conversation, Message
 from app.utils import aiohttp_tools, helpers
 
 
-async def import_modules():
+def import_modules():
     for py_module in glob.glob(pathname="app/**/*.py", recursive=True):
         name = os.path.splitext(py_module)[0]
         py_name = name.replace("/", ".")
@@ -23,6 +24,24 @@ async def import_modules():
             importlib.import_module(py_name)
         except Exception as e:
             print(e)
+
+
+async def init_tasks():
+    sudo = await DB.SUDO.find_one({"_id": "sudo_switch"})
+    if sudo:
+        Config.SUDO = sudo["value"]
+    Config.SUDO_USERS = [sudo_user["_id"] async for sudo_user in DB.SUDO_USERS.find()]
+    Config.SUDO_CMD_LIST = [
+        sudo_cmd["_id"] async for sudo_cmd in DB.SUDO_CMD_LIST.find()
+    ]
+
+    helpers.TELEGRAPH = Telegraph()
+    await helpers.TELEGRAPH.create_account(
+        short_name="Plain-UB", author_name="Plain-UB", author_url=Config.UPSTREAM_REPO
+    )
+
+    import_modules()
+    await aiohttp_tools.session_switch()
 
 
 class BOT(Client):
@@ -70,17 +89,10 @@ class BOT(Client):
 
     async def boot(self) -> None:
         await super().start()
-        await import_modules()
-        await aiohttp_tools.session_switch()
-        await self.edit_restart_msg()
-        helpers.TELEGRAPH = Telegraph()
-        await helpers.TELEGRAPH.create_account(
-            short_name="Plain-UB",
-            author_name="Plain-UB",
-            author_url=Config.UPSTREAM_REPO,
-        )
         print("started")
-        await self.log(text="<i>Started</i>")
+        await asyncio.gather(
+            init_tasks(), self.edit_restart_msg(), self.log(text="<i>Started</i>")
+        )
         await idle()
         await aiohttp_tools.session_switch()
         DB._client.close()

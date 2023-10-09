@@ -1,4 +1,3 @@
-import json
 import os
 from typing import Callable
 
@@ -7,7 +6,9 @@ from pyrogram.types import Message
 
 
 class Config:
-    CMD_DICT: dict["str", Callable] = {}
+    CMD_DICT: dict[str, Callable] = {}
+
+    CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
 
     CONVO_DICT: dict[int, dict[str | int, Message | Filter | None]] = {}
 
@@ -21,11 +22,15 @@ class Config:
 
     LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
 
-    TRIGGER: str = os.environ.get("TRIGGER", ".")
+    SUDO: bool = False
+
+    SUDO_TRIGGER: str = os.environ.get("SUDO_TRIGGER", "!")
 
     OWNER_ID = int(os.environ.get("OWNER_ID"))
 
-    USERS: list[int] = json.loads(os.environ.get("USERS", "[]"))
+    SUDO_CMD_LIST: list[str] = []
+
+    SUDO_USERS: list[int] = []
 
     UPSTREAM_REPO: str = os.environ.get(
         "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"

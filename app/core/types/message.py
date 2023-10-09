@@ -26,12 +26,11 @@ class Message(Msg):
 
     @cached_property
     def flt_input(self) -> str:
-        split_lines = self.input.splitlines()
-        split_n_joined = [
-            " ".join([word for word in line.split(" ") if word not in self.flags])
-            for line in split_lines
-        ]
-        return "\n".join(split_n_joined)
+        split_lines = self.input.split("\n", maxsplit=1)
+        split_lines[0] = " ".join(
+            [word for word in split_lines[0].split(" ") if word not in self.flags]
+        )
+        return "\n".join(split_lines)
 
     @cached_property
     def input(self) -> str:

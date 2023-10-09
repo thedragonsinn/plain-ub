@@ -1,8 +1,9 @@
 from pyrogram.types import User
+from telegraph.aio import Telegraph
 
 from app import Config
 
-TELEGRAPH = None
+TELEGRAPH: None | Telegraph = None
 
 
 async def post_to_telegraph(title: str, text: str):
@@ -19,3 +20,7 @@ def get_name(user: User) -> str:
     first = user.first_name or ""
     last = user.last_name or ""
     return f"{first} {last}".strip()
+
+
+def extract_user_data(user: User) -> dict:
+    return dict(name=get_name(user), username=user.username, mention=user.mention)

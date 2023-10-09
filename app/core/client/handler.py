@@ -7,14 +7,14 @@ from app import Config, bot
 from app.core import Message, filters
 
 
-@bot.on_message(filters.cmd_filter, group=1)
-@bot.on_edited_message(filters.cmd_filter, group=1)
+@bot.on_message(filters.owner_filter | filters.sudo_filter, group=1)
+@bot.on_edited_message(filters.owner_filter | filters.sudo_filter, group=1)
 async def cmd_dispatcher(bot, message) -> None:
     message = Message.parse_message(message)
     func = Config.CMD_DICT[message.cmd]
     coro = func(bot, message)
-    await run_coro(coro, message)
-    if message.is_from_owner:
+    x = await run_coro(coro, message)
+    if not x and message.is_from_owner:
         await message.delete()
 
 
@@ -33,7 +33,7 @@ async def convo_handler(bot: bot, message: Msg):
     message.continue_propagation()
 
 
-async def run_coro(coro, message) -> None:
+async def run_coro(coro, message) -> None | int:
     try:
         task = asyncio.Task(coro, name=message.task_id)
         await task
@@ -46,3 +46,4 @@ async def run_coro(coro, message) -> None:
             func=coro.__name__,
             name="traceback.txt",
         )
+        return 1
