@@ -73,6 +73,13 @@ async def sudo_list(bot: bot, message: Message):
 
 @bot.add_cmd(cmd="addscmd")
 async def add_scmd(bot: bot, message: Message):
+    if "-all" in message.flags:
+        cmds = [{"_id": cmd} for cmd in Config.CMD_DICT.keys()]
+        Config.SUDO_CMD_LIST = list(Config.CMD_DICT.keys())
+        await DB.SUDO_CMD_LIST.insert_many(cmds)
+        await message.reply("All Commands Added to Sudo!")
+        await bot.log(text="All Commands Added to Sudo!")
+        return
     cmd = message.flt_input
     response = await message.reply(f"Adding <b>{cmd}</b> to sudo....")
     if cmd in Config.SUDO_CMD_LIST:
