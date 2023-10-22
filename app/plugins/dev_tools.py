@@ -82,12 +82,15 @@ async def executor(bot: bot, message: Message) -> Message | None:
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
     output = codeErr.getvalue().strip() or codeOut.getvalue().strip()
-    output = f"{output}\n\n{func_out}".strip()
     if func_out is not None:
-        if "-s" in message.flags:
-            output = f">> `{output}`"
-        else:
-            output = f"> `{code}`\n\n>>  `{output}`"
+        output = f"{output}\n\n{func_out}".strip()
+    elif not output and "-s" in message.flags:
+        await reply.delete()
+        return
+    if "-s" in message.flags:
+        output = f">> `{output}`"
+    else:
+        output = f"> `{code}`\n\n>>  `{output}`"
     await reply.edit(
         output,
         name="exec.txt",
