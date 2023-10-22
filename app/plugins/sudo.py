@@ -30,13 +30,15 @@ async def add_sudo(bot: bot, message: Message) -> Message | None:
     if user.id in Config.SUDO_USERS:
         await response.edit(text=f"{get_name(user)} already in Sudo!", del_in=5)
         return
+    response_str = f"{user.mention} added to Sudo List."
     Config.SUDO_USERS.append(user.id)
     if "-temp" not in message.flags:
         await add_data(
             collection=DB.SUDO_USERS, id=user.id, data=extract_user_data(user)
         )
-    await response.edit(text=f"{user.mention} added to Sudo List.", del_in=5)
-    await bot.log(text=f"{user.mention} added to the Sudo List.")
+        response_str += "\n<b>Temporary</b>: True"
+    await response.edit(text=response_str, del_in=5)
+    await bot.log(text=response_str)
 
 
 @bot.add_cmd(cmd="delsudo")
@@ -53,10 +55,12 @@ async def remove_sudo(bot: bot, message: Message) -> Message | None:
         await response.edit(text=f"{get_name(user)} not in Sudo!", del_in=5)
         return
     Config.SUDO_USERS.remove(user.id)
+    response_str = f"{user.mention} removed from Sudo List."
     if "-temp" not in message.flags:
         await delete_data(collection=DB.SUDO_USERS, id=user.id)
-    await response.edit(text=f"{user.mention} removed from Sudo List.", del_in=5)
-    await bot.log(text=f"{user.mention} removed from Sudo List.")
+        response_str += "\n<b>Temporary</b>: True"
+    await response.edit(text=response_str, del_in=5)
+    await bot.log(text=response_str)
 
 
 @bot.add_cmd(cmd="vsudo")
