@@ -8,6 +8,7 @@ from pyrogram.types import Chat, User
 from app import DB, Config, bot
 from app.core import Message
 from app.utils.db_utils import add_data, delete_data
+from app.utils.helpers import get_name
 
 FED_LIST: AgnosticCollection = DB.FED_LIST
 
@@ -18,6 +19,7 @@ FILTERS: filters.Filter = (
 FBAN_REGEX: filters.Filter = filters.regex(
     r"(New FedBan|starting a federation ban|Starting a federation ban|start a federation ban|FedBan Reason update|FedBan reason updated|Would you like to update this reason)"
 )
+
 
 UNFBAN_REGEX: filters.Filter = filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)")
 
@@ -89,20 +91,20 @@ async def fed_ban(bot: bot, message: Message):
             await message.reply("Reply to a proof")
             return
         proof = await message.replied.forward(Config.FBAN_LOG_CHANNEL)
-        proof_str = f"{ {proof.link} }"
+        proof_str = f"\n{ {proof.link} }"
 
     await progress.edit("❯❯")
     total: int = 0
     failed: list[str] = []
-    reason = f"{reason}\n{proof_str}"
-    fban_cmd: str = f"/fban {user.mention} {reason}"
+    reason = f"{reason}{proof_str}"
+    fban_cmd: str = f"/fban <a href='tg://user?id={user.id}'>{user.id}</a> {reason}"
     async for fed in FED_LIST.find():
         chat_id = int(fed["_id"])
         total += 1
         cmd: Message = await bot.send_message(
             chat_id=chat_id, text=fban_cmd, disable_web_page_preview=True
         )
-        response: Message | None = await cmd.get_response(filters=(FILTERS), timeout=8)
+        response: Message | None = await cmd.get_response(filters=FILTERS, timeout=8)
         if not response or not (await FBAN_REGEX(bot, response)):
             failed.append(fed["name"])
         elif "Would you like to update this reason" in response.text:
@@ -111,11 +113,15 @@ async def fed_ban(bot: bot, message: Message):
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
-    resp_str = f"❯❯❯ <b>FBanned {user.mention}\nID: {user.id}\nReason: {reason}\n"
+    resp_str = f"❯❯❯ <b>FBanned</b> {user.mention}\n<b>ID</b>: {user.id}\n<b>Reason</b>: {reason}\n<b.Initiated in</b>:{message.chat.title}"
     if failed:
-        resp_str += f"Failed in: {len(failed)}/{total}\n• " + "\n• ".join(failed)
+        resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(
+            failed
+        )
     else:
-        resp_str += f"Success! Fbanned in {total} feds."
+        resp_str += f"\nSuccess! <b>Fbanned</b> in <b>{total}</b> feds."
+    if not message.is_from_owner:
+        resp_str += f"\n<b>By</b>: {get_name(message.from_user)}"
     await bot.send_message(
         chat_id=Config.FBAN_LOG_CHANNEL, text=resp_str, disable_web_page_preview=True
     )
@@ -137,14 +143,14 @@ async def un_fban(bot: bot, message: Message):
     await progress.edit("❯❯")
     total: int = 0
     failed: list[str] = []
-    unfban_cmd: str = f"/unfban {user.mention} {reason}"
+    unfban_cmd: str = f"/unfban <a href='tg://user?id={user.id}'>{user.id}</a> {reason}"
     async for fed in FED_LIST.find():
         chat_id = int(fed["_id"])
         total += 1
         cmd: Message = await bot.send_message(
             chat_id=chat_id, text=unfban_cmd, disable_web_page_preview=True
         )
-        response: Message | None = await cmd.get_response(filters=(FILTERS), timeout=8)
+        response: Message | None = await cmd.get_response(filters=FILTERS, timeout=8)
         if not response or not (await UNFBAN_REGEX(bot, response)):
             failed.append(fed["name"])
         await asyncio.sleep(0.8)

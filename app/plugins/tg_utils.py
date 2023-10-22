@@ -68,7 +68,7 @@ async def leave_chat(bot: bot, message: Message) -> None:
     else:
         chat = message.chat.id
         await message.reply(
-            f"Leaving current chat in 5\nReply with `{Config.TRIGGER}c` to cancel",
+            f"Leaving current chat in 5\nReply with `{message.trigger}c` to cancel",
             del_in=5,
             block=True,
         )

@@ -31,7 +31,10 @@ async def add_sudo(bot: bot, message: Message) -> Message | None:
         await response.edit(text=f"{get_name(user)} already in Sudo!", del_in=5)
         return
     Config.SUDO_USERS.append(user.id)
-    await add_data(collection=DB.SUDO_USERS, id=user.id, data=extract_user_data(user))
+    if "-temp" not in message.flags:
+        await add_data(
+            collection=DB.SUDO_USERS, id=user.id, data=extract_user_data(user)
+        )
     await response.edit(text=f"{user.mention} added to Sudo List.", del_in=5)
     await bot.log(text=f"{user.mention} added to the Sudo List.")
 
@@ -50,7 +53,8 @@ async def remove_sudo(bot: bot, message: Message) -> Message | None:
         await response.edit(text=f"{get_name(user)} not in Sudo!", del_in=5)
         return
     Config.SUDO_USERS.remove(user.id)
-    await delete_data(collection=DB.SUDO_USERS, id=user.id)
+    if "-temp" not in message.flags:
+        await delete_data(collection=DB.SUDO_USERS, id=user.id)
     await response.edit(text=f"{user.mention} removed from Sudo List.", del_in=5)
     await bot.log(text=f"{user.mention} removed from Sudo List.")
 

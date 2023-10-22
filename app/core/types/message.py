@@ -12,7 +12,9 @@ from app.core import Conversation
 
 class Message(Msg):
     def __init__(self, message: Msg) -> None:
-        super().__dict__.update(message.__dict__)
+        args = vars(message)
+        args["client"] = args.pop("_client")
+        super().__init__(**args)
 
     @cached_property
     def cmd(self) -> str | None:
@@ -64,6 +66,10 @@ class Message(Msg):
     @cached_property
     def text_list(self) -> list:
         return self.text.split()
+
+    @cached_property
+    def trigger(self):
+        return Config.CMD_TRIGGER if self.is_from_owner else Config.SUDO_TRIGGER
 
     async def async_deleter(self, del_in, task, block) -> None:
         if block:

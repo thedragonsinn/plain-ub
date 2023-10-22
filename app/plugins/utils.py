@@ -12,15 +12,15 @@ from app.core import Message
 @bot.add_cmd(cmd="help")
 async def cmd_list(bot: bot, message: Message) -> None:
     commands: str = "\n".join(
-        [f"<code>{Config.TRIGGER}{i}</code>" for i in Config.CMD_DICT.keys()]
+        [f"<code>{message.trigger}{cmd}</code>" for cmd in Config.CMD_DICT.keys()]
     )
     await message.reply(
-        f"<b>Available Commands:</b>\n\n{commands}", del_in=30, block=False
+        f"<b>Available Commands:</b>\n\n{commands}", del_in=30, block=True
     )
 
 
 # Not my Code
-# Prolly from Userge/UX/VenomX idk
+# Prolly from Userge/UX/VenomX IDK
 @bot.add_cmd(cmd="ping")
 async def ping_bot(bot: bot, message: Message):
     start = datetime.now()

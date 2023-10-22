@@ -12,12 +12,19 @@ def cmd_check(message: Message, trigger: str, sudo: bool = False) -> bool:
     return bool(cmd in Config.CMD_DICT)
 
 
-def owner_check(filter, client, message: Message) -> bool:
+def basic_check(message: Message):
     if (
         message.reactions
         or not message.text
         or not message.text.startswith(Config.CMD_TRIGGER)
         or not message.from_user
+    ):
+        return True
+
+
+def owner_check(filter, client, message: Message) -> bool:
+    if (
+        basic_check(message)
         or message.from_user.id != Config.OWNER_ID
         or (message.chat.id != Config.OWNER_ID and not message.outgoing)
     ):
@@ -29,10 +36,8 @@ def owner_check(filter, client, message: Message) -> bool:
 def sudo_check(filter, client, message: Message) -> bool:
     if (
         not Config.SUDO
-        or message.reactions
-        or not message.text
+        or basic_check(message)
         or not message.text.startswith(Config.SUDO_TRIGGER)
-        or not message.from_user
         or message.from_user.id not in Config.SUDO_USERS
     ):
         return False
