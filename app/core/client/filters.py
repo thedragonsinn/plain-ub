@@ -16,7 +16,6 @@ def basic_check(message: Message):
     if (
         message.reactions
         or not message.text
-        or not message.text.startswith(Config.CMD_TRIGGER)
         or not message.from_user
     ):
         return True
@@ -25,6 +24,7 @@ def basic_check(message: Message):
 def owner_check(filter, client, message: Message) -> bool:
     if (
         basic_check(message)
+        or not message.text.startswith(Config.CMD_TRIGGER)
         or message.from_user.id != Config.OWNER_ID
         or (message.chat.id != Config.OWNER_ID and not message.outgoing)
     ):
