@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Callable
 
@@ -5,33 +6,42 @@ from pyrogram.filters import Filter
 from pyrogram.types import Message
 
 
-class Config:
-    CMD_DICT: dict[str, Callable] = {}
+class _Config:
+    def __init__(self):
+        self.CMD_DICT: dict[str, Callable] = {}
 
-    CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
+        self.CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
 
-    CONVO_DICT: dict[int, dict[str | int, Message | Filter | None]] = {}
+        self.CONVO_DICT: dict[int, dict[str | int, Message | Filter | None]] = {}
 
-    DEV_MODE: int = int(os.environ.get("DEV_MODE", 0))
+        self.DEV_MODE: int = int(os.environ.get("DEV_MODE", 0))
 
-    DB_URL: str = os.environ.get("DB_URL")
+        self.DB_URL: str = os.environ.get("DB_URL")
 
-    FBAN_LOG_CHANNEL: int = int(
-        os.environ.get("FBAN_LOG_CHANNEL", os.environ.get("LOG_CHAT"))
-    )
+        self.FBAN_LOG_CHANNEL: int = int(
+            os.environ.get("FBAN_LOG_CHANNEL", os.environ.get("LOG_CHAT"))
+        )
 
-    LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
+        self.LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
 
-    SUDO: bool = False
+        self.SUDO: bool = False
 
-    SUDO_TRIGGER: str = os.environ.get("SUDO_TRIGGER", "!")
+        self.SUDO_TRIGGER: str = os.environ.get("SUDO_TRIGGER", "!")
 
-    OWNER_ID = int(os.environ.get("OWNER_ID"))
+        self.OWNER_ID = int(os.environ.get("OWNER_ID"))
 
-    SUDO_CMD_LIST: list[str] = []
+        self.SUDO_CMD_LIST: list[str] = []
 
-    SUDO_USERS: list[int] = []
+        self.SUDO_USERS: list[int] = []
 
-    UPSTREAM_REPO: str = os.environ.get(
-        "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"
-    )
+        self.UPSTREAM_REPO: str = os.environ.get(
+            "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"
+        )
+
+    def __str__(self):
+        config_dict = self.__dict__.copy()
+        config_dict["DB_URL"] = "SECURED"
+        return json.dumps(config_dict, indent=4, ensure_ascii=False, default=str)
+
+
+Config = _Config()

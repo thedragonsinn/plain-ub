@@ -25,7 +25,7 @@ class Conversation:
         self.timeout = timeout
 
     def __str__(self):
-        return json.dumps(self.__dict__, indent=4, ensure_ascii=False)
+        return json.dumps(self.__dict__, indent=4, ensure_ascii=False, default=str)
 
     async def get_response(self, timeout: int | None = None) -> Message | None:
         try:
