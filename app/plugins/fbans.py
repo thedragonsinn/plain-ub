@@ -113,20 +113,20 @@ async def fed_ban(bot: bot, message: Message):
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
-    resp_str = f"❯❯❯ <b>FBanned</b> {user.mention}\n<b>ID</b>: {user.id}\n<b>Reason</b>: {reason}\n<b.Initiated in</b>:{message.chat.title}"
+    resp_str = f"❯❯❯ <b>FBanned</b> {user.mention}\n<b>ID</b>: {user.id}\n<b>Reason</b>: {reason}\n<b>Initiated in</b>:{message.chat.title or 'PM'}"
     if failed:
         resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(
             failed
         )
     else:
-        resp_str += f"\nSuccess! <b>Fbanned</b> in <b>{total}</b> feds."
+        resp_str += f"\n<b>Status</b>: Fbanned in <b>{total}</b> feds."
     if not message.is_from_owner:
-        resp_str += f"\n<b>By</b>: {get_name(message.from_user)}"
+        resp_str += f"\n\n<b>By</b>: {get_name(message.from_user)}"
     await bot.send_message(
         chat_id=Config.FBAN_LOG_CHANNEL, text=resp_str, disable_web_page_preview=True
     )
     await progress.edit(
-        text=resp_str, del_in=8, block=False, disable_web_page_preview=True
+        text=resp_str, del_in=5, block=True, disable_web_page_preview=True
     )
 
 
