@@ -13,11 +13,7 @@ def cmd_check(message: Message, trigger: str, sudo: bool = False) -> bool:
 
 
 def basic_check(message: Message):
-    if (
-        message.reactions
-        or not message.text
-        or not message.from_user
-    ):
+    if message.reactions or not message.text or not message.from_user:
         return True
 
 

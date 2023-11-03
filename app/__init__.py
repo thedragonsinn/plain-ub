@@ -13,4 +13,4 @@ if "com.termux" not in os.environ.get("PATH", ""):
 
     uvloop.install()
 
-bot = BOT()
+bot: BOT = BOT()
