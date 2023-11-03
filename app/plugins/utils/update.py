@@ -4,6 +4,7 @@ from git import Repo
 
 from app import Config, bot
 from app.core import Message
+from app.plugins.utils.restart import restart
 
 
 @bot.add_cmd(cmd="update")
