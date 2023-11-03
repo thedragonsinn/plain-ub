@@ -5,9 +5,9 @@ from app.core import Message
 
 
 def get_message(link: str) -> tuple[int | str, int]:
-    parsed_url: str = urlparse(link).path.lstrip("/")
-    chat, id = parsed_url.split("/")
-    if chat.is_digit():
+    parsed_url: str = urlparse(link).path.strip("/")
+    chat, id = parsed_url.lstrip("c/").split("/")
+    if chat.isdigit():
         chat = int(f"-100{chat}")
     return chat, int(id)
 
