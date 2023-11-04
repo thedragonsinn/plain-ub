@@ -41,7 +41,7 @@ async def executor(bot: bot, message: Message) -> Message | None:
     if "-s" in message.flags:
         output = f">> `{output}`"
     else:
-        output = f"> `{code}`\n\n>>  `{output}`"
+        output = f"```python\n> {code}```\n\n>> `{output}`"
     await reply.edit(
         output,
         name="exec.txt",

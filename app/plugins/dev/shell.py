@@ -16,7 +16,7 @@ async def run_cmd(bot: bot, message: Message) -> Message | None:
         )
     except asyncio.exceptions.CancelledError:
         return await reply.edit("`Cancelled...`")
-    output: str = f"~$`{cmd}`\n\n`{proc_stdout}`"
+    output: str = f"<pre language=shell>~${cmd}\n\n{proc_stdout}</pre>"
     return await reply.edit(output, name="sh.txt", disable_web_page_preview=True)
 
 
@@ -32,7 +32,7 @@ async def live_shell(bot: bot, message: Message) -> Message | None:
             if output != stdout:
                 if len(stdout) <= 4096:
                     await reply.edit(
-                        f"`{stdout}`",
+                        f"```shell\n{stdout}```",
                         disable_web_page_preview=True,
                         parse_mode=ParseMode.MARKDOWN,
                     )
@@ -42,7 +42,7 @@ async def live_shell(bot: bot, message: Message) -> Message | None:
             await asyncio.Task(asyncio.sleep(sleep_for), name=reply.task_id)
             sleep_for += 1
         return await reply.edit(
-            f"~$`{cmd}\n\n``{sub_process.full_std}`",
+            f"<pre language=shell>~${cmd}\n\n{sub_process.full_std}</pre>",
             name="shell.txt",
             disable_web_page_preview=True,
         )
