@@ -41,7 +41,7 @@ async def run_coro(coro, message) -> None | int:
         await bot.log(text=f"<b>#Cancelled</b>:\n<code>{message.text}</code>")
     except BaseException:
         await bot.log(
-            traceback=str(traceback.format_exc()),
+            traceback=f"<pre language=python>{traceback.format_exc()}</pre>",
             chat=message.chat.title or message.chat.first_name,
             func=coro.__name__,
             name="traceback.txt",
