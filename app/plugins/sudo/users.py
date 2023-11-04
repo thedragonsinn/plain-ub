@@ -36,6 +36,7 @@ async def add_sudo(bot: bot, message: Message) -> Message | None:
         await add_data(
             collection=DB.SUDO_USERS, id=user.id, data=extract_user_data(user)
         )
+    else:
         response_str += "\n<b>Temporary</b>: True"
     await response.edit(text=response_str, del_in=5)
     await bot.log(text=response_str)
@@ -58,6 +59,7 @@ async def remove_sudo(bot: bot, message: Message) -> Message | None:
     response_str = f"{user.mention} removed from Sudo List."
     if "-temp" not in message.flags:
         await delete_data(collection=DB.SUDO_USERS, id=user.id)
+    else:
         response_str += "\n<b>Temporary</b>: True"
     await response.edit(text=response_str, del_in=5)
     await bot.log(text=response_str)
