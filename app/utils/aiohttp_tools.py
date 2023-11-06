@@ -15,6 +15,7 @@ class MediaType(Enum):
     GROUP = auto()
     GIF = auto()
     MESSAGE = auto()
+    DOCUMENT = auto()
 
 
 async def session_switch() -> None:
@@ -61,14 +62,19 @@ def get_filename(url: str) -> str:
     return name
 
 
-def get_type(url: str) -> MediaType | None:
-    name, ext = splitext(get_filename(url))
+def get_type(url: str | None = "", path: str | None = "") -> MediaType | None:
+    if url:
+        media = get_filename(url)
+    else:
+        media = path
+    name, ext = splitext(media)
     if ext in {".png", ".jpg", ".jpeg"}:
         return MediaType.PHOTO
     if ext in {".mp4", ".mkv", ".webm"}:
         return MediaType.VIDEO
     if ext in {".gif"}:
         return MediaType.GIF
+    return MediaType.DOCUMENT
 
 
 async def thumb_dl(thumb) -> BytesIO | str | None:
