@@ -82,7 +82,7 @@ class Download:
 
     @property
     def completed_size(self):
-        return self.raw_completed_size / 1024
+        return self.raw_completed_size / 1048576
 
     async def close(self):
         if not self.session.closed:
