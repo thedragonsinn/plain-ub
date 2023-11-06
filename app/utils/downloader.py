@@ -82,7 +82,7 @@ class Download:
 
     @property
     def completed_size(self):
-        return self.raw_completed_size / 1048576
+        return self.raw_completed_size / 1024
 
     async def close(self):
         if not self.session.closed:
@@ -98,9 +98,9 @@ class Download:
             os.path.join(self.path, self.file_name), "wb"
         ) as async_file:
             self.has_started = True
-            while file_chunk := (await self.file_session.content.read(1048576)):  # NOQA
+            while file_chunk := (await self.file_session.content.read(1024)):  # NOQA
                 await async_file.write(file_chunk)
-                self.raw_completed_size += 1048576
+                self.raw_completed_size += 1024
         self.is_done = True
         self.edit_task.cancel()
         await self.close()
