@@ -82,7 +82,7 @@ class Download:
 
     @property
     def completed_size(self):
-        return self.raw_completed_size / 1048576
+        return round(self.raw_completed_size / 1048576)
 
     async def close(self):
         if not self.session.closed:
@@ -118,6 +118,8 @@ class Download:
                 f"\nsize={self.size}mb"
                 f"\ncompleted={self.completed_size}</pre>"
             )
+            if sleep_for == 10:
+                sleep_for = 1
             await asyncio.sleep(sleep_for)
             sleep_for += 1
 
