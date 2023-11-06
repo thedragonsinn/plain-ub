@@ -103,7 +103,7 @@ class Download:
         self.is_done = True
         self.edit_task.cancel()
         await self.close()
-        return
+        return self.return_file()
 
     async def edit_progress_message(self):
         if not self.message:
