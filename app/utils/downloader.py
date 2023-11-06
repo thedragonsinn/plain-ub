@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import re
@@ -49,8 +50,9 @@ class Download:
         self.session: aiohttp.ClientSession = session
         self.message: Message | Msg | None = message
         self.raw_completed_size: int = 0
-        self.edit_pass_count: int = 0
-        self.is_done = False
+        self.has_started: bool = False
+        self.is_done: bool = False
+        self.edit_task: asyncio.Task | None = None
 
     @cached_property
     def file_name(self):
@@ -70,51 +72,53 @@ class Download:
         # File size in MBs
         return self.raw_size / 1048576
 
-    @cached_property
-    def check_disk_space(self):
+    async def check_disk_space(self):
         if shutil.disk_usage(self.path).free < self.raw_size:
-            self.close()
+            await self.close()
             raise MemoryError(
                 f"Not enough space in {self.path} to download {self.size}mb."
             )
 
     @property
     def completed_size(self):
-        return round(self.raw_completed_size / 1048576)
+        return self.raw_completed_size / 1048576
 
-    def close(self):
+    async def close(self):
         if not self.session.closed:
-            self.session.close()
+            await self.session.close()
         if not self.file_session.closed:
-            self.file_session.close()
+            await self.file_session.close()
 
     async def download(self) -> DownloadedFile | None:
         if self.session.closed:
             return
+        self.edit_task = asyncio.create_task(self.edit_progress_message())
         async with aiofiles.open(
             os.path.join(self.path, self.file_name), "wb"
         ) as async_file:
+            self.has_started = True
             while file_chunk := (await self.file_session.content.read(1048576)):  # NOQA
                 await async_file.write(file_chunk)
                 self.raw_completed_size += 1048576
-                self.edit_pass_count += 1
-                if self.edit_pass_count >= 8:
-                    self.edit_pass_count = 0
-                    await self.edit_progress_message()
         self.is_done = True
-        self.close()
+        self.edit_task.cancel()
+        await self.close()
         return
 
     async def edit_progress_message(self):
         if not self.message:
             return
-        await self.message.edit(
-            f"Downloading..."
-            f"\n<pre language=bash>"
-            f"\nfile = {self.file_name}"
-            f"\nsize={self.size}"
-            f"\ncompleted={self.completed_size}</pre>"
-        )
+        sleep_for = 0
+        while not self.is_done:
+            await self.message.edit(
+                f"Downloading..."
+                f"\n<pre language=bash>"
+                f"\nfile={self.file_name}"
+                f"\nsize={self.size}mb"
+                f"\ncompleted={self.completed_size}</pre>"
+            )
+            await asyncio.sleep(sleep_for)
+            sleep_for += 1
 
     def return_file(self) -> DownloadedFile:
         return DownloadedFile(name=self.file_name, path=self.path)
