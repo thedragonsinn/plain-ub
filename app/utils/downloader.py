@@ -16,10 +16,11 @@ RECENT_LINKS = []
 
 
 class DownloadedFile:
-    def __init__(self, name: str, path: str):
+    def __init__(self, name: str, path: str, size: int):
         self.name = name
         self.path = path
-        self.full_path = os.path.join(name, path)
+        self.full_path = os.path.join(path, name)
+        self.size = size
         self.type = get_type(path=name)
 
     def __str__(self):
@@ -121,7 +122,7 @@ class Download:
             sleep_for += 1
 
     def return_file(self) -> DownloadedFile:
-        return DownloadedFile(name=self.file_name, path=self.path)
+        return DownloadedFile(name=self.file_name, path=self.path, size=self.size)
 
     @classmethod
     async def setup(cls, url: str, path: str = "downloads", message=None) -> "Download":
