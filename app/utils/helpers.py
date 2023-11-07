@@ -1,4 +1,5 @@
 import os
+import time
 
 from pyrogram.enums import MessageMediaType
 from pyrogram.types import Message, User
@@ -9,7 +10,7 @@ from app.utils.downloader import DownloadedFile
 
 TELEGRAPH: None | Telegraph = None
 
-PROGRESS_STR_DICT = {}
+PROGRESS_DICT = {}
 
 
 async def post_to_telegraph(title: str, text: str):
@@ -43,24 +44,17 @@ async def progress(
     if current == total:
         PROGRESS_STR_DICT.pop(file_path, "")
         return
-    prog = f"{current * 100 / total:.1f}%"
-    resp_str = (
-        f"<b>{action}</b>"
-        f"\n<pre language=bash>"
-        f"\nfile={file_name}"
-        f"\npath={file_path}"
-        f"\nsize={round(total/1048576,1)}mb"
-        f"\ncompleted={prog}mb</pre>"
-    )
-    if file_path not in PROGRESS_STR_DICT:
-        PROGRESS_STR_DICT[file_path] = {}
-    if PROGRESS_STR_DICT[file_path].get("resp") != resp_str:
-        PROGRESS_STR_DICT[file_path]["resp"] = resp_str
-        PROGRESS_STR_DICT["count"] = PROGRESS_STR_DICT.get("count", 0)
-        if PROGRESS_STR_DICT["count"] % 150:
-            PROGRESS_STR_DICT["count"] += 1
-            return
-        await response.edit(resp_str)
+    current_time = time.time()
+    if file_path not in PROGRESS_DICT or (current_time - PROGRESS_DICT[file_path]) > 5:
+        PROGRESS_DICT[file_path] = current_time
+        await response.edit(
+            f"<b>{action}</b>"
+            f"\n<pre language=bash>"
+            f"\nfile={file_name}"
+            f"\npath={file_path}"
+            f"\nsize={round(total/1048576,1)}mb"
+            f"\ncompleted={current * 100 / total:.1f}%</pre>"
+        )
 
 
 def get_tg_media_details(message: Message, path: str) -> DownloadedFile | None:
