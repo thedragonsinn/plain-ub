@@ -142,10 +142,10 @@ class Download:
                 f"\nsize={self.size}mb"
                 f"\ncompleted={self.completed_size}mb</pre>"
             )
-            if sleep_for == 10:
-                sleep_for = 1
+            if sleep_for == 12:
+                sleep_for = 2
             await asyncio.sleep(sleep_for)
-            sleep_for += 1
+            sleep_for += 2
 
     def return_file(self) -> DownloadedFile:
         if os.path.isfile(self.full_path):
