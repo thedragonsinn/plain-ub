@@ -54,13 +54,13 @@ async def progress(
     )
     if file_path not in PROGRESS_STR_DICT:
         PROGRESS_STR_DICT[file_path] = {}
-    if PROGRESS_STR_DICT[file_path]["resp"] != resp_str:
+    if PROGRESS_STR_DICT[file_path].get("resp") != resp_str:
         PROGRESS_STR_DICT[file_path]["resp"] = resp_str
         PROGRESS_STR_DICT["count"] = PROGRESS_STR_DICT.get("count", 0)
         if PROGRESS_STR_DICT["count"] % 5:
             PROGRESS_STR_DICT["count"] += 1
             return
-    await response.edit(resp_str)
+        await response.edit(resp_str)
 
 
 def get_tg_media_details(message: Message, path: str) -> DownloadedFile | None:
