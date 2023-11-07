@@ -57,7 +57,7 @@ async def progress(
     if PROGRESS_STR_DICT[file_path].get("resp") != resp_str:
         PROGRESS_STR_DICT[file_path]["resp"] = resp_str
         PROGRESS_STR_DICT["count"] = PROGRESS_STR_DICT.get("count", 0)
-        if PROGRESS_STR_DICT["count"] % 10:
+        if PROGRESS_STR_DICT["count"] % 50:
             PROGRESS_STR_DICT["count"] += 1
             return
         await response.edit(resp_str)
