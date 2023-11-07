@@ -9,6 +9,8 @@ from app.utils.downloader import DownloadedFile
 
 TELEGRAPH: None | Telegraph = None
 
+PROGRESS_STR_DICT = {}
+
 
 async def post_to_telegraph(title: str, text: str):
     telegraph = await TELEGRAPH.create_page(
@@ -38,15 +40,21 @@ async def progress(
     file_name: str = "",
     file_path: str = "",
 ):
+    if current == total:
+        PROGRESS_STR_DICT.pop(file_path, "")
+        return
     prog = f"{current * 100 / total:.1f}%"
-    await response.edit(
+    resp_str = (
         f"<b>{action}</b>"
         f"\n<pre language=bash>"
         f"\nfile={file_name}"
         f"\npath={file_path}"
         f"\nsize={total}mb"
-        f"\ncompleted={prog}/pre>"
+        f"\ncompleted={prog}mb/pre>"
     )
+    if file_path not in PROGRESS_STR_DICT or PROGRESS_STR_DICT[file_path] != resp_str:
+        PROGRESS_STR_DICT[file_path] = resp_str
+        await response.edit(resp_str)
 
 
 def get_tg_media_details(message: Message, path: str) -> DownloadedFile | None:
