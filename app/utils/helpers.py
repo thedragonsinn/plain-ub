@@ -73,6 +73,6 @@ def get_tg_media_details(message: Message, path: str) -> DownloadedFile | None:
     return DownloadedFile(
         name=name,
         path=path,
-        size=round(file.file_size / (1024 * 1024)),
+        size=file.file_size / (1024 * 1024),
         full_path=os.path.join(path, name),
     )

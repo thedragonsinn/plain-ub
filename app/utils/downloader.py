@@ -15,7 +15,7 @@ from app.utils.aiohttp_tools import get_filename, get_type
 
 
 class DownloadedFile:
-    def __init__(self, name: str, path: str, full_path: str, size: int):
+    def __init__(self, name: str, path: str, full_path: str, size: int | float):
         self.name = name
         self.path = path
         self.full_path = full_path

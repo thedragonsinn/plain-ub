@@ -15,7 +15,7 @@ async def down_load(bot: BOT, message: Message):
             "Invalid input...\nReply to a message containing media or give a link with cmd."
         )
         return
-    dl_path = os.path.join("download", str(time.time()))
+    dl_path = os.path.join("downloads", str(time.time()))
     if message.replied and message.replied.media:
         downloaded_file: DownloadedFile = await telegram_download(
             message=message.replied, response=response, path=dl_path
@@ -31,7 +31,7 @@ async def down_load(bot: BOT, message: Message):
         f"\n<pre language=bash>"
         f"\nfile={downloaded_file.name}"
         f"\npath={downloaded_file.full_path}"
-        f"\nsize={downloaded_file.size}mb"
+        f"\nsize={downloaded_file.size}mb</pre>"
     )
     return downloaded_file
 
