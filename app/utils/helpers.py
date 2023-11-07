@@ -50,11 +50,17 @@ async def progress(
         f"\nfile={file_name}"
         f"\npath={file_path}"
         f"\nsize={total}mb"
-        f"\ncompleted={prog}mb/pre>"
+        f"\ncompleted={prog}mb</pre>"
     )
-    if file_path not in PROGRESS_STR_DICT or PROGRESS_STR_DICT[file_path] != resp_str:
-        PROGRESS_STR_DICT[file_path] = resp_str
-        await response.edit(resp_str)
+    if file_path not in PROGRESS_STR_DICT:
+        PROGRESS_STR_DICT[file_path] = {}
+    if PROGRESS_STR_DICT[file_path]["resp"] != resp_str:
+        PROGRESS_STR_DICT[file_path]["resp"] = resp_str
+        PROGRESS_STR_DICT["count"] = PROGRESS_STR_DICT.get("count", 0)
+        if PROGRESS_STR_DICT["count"] % 5:
+            PROGRESS_STR_DICT["count"] += 1
+            return
+    await response.edit(resp_str)
 
 
 def get_tg_media_details(message: Message, path: str) -> DownloadedFile | None:
@@ -81,6 +87,6 @@ def get_tg_media_details(message: Message, path: str) -> DownloadedFile | None:
     return DownloadedFile(
         name=name,
         path=path,
-        size=file.file_size / (1024 * 1024),
+        size=round(file.file_size / (1024 * 1024), 1),
         full_path=os.path.join(path, name),
     )

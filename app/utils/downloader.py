@@ -88,7 +88,7 @@ class Download:
 
     @property
     def completed_size(self):
-        return round(self.raw_completed_size / 1048576)
+        return round(self.raw_completed_size / 1048576, 1)
 
     @cached_property
     def file_name(self):
@@ -110,7 +110,7 @@ class Download:
     @cached_property
     def size(self):
         # File size in MBs
-        return round(self.raw_size / 1048576)
+        return round(self.raw_size / 1048576, 1)
 
     async def close(self):
         if not self.session.closed:
