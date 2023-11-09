@@ -11,7 +11,7 @@ from app.utils.shell import check_audio, get_duration, take_ss
 
 async def video_upload(
     file: DownloadedFile, has_spoiler: bool
-) -> dict[str, bot.send_video | bot.send_animation, dict]:
+) -> dict[str, bot.send_video , bot.send_animation, dict]:
     thumb = await take_ss(file.full_path)
     if not check_audio(file.full_path):
         return {
@@ -79,7 +79,7 @@ def file_check(file: str):
 
 
 @bot.add_cmd(cmd="upload")
-async def uppload(bot: BOT, message: Message):
+async def upload(bot: BOT, message: Message):
     input = message.flt_input
     if not input:
         await message.reply("give a file url | path to upload.")
