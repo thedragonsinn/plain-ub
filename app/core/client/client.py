@@ -63,14 +63,12 @@ class BOT(Client):
         def the_decorator(func):
             @wraps(func)
             def wrapper():
+                path = inspect.stack()[1][1]
                 if isinstance(cmd, list):
                     for _cmd in cmd:
-                        Config.CMD_DICT[_cmd] = {
-                            "func": func,
-                            "path": inspect.stack()[1][1],
-                        }
+                        Config.CMD_DICT[_cmd] = {"func": func, "path": path}
                 else:
-                    Config.CMD_DICT[cmd] = {"func": func, "path": inspect.stack()[1][1]}
+                    Config.CMD_DICT[cmd] = {"func": func, "path": path}
 
             wrapper()
             return func
