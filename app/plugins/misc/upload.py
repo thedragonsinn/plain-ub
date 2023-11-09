@@ -11,7 +11,7 @@ from app.utils.shell import check_audio, get_duration, take_ss
 
 async def video_upload(
     file: DownloadedFile, has_spoiler: bool
-) -> dict[str, bot.send_video , bot.send_animation, dict]:
+) -> dict[str, bot.send_video, bot.send_animation, dict]:
     thumb = await take_ss(file.full_path)
     if not check_audio(file.full_path):
         return {
@@ -86,12 +86,15 @@ async def upload(bot: BOT, message: Message):
         return
     response = await message.reply("checking input...")
     if input.startswith("http") and not file_check(input):
-        dl_obj: Download = await Download.setup(
-            url=message.input,
-            path=os.path.join("downloads", str(time.time())),
-            message_to_edit=response,
-        )
-        file: DownloadedFile = await dl_obj.download()
+        try:
+            dl_obj: Download = await Download.setup(
+                url=message.input,
+                path=os.path.join("downloads", str(time.time())),
+                message_to_edit=response,
+            )
+            file: DownloadedFile = await dl_obj.download()
+        except Download.DuplicateDownload:
+            file: DownloadFile = dl_obj.return_file()
     elif file_check(input):
         file = DownloadedFile(
             name=input,

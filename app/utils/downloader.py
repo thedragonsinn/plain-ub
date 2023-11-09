@@ -6,7 +6,6 @@ from functools import cached_property
 
 import aiofiles
 import aiohttp
-from async_lru import alru_cache
 from pyrogram.types import Message as Msg
 
 from app.core.types.message import Message
@@ -73,7 +72,6 @@ class Download:
         self.is_done: bool = False
         os.makedirs(name=path, exist_ok=True)
 
-    @alru_cache()
     async def check_disk_space(self):
         if shutil.disk_usage(self.path).free < self.raw_size:
             await self.close()
@@ -81,7 +79,6 @@ class Download:
                 f"Not enough space in {self.path} to download {self.size}mb."
             )
 
-    @alru_cache()
     async def check_duplicates(self):
         if os.path.isfile(self.full_path):
             await self.close()
@@ -156,7 +153,7 @@ class Download:
         session = aiohttp.ClientSession()
         file_session = await session.get(url=url)
         headers = file_session.headers
-        return cls(
+        obj = cls(
             url=url,
             path=path,
             file_session=file_session,
@@ -164,3 +161,6 @@ class Download:
             headers=headers,
             message_to_edit=message_to_edit,
         )
+        await obj.check_disk_space()
+        await obj.check_duplicates()
+        return obj

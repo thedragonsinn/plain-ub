@@ -53,5 +53,5 @@ async def progress(
             f"\nfile={file_name}"
             f"\npath={file_path}"
             f"\nsize={bytes_to_mb(total)}mb"
-            f"\ncompleted={bytes_to_mb(current)}mb | {current * 100 / total:.1f}%)</pre>"
+            f"\ncompleted={bytes_to_mb(current)}mb | {current * 100 / total:.1f}%</pre>"
         )
