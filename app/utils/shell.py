@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import AsyncIterable
 
 
@@ -8,6 +9,29 @@ async def run_shell_cmd(cmd: str) -> str:
     )
     stdout, _ = await proc.communicate()
     return stdout.decode("utf-8")
+
+
+async def take_ss(video: str, path: str) -> None | str:
+    thumb = f"{path}/i.png"
+    await run_shell_cmd(
+        f'''ffmpeg -hide_banner -loglevel error -ss 0.1 -i "{video}" -vframes 1 "{thumb}"'''
+    )
+    if os.path.isfile(thumb):
+        return thumb
+
+
+async def check_audio(file) -> int:
+    result = await run_shell_cmd(
+        f"ffprobe -v error -show_entries format=nb_streams -of default=noprint_wrappers=1:nokey=1 {file}"
+    )
+    return int(result or 0) - 1
+
+
+async def get_duration(file) -> int:
+    duration = await run_shell_cmd(
+        f"""ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {file}"""
+    )
+    return int(duration or 0)
 
 
 class AsyncShell:

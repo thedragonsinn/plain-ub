@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 import re
@@ -11,7 +10,8 @@ from async_lru import alru_cache
 from pyrogram.types import Message as Msg
 
 from app.core.types.message import Message
-from app.utils.aiohttp_tools import get_filename, get_type
+from app.utils.helpers import progress
+from app.utils.media_helper import bytes_to_mb, get_filename, get_type
 
 
 class DownloadedFile:
@@ -27,25 +27,26 @@ class DownloadedFile:
 
 
 class Download:
-    """
-    Example usage:
-    dl_obj = await Download.setup(
-        url="https....",
-        path="downloads", # default is download
-        message=response # optional
+    """Download a file in async using aiohttp.
+
+    Attributes:
+        url (str):
+            file url.
+        path (str):
+            download path without file name.
+        message_to_edit:
+            response message to edit for progress.
+
+    Returns:
+        ON success a DownloadedFile object is returned.
+
+    Methods:
+        dl_obj = await Download.setup(
+            url="https....",
+            path="downloads",
+            message_to_edit=response,
         )
-    without message:
         file = await dl_obj.download()
-        # only download the file
-    with message:
-        file = await dl_obj.start()
-        # starts the download and edit the response message with progress
-
-    On success both return a DownloadedFile class.
-
-    if the file path exists raises Download.DuplicateDownload error.
-
-    if not enough disk space in specified path raises MemoryError.
     """
 
     class DuplicateDownload(Exception):
@@ -59,14 +60,14 @@ class Download:
         file_session: aiohttp.ClientResponse,
         session: aiohttp.client,
         headers: aiohttp.ClientResponse.headers,
-        message: Message | Msg | None = None,
+        message_to_edit: Message | Msg | None = None,
     ):
         self.url: str = url
         self.path: str = path
         self.headers: aiohttp.ClientResponse.headers = headers
         self.file_session: aiohttp.ClientResponse = file_session
         self.session: aiohttp.ClientSession = session
-        self.message: Message | Msg | None = message
+        self.message_to_edit: Message | Msg | None = message_to_edit
         self.raw_completed_size: int = 0
         self.has_started: bool = False
         self.is_done: bool = False
@@ -88,7 +89,8 @@ class Download:
 
     @property
     def completed_size(self):
-        return round(self.raw_completed_size / 1048576, 1)
+        """Size in MB"""
+        return bytes_to_mb(self.raw_completed_size)
 
     @cached_property
     def file_name(self):
@@ -109,8 +111,8 @@ class Download:
 
     @cached_property
     def size(self):
-        # File size in MBs
-        return round(self.raw_size / 1048576, 1)
+        """File size in MBs"""
+        return bytes_to_mb(self.raw_size)
 
     async def close(self):
         if not self.session.closed:
@@ -126,26 +128,17 @@ class Download:
             while file_chunk := (await self.file_session.content.read(1024)):  # NOQA
                 await async_file.write(file_chunk)
                 self.raw_completed_size += 1024
+                await progress(
+                    current=self.raw_completed_size,
+                    total=self.raw_size,
+                    response=self.message_to_edit,
+                    action="Downloading...",
+                    file_name=self.file_name,
+                    file_path=self.full_path,
+                )
         self.is_done = True
         await self.close()
         return self.return_file()
-
-    async def edit_progress_message(self):
-        if not self.message:
-            return
-        sleep_for = 0
-        while not self.is_done:
-            await self.message.edit(
-                f"Downloading..."
-                f"\n<pre language=bash>"
-                f"\nfile={self.file_name}"
-                f"\nsize={self.size}mb"
-                f"\ncompleted={self.completed_size}mb</pre>"
-            )
-            if sleep_for == 12:
-                sleep_for = 2
-            await asyncio.sleep(sleep_for)
-            sleep_for += 2
 
     def return_file(self) -> DownloadedFile:
         if os.path.isfile(self.full_path):
@@ -156,14 +149,10 @@ class Download:
                 size=self.size,
             )
 
-    async def start(self) -> DownloadedFile:
-        _, downloaded_file = await asyncio.gather(
-            self.edit_progress_message(), self.download()
-        )
-        return downloaded_file
-
     @classmethod
-    async def setup(cls, url: str, path: str = "downloads", message=None) -> "Download":
+    async def setup(
+        cls, url: str, path: str = "downloads", message_to_edit=None
+    ) -> "Download":
         session = aiohttp.ClientSession()
         file_session = await session.get(url=url)
         headers = file_session.headers
@@ -173,5 +162,5 @@ class Download:
             file_session=file_session,
             session=session,
             headers=headers,
-            message=message,
+            message_to_edit=message_to_edit,
         )

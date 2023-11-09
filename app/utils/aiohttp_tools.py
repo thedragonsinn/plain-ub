@@ -1,21 +1,11 @@
 import json
-from enum import Enum, auto
 from io import BytesIO
-from os.path import basename, splitext
-from urllib.parse import urlparse
 
 import aiohttp
 
+from app.utils.media_helper import get_filename
+
 SESSION: aiohttp.ClientSession | None = None
-
-
-class MediaType(Enum):
-    PHOTO = auto()
-    VIDEO = auto()
-    GROUP = auto()
-    GIF = auto()
-    MESSAGE = auto()
-    DOCUMENT = auto()
 
 
 async def session_switch() -> None:
@@ -53,31 +43,7 @@ async def in_memory_dl(url: str) -> BytesIO:
     return file
 
 
-def get_filename(url: str) -> str:
-    name = basename(urlparse(url).path.rstrip("/")).lower()
-    if name.endswith((".webp", ".heic")):
-        name = name + ".jpg"
-    if name.endswith(".webm"):
-        name = name + ".mp4"
-    return name
-
-
-def get_type(url: str | None = "", path: str | None = "") -> MediaType | None:
-    if url:
-        media = get_filename(url)
-    else:
-        media = path
-    name, ext = splitext(media)
-    if ext in {".png", ".jpg", ".jpeg"}:
-        return MediaType.PHOTO
-    if ext in {".mp4", ".mkv", ".webm"}:
-        return MediaType.VIDEO
-    if ext in {".gif"}:
-        return MediaType.GIF
-    return MediaType.DOCUMENT
-
-
 async def thumb_dl(thumb) -> BytesIO | str | None:
     if not thumb or not thumb.startswith("http"):
         return thumb
-    return await in_memory_dl(thumb)
+    return await in_memory_dl(thumb)  # NOQA

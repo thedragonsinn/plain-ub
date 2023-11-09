@@ -1,4 +1,5 @@
 aiohttp==3.8.5
+aiofiles==23.2.1
 async-lru==2.0.4
 httpx==0.25.0
 dnspython==2.3.0
