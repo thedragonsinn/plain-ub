@@ -11,7 +11,7 @@ from app.core import Message, filters
 @bot.on_edited_message(filters.owner_filter | filters.sudo_filter, group=1)
 async def cmd_dispatcher(bot, message) -> None:
     message = Message.parse_message(message)
-    func = Config.CMD_DICT[message.cmd]
+    func = Config.CMD_DICT[message.cmd]["func"]
     coro = func(bot, message)
     x = await run_coro(coro, message)
     if not x and message.is_from_owner:

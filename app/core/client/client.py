@@ -1,6 +1,7 @@
 import asyncio
 import glob
 import importlib
+import inspect
 import os
 import sys
 from functools import wraps
@@ -58,16 +59,18 @@ class BOT(Client):
         )
 
     @staticmethod
-    def add_cmd(cmd: str):
+    def add_cmd(cmd: str | list):
         def the_decorator(func):
             @wraps(func)
             def wrapper():
-                config_dict = Config.CMD_DICT
                 if isinstance(cmd, list):
                     for _cmd in cmd:
-                        config_dict[_cmd] = func
+                        Config.CMD_DICT[_cmd] = {
+                            "func": func,
+                            "path": inspect.stack()[1][1],
+                        }
                 else:
-                    config_dict[cmd] = func
+                    Config.CMD_DICT[cmd] = {"func": func, "path": inspect.stack()[1][1]}
 
             wrapper()
             return func

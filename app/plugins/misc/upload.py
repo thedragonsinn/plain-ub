@@ -1,7 +1,7 @@
 import os
 import time
 
-from app import BOT, bot
+from app import BOT, bot, Config 
 from app.core import Message
 from app.utils.downloader import Download, DownloadedFile
 from app.utils.helpers import progress
@@ -20,7 +20,7 @@ async def video_upload(
                 "thumb": thumb,
                 "unsave": True,
                 "animation": file.full_path,
-                "duration": get_duration(file.path),
+                "duration": get_duration(file.full_path),
                 "has_spoiler": has_spoiler,
             },
         }
@@ -29,7 +29,7 @@ async def video_upload(
         "kwargs": {
             "thumb": thumb,
             "video": file.full_path,
-            "duration": get_duration(file.path),
+            "duration": get_duration(file.full_path),
             "has_spoiler": has_spoiler,
         },
     }
@@ -85,16 +85,17 @@ async def upload(bot: BOT, message: Message):
         await message.reply("give a file url | path to upload.")
         return
     response = await message.reply("checking input...")
-    if input.startswith("http") and not file_check(input):
-        try:
-            dl_obj: Download = await Download.setup(
-                url=message.input,
-                path=os.path.join("downloads", str(time.time())),
-                message_to_edit=response,
-            )
-            file: DownloadedFile = await dl_obj.download()
-        except Download.DuplicateDownload:
-            file: DownloadFile = dl_obj.return_file()
+    if input in Config.CMD_DICT:
+        await message.reply_document(document=Config.CMD_DICT[input]["path"])
+        await response.delete()
+        return 
+    elif input.startswith("http") and not file_check(input):
+        dl_obj: Download = await Download.setup(
+            url=message.input,
+            path=os.path.join("downloads", str(time.time())),
+            message_to_edit=response,
+        )
+        file: DownloadedFile = await dl_obj.download()
     elif file_check(input):
         file = DownloadedFile(
             name=input,
@@ -103,7 +104,7 @@ async def upload(bot: BOT, message: Message):
             size=bytes_to_mb(os.path.getsize(input)),
         )
     else:
-        await response.edit("invalid url | file path!!!")
+        await response.edit("invalid `cmd` | `url` | `file path`!!!")
         return
     await response.edit("uploading....")
     progress_args = (response, "Uploading...", file.name, file.full_path)
