@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import sys
 import traceback
 from io import StringIO
@@ -51,4 +52,4 @@ async def executor(bot: bot, message: Message) -> Message | None:
 
 
 if Config.DEV_MODE:
-    Config.CMD_DICT["exec"] = executor
+    Config.CMD_DICT["exec"] = {"func": executor, "path":inspect.stack()[0][1]}

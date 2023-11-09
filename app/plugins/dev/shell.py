@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 
 from pyrogram.enums import ParseMode
 
@@ -52,5 +53,5 @@ async def live_shell(bot: bot, message: Message) -> Message | None:
 
 
 if Config.DEV_MODE:
-    Config.CMD_DICT["shell"] = live_shell
-    Config.CMD_DICT["sh"] = run_cmd
+    Config.CMD_DICT["shell"] ={"func": live_shell, "path":inspect.stack()[0][1]}
+    Config.CMD_DICT["sh"] = {"func": run_cmd, "path":inspect.stack()[0][1]}

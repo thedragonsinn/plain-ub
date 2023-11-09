@@ -1,4 +1,5 @@
 import importlib
+import inspect
 import sys
 import traceback
 
@@ -26,4 +27,4 @@ async def loader(bot: bot, message: Message) -> Message | None:
 
 
 if Config.DEV_MODE:
-    Config.CMD_DICT["load"] = loader
+    Config.CMD_DICT["load"] ={"func": loader, "path":inspect.stack()[0][1]}
