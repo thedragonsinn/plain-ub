@@ -59,7 +59,7 @@ def get_tg_media_details(message: Message):
             file = message.photo
             file.file_name = "photo.jpg"
         case MessageMediaType.AUDIO:
-            file = message.animation
+            file = message.audio
         case MessageMediaType.ANIMATION:
             file = message.animation
         case MessageMediaType.DOCUMENT:
