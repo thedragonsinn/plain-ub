@@ -8,7 +8,7 @@ from pyrogram.types import Message
 
 class _Config:
     def __init__(self):
-        self.CMD_DICT: dict[str, Callable] = {}
+        self.CMD_DICT: dict[str, dict[str, Callable, str]] = {}
 
         self.CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
 

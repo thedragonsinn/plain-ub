@@ -62,6 +62,7 @@ class BOT(Client):
     def add_cmd(cmd: str | list):
         def the_decorator(func):
             path = inspect.stack()[1][1]
+
             @wraps(func)
             def wrapper():
                 if isinstance(cmd, list):

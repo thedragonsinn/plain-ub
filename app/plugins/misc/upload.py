@@ -1,7 +1,7 @@
 import os
 import time
 
-from app import BOT, bot, Config 
+from app import BOT, Config, bot
 from app.core import Message
 from app.utils.downloader import Download, DownloadedFile
 from app.utils.helpers import progress
@@ -88,7 +88,7 @@ async def upload(bot: BOT, message: Message):
     if input in Config.CMD_DICT:
         await message.reply_document(document=Config.CMD_DICT[input]["path"])
         await response.delete()
-        return 
+        return
     elif input.startswith("http") and not file_check(input):
         dl_obj: Download = await Download.setup(
             url=message.input,

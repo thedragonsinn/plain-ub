@@ -47,11 +47,15 @@ async def progress(
     current_time = time.time()
     if file_path not in PROGRESS_DICT or (current_time - PROGRESS_DICT[file_path]) > 5:
         PROGRESS_DICT[file_path] = current_time
+        if total:
+            percentage = round((current * 100 / total),1)
+        else:
+            percentage = 0
         await response.edit(
             f"<b>{action}</b>"
             f"\n<pre language=bash>"
             f"\nfile={file_name}"
             f"\npath={file_path}"
             f"\nsize={bytes_to_mb(total)}mb"
-            f"\ncompleted={bytes_to_mb(current)}mb | {current * 100 / total:.1f}%</pre>"
+            f"\ncompleted={bytes_to_mb(current)}mb | {percentage}%</pre>"
         )

@@ -53,5 +53,5 @@ async def live_shell(bot: bot, message: Message) -> Message | None:
 
 
 if Config.DEV_MODE:
-    Config.CMD_DICT["shell"] ={"func": live_shell, "path":inspect.stack()[0][1]}
-    Config.CMD_DICT["sh"] = {"func": run_cmd, "path":inspect.stack()[0][1]}
+    Config.CMD_DICT["shell"] = {"func": live_shell, "path": inspect.stack()[0][1]}
+    Config.CMD_DICT["sh"] = {"func": run_cmd, "path": inspect.stack()[0][1]}

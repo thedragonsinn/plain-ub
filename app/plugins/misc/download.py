@@ -48,7 +48,11 @@ async def telegram_download(
         size=round(tg_media.file_size / 1048576, 1),
         full_path=os.path.join(path, tg_media.file_name),
     )
-    progress_args = (response, "Downloading...", media_obj.name, media_obj.full_path)
+    progress_args = (
+        response,
+        "Downloading...",
+        media_obj.name,
+        media_obj.full_path)
     await message.download(
         file_name=media_obj.full_path, progress=progress, progress_args=progress_args
     )
