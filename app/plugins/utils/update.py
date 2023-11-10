@@ -7,8 +7,12 @@ from app.core import Message
 from app.plugins.utils.restart import restart
 
 
-def get_commits(repo: Repo) -> str:
-    repo.git.fetch()
+async def get_commits(repo: Repo) -> str | None:
+    try:
+        async with asyncio.timeout(10):
+            await asyncio.to_thread(repo.git.fetch)
+    except TimeoutError:
+        return
     commits: str = ""
     limit: int = 0
     for commit in repo.iter_commits("HEAD..origin/main"):
@@ -21,32 +25,39 @@ def get_commits(repo: Repo) -> str:
     return commits
 
 
-async def pull_commits(repo: Repo) -> None:
+async def pull_commits(repo: Repo) -> None | bool:
     repo.git.reset("--hard")
-    async with asyncio.timeout(10):
-        await asyncio.to_thread(repo.git.pull, Config.UPSTREAM_REPO, "--rebase=true")
+    try:
+        async with asyncio.timeout(10):
+            await asyncio.to_thread(
+                repo.git.pull, Config.UPSTREAM_REPO, "--rebase=true"
+            )
+            return True
+    except TimeoutError:
+        return
 
 
 @bot.add_cmd(cmd="update")
 async def updater(bot: bot, message: Message) -> None | Message:
     reply: Message = await message.reply("Checking for Updates....")
     repo: Repo = Repo()
-    commits: str = await asyncio.to_thread(get_commits, repo)
+    commits: str = await get_commits(repo)
+    if commits is None:
+        await reply.edit("Timeout... Try again.")
+        return
     if not commits:
         await reply.edit("Already Up To Date.", del_in=5)
         return
     if "-pull" not in message.flags:
         await reply.edit(
-            f"<b>Update Available:</b>\n\n{commits}", disable_web_page_preview=True
+            f"<b>Update Available:</b>\n{commits}", disable_web_page_preview=True
         )
         return
-    try:
-        await pull_commits(repo)
-    except TimeoutError:
-        await reply.edit("Timeout...try again.")
+    if not (await pull_commits(repo)):  # NOQA
+        await reply.edit("Timeout...Try again.")
         return
     await asyncio.gather(
-        bot.log(text=f"#Updater\nPulled:\n\n{commits}", disable_web_page_preview=True),
+        bot.log(text=f"#Updater\nPulled:\n{commits}", disable_web_page_preview=True),
         reply.edit("<b>Update Found</b>\n<i>Pulling....</i>"),
     )
     await restart(bot, message, reply)

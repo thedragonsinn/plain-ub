@@ -14,7 +14,12 @@ from app.utils.media_helper import bytes_to_mb, get_filename, get_type
 
 
 class DownloadedFile:
-    def __init__(self, name: str, path: str, full_path: str, size: int | float):
+    def __init__(
+            self,
+            name: str,
+            path: str,
+            full_path: str,
+            size: int | float):
         self.name = name
         self.path = path
         self.full_path = full_path
@@ -22,7 +27,11 @@ class DownloadedFile:
         self.type = get_type(path=name)
 
     def __str__(self):
-        return json.dumps(self.__dict__, indent=4, ensure_ascii=False, default=str)
+        return json.dumps(
+            self.__dict__,
+            indent=4,
+            ensure_ascii=False,
+            default=str)
 
 
 class Download:

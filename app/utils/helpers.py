@@ -48,7 +48,7 @@ async def progress(
     if file_path not in PROGRESS_DICT or (current_time - PROGRESS_DICT[file_path]) > 5:
         PROGRESS_DICT[file_path] = current_time
         if total:
-            percentage = round((current * 100 / total),1)
+            percentage = round((current * 100 / total), 1)
         else:
             percentage = 0
         await response.edit(
