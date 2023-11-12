@@ -96,6 +96,11 @@ async def upload(bot: BOT, message: Message):
             path=os.path.join("downloads", str(time.time())),
             message_to_edit=response,
         )
+        if not bot.me.is_premium and dl_obj.size > 1999:
+            await response.edit(
+                "<b>Aborted</b>, File size exceeds 2gb limit for non premium users!!!"
+            )
+            return
         try:
             file: DownloadedFile = await dl_obj.download()
         except asyncio.exceptions.CancelledError:
