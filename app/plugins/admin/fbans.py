@@ -105,7 +105,7 @@ async def fed_ban(bot: bot, message: Message):
             chat_id=chat_id, text=fban_cmd, disable_web_page_preview=True
         )
         response: Message | None = await cmd.get_response(filters=FILTERS, timeout=8)
-        if not response or not (await FBAN_REGEX(bot, response)):
+        if not response or not (await FBAN_REGEX(bot, response)):  # NOQA
             failed.append(fed["name"])
         elif "Would you like to update this reason" in response.text:
             await response.click("Update reason")
@@ -113,7 +113,7 @@ async def fed_ban(bot: bot, message: Message):
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
-    resp_str = f"❯❯❯ <b>FBanned</b> {user.mention}\n<b>ID</b>: {user.id}\n<b>Reason</b>: {reason}\n<b>Initiated in</b>:{message.chat.title or 'PM'}"
+    resp_str = f"❯❯❯ <b>FBanned</b> {user.mention}\n<b>ID</b>: {user.id}\n<b>Reason</b>: {reason}\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
     if failed:
         resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(
             failed

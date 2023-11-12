@@ -91,11 +91,18 @@ async def upload(bot: BOT, message: Message):
         return
     elif input.startswith("http") and not file_check(input):
         dl_obj: Download = await Download.setup(
-            url=message.input,
+            url=input,
             path=os.path.join("downloads", str(time.time())),
             message_to_edit=response,
         )
-        file: DownloadedFile = await dl_obj.download()
+        try:
+            file: DownloadedFile = await dl_obj.download()
+        except asyncio.exceptions.CancelledError:
+            await response.edit("Cancelled...")
+            return
+        except TimeoutError:
+            await response.edit("Download Timeout...")
+            return
     elif file_check(input):
         file = DownloadedFile(
             name=input,
@@ -107,21 +114,32 @@ async def upload(bot: BOT, message: Message):
         await response.edit("invalid `cmd` | `url` | `file path`!!!")
         return
     await response.edit("uploading....")
-    progress_args = (response, "Uploading...", file.name, file.full_path)
+    progress_args = (
+        response,
+        "Uploading...",
+        file.name,
+        file.full_path,
+    )
     if "-d" in message.flags:
         media: dict = {
             "method": bot.send_document,
-            "kwargs": {"document": file.full_path, "force_document": True},
+            "kwargs": {
+                "document": file.full_path,
+                "force_document": True,
+            },
         }
     else:
         media: dict = await FILE_TYPE_MAP[file.type](
             file, has_spoiler="-s" in message.flags
         )
-    await media["method"](
-        chat_id=message.chat.id,
-        reply_to_message_id=message.reply_id,
-        progress=progress,
-        progress_args=progress_args,
-        **media["kwargs"]
-    )
-    await response.delete()
+    try:
+        await media["method"](
+            chat_id=message.chat.id,
+            reply_to_message_id=message.reply_id,
+            progress=progress,
+            progress_args=progress_args,
+            **media["kwargs"]
+        )
+        await response.delete()
+    except asyncio.exceptions.CancelledError:
+        await response.edit("Cancelled....")
