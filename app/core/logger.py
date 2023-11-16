@@ -22,3 +22,4 @@ basicConfig(
 )
 
 getLogger("pyrogram").setLevel(WARNING)
+getLogger("httpx").setLevel(WARNING)

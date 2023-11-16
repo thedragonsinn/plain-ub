@@ -144,8 +144,10 @@ class BOT(Client):
         await super().stop(block=False)
         DB._client.close()
         if hard:
+            os.remove("logs/app_logs.txt")
             os.execl("/bin/bash", "/bin/bash", "run")
         os.execl(sys.executable, sys.executable, "-m", "app")
+
 
     async def send_message(
         self, chat_id: int | str, text, name: str = "output.txt", **kwargs
