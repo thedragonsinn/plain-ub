@@ -13,18 +13,18 @@ from pyrogram.types import Message as Msg
 from telegraph.aio import Telegraph
 
 from app import DB, Config
-from app.core import Conversation, Message
+from app.core import Conversation, Message, logger
 from app.utils import aiohttp_tools, helpers
 
 
 def import_modules():
-    for py_module in glob.glob(pathname="app/**/*.py", recursive=True):
+    for py_module in glob.glob(pathname="app/**/[!^_]*.py", recursive=True):
         name = os.path.splitext(py_module)[0]
         py_name = name.replace("/", ".")
         try:
             importlib.import_module(py_name)
-        except Exception as e:
-            print(e)
+        except Exception as exc:
+            logger.LOGGER.error(exc.with_exception())
 
 
 async def init_tasks():
@@ -91,7 +91,7 @@ class BOT(Client):
 
     async def boot(self) -> None:
         await super().start()
-        print("started")
+        logger.LOGGER.info("Started")
         await asyncio.gather(
             init_tasks(), self.edit_restart_msg(), self.log(text="<i>Started</i>")
         )
@@ -124,12 +124,13 @@ class BOT(Client):
         if message:
             return (await message.copy(chat_id=Config.LOG_CHAT))  # fmt: skip
         if traceback:
-            text = f"""
-#Traceback
-<b>Function:</b> {func}
-<b>Chat:</b> {chat}
-<b>Traceback:</b>
-<code>{traceback}</code>"""
+            text = (
+                "#Traceback"
+                f"\n<b>Function:</b> {func}"
+                f"\n<b>Chat:</b> {chat}"
+                f"\n<b>Traceback:</b>"
+                f"\n<code>{traceback}</code>"
+            )
         return await self.send_message(
             chat_id=Config.LOG_CHAT,
             text=text,

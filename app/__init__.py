@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv("config.env")
 
 from app.config import Config  # NOQA
+from app.core import LOGGER  # NOQA
 from app.core.db import DB  # NOQA
 from app.core.client.client import BOT  # NOQA
 

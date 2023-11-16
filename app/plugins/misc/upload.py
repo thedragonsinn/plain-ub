@@ -14,14 +14,14 @@ async def video_upload(
     file: DownloadedFile, has_spoiler: bool
 ) -> dict[str, bot.send_video, bot.send_animation, dict]:
     thumb = await take_ss(file.full_path)
-    if not check_audio(file.full_path):
+    if not (await check_audio(file.full_path)):  # fmt:skip
         return {
             "method": bot.send_animation,
             "kwargs": {
                 "thumb": thumb,
                 "unsave": True,
                 "animation": file.full_path,
-                "duration": get_duration(file.full_path),
+                "duration": await get_duration(file.full_path),
                 "has_spoiler": has_spoiler,
             },
         }
@@ -30,7 +30,7 @@ async def video_upload(
         "kwargs": {
             "thumb": thumb,
             "video": file.full_path,
-            "duration": get_duration(file.full_path),
+            "duration": await get_duration(file.full_path),
             "has_spoiler": has_spoiler,
         },
     }
@@ -52,7 +52,7 @@ async def audio_upload(
         "method": bot.send_audio,
         "kwargs": {
             "audio": file.full_path,
-            "duration": get_duration(file=file.full_path),
+            "duration": await get_duration(file=file.full_path),
         },
     }
 
@@ -120,12 +120,7 @@ async def upload(bot: BOT, message: Message):
         await response.edit("invalid `cmd` | `url` | `file path`!!!")
         return
     await response.edit("uploading....")
-    progress_args = (
-        response,
-        "Uploading...",
-        file.name,
-        file.full_path,
-    )
+    progress_args = (response, "Uploading...", file.name, file.full_path)
     if "-d" in message.flags:
         media: dict = {
             "method": bot.send_document,
