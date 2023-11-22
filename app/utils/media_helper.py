@@ -28,10 +28,10 @@ def bytes_to_mb(size: int):
 
 
 def get_filename(url: str) -> str:
-    name = basename(urlparse(url).path.rstrip("/")).lower()
-    if name.endswith((".webp", ".heic")):
+    name = basename(urlparse(url).path.rstrip("/"))
+    if name.lower().endswith((".webp", ".heic")):
         name = name + ".jpg"
-    if name.endswith(".webm"):
+    elif name.lower().endswith(".webm"):
         name = name + ".mp4"
     return name
 
