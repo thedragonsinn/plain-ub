@@ -13,7 +13,7 @@ from app.core import Conversation
 class Message(Msg):
     def __init__(self, message: Msg) -> None:
         args = vars(message)
-        args["client"] = args.pop("_client", None)
+        args["client"] = args.pop("_client", message._client)
         super().__init__(**args)
 
     @cached_property
