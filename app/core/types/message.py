@@ -12,7 +12,7 @@ from app.core import Conversation
 
 class Message(Msg):
     def __init__(self, message: Msg) -> None:
-        args = vars(message)
+        args = vars(message).copy()
         args["client"] = args.pop("_client", message._client)
         super().__init__(**args)
 
