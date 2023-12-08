@@ -4,11 +4,12 @@ from io import BytesIO
 import aiohttp
 
 from app.utils.media_helper import get_filename
+from app import Config
 
 SESSION: aiohttp.ClientSession | None = None
 
 
-async def session_switch() -> None:
+async def init_task() -> None:
     if not SESSION:
         globals().update({"SESSION": aiohttp.ClientSession()})
     else:

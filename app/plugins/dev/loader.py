@@ -3,11 +3,10 @@ import inspect
 import sys
 import traceback
 
-from app import Config, bot
-from app.core import Message
+from app import Config, bot, BOT, Message
 
 
-async def loader(bot: bot, message: Message) -> Message | None:
+async def loader(bot: BOT, message: Message) -> Message | None:
     if (
         not message.replied
         or not message.replied.document

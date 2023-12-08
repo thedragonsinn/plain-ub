@@ -1,11 +1,10 @@
 import asyncio
 
-from app import bot
-from app.core import Message
+from app import bot, Message, BOT
 
 
 @bot.add_cmd(cmd="c")
-async def cancel_task(bot: bot, message: Message) -> Message | None:
+async def cancel_task(bot: BOT, message: Message) -> Message | None:
     task_id: str | None = message.replied_task_id
     if not task_id:
         return await message.reply(

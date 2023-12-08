@@ -3,12 +3,11 @@ import inspect
 
 from pyrogram.enums import ParseMode
 
-from app import Config, bot
-from app.core import Message
+from app import Config, bot, BOT, Message
 from app.utils import shell
 
 
-async def run_cmd(bot: bot, message: Message) -> Message | None:
+async def run_cmd(bot: BOT, message: Message) -> Message | None:
     cmd: str = message.input.strip()
     reply: Message = await message.reply("executing...")
     try:
@@ -22,7 +21,7 @@ async def run_cmd(bot: bot, message: Message) -> Message | None:
 
 
 # Shell with Live Output
-async def live_shell(bot: bot, message: Message) -> Message | None:
+async def live_shell(bot: BOT, message: Message) -> Message | None:
     cmd: str = message.input.strip()
     reply: Message = await message.reply("`getting live output....`")
     sub_process: shell.AsyncShell = await shell.AsyncShell.run_cmd(cmd)

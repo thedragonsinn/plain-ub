@@ -1,9 +1,15 @@
-from app import DB, Config, bot
-from app.core import Message
+from app import DB, Config, bot, BOT, Message
+
+
+async def init_task():
+    Config.SUDO_CMD_LIST = [
+        sudo_cmd["_id"] async for sudo_cmd in DB.SUDO_CMD_LIST.find()
+    ]
+
 
 
 @bot.add_cmd(cmd="addscmd")
-async def add_scmd(bot: bot, message: Message):
+async def add_scmd(bot: BOT, message: Message):
     if "-all" in message.flags:
         cmds = [{"_id": cmd} for cmd in Config.CMD_DICT.keys()]
         Config.SUDO_CMD_LIST = list(Config.CMD_DICT.keys())
@@ -24,7 +30,7 @@ async def add_scmd(bot: bot, message: Message):
 
 
 @bot.add_cmd(cmd="delscmd")
-async def del_scmd(bot: bot, message: Message):
+async def del_scmd(bot: BOT, message: Message):
     if "-all" in message.flags:
         Config.SUDO_CMD_LIST = []
         await DB.SUDO_CMD_LIST.drop()
@@ -43,7 +49,7 @@ async def del_scmd(bot: bot, message: Message):
 
 
 @bot.add_cmd(cmd="vscmd")
-async def view_sudo_cmd(bot: bot, message: Message):
+async def view_sudo_cmd(bot: BOT, message: Message):
     cmds = " ".join(Config.SUDO_CMD_LIST)
     if not cmds:
         await message.reply("No Commands in SUDO!")

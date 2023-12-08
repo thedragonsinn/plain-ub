@@ -4,44 +4,79 @@ import json
 from pyrogram.filters import Filter
 from pyrogram.types import Message
 
-from app import Config
-
 
 class Conversation:
+    CONVO_DICT: dict[int, "Conversation"] = {}
+
     class DuplicateConvo(Exception):
-        def __init__(self, chat: str | int | None = None):
-            text = "Conversation already started"
-            if chat:
-                text += f" with {chat}"
-            super().__init__(text)
+        def __init__(self, chat: str | int):
+            super().__init__(f"Conversation already started with {chat} ")
 
-    class TimeOutError(Exception):
-        def __init__(self):
-            super().__init__("Conversation Timeout")
-
-    def __init__(self, chat_id: int, filters: Filter | None = None, timeout: int = 10):
+    def __init__(
+        self, chat_id: int | str, filters: Filter | None = None, timeout: int = 10
+    ):
         self.chat_id = chat_id
         self.filters = filters
         self.timeout = timeout
+        self.responses: list = []
+        self.set_future()
+        from app import bot
+
+        self._client = bot
 
     def __str__(self):
         return json.dumps(self.__dict__, indent=4, ensure_ascii=False, default=str)
 
+    def set_future(self,*args,**kwargs):
+        future = asyncio.Future()
+        future.add_done_callback(self.set_future)
+        self.response = future
+
     async def get_response(self, timeout: int | None = None) -> Message | None:
         try:
-            async with asyncio.timeout(timeout or self.timeout):
-                while not Config.CONVO_DICT[self.chat_id]["response"]:
-                    await asyncio.sleep(0)
-            return Config.CONVO_DICT[self.chat_id]["response"]
+            resp_future: asyncio.Future = await asyncio.wait_for(
+                self.response, timeout=timeout or self.timeout
+            )
+            return resp_future
         except asyncio.TimeoutError:
-            raise self.TimeOutError
+            raise TimeoutError("Conversation Timeout")
+
+    async def send_message(
+        self, text: str, timeout=0, get_response=False, **kwargs
+    ) -> Message | tuple[Message, Message]:
+        message = await self._client.send_message(
+            chat_id=self.chat_id, text=text, **kwargs
+        )
+        if get_response:
+            response = await self.get_response(timeout=timeout or self.timeout)
+            return message, response
+        return message
+
+    async def send_document(
+        self, document, caption="", timeout=0, get_response=False, **kwargs
+    ) -> Message | tuple[Message, Message]:
+        message = await self._client.send_document(
+            chat_id=self.chat_id,
+            document=document,
+            caption=caption,
+            force_document=True,
+            **kwargs,
+        )
+        if get_response:
+            response = await self.get_response(timeout=timeout or self.timeout)
+            return message, response
+        return message
 
     async def __aenter__(self) -> "Conversation":
-        if self.chat_id in Config.CONVO_DICT:
+        if isinstance(self.chat_id, str):
+            self.chat_id = (await self._client.get_chat(self.chat_id)).id
+        if (
+            self.chat_id in Conversation.CONVO_DICT
+            and Conversation.CONVO_DICT[self.chat_id].filters == self.filters
+        ):
             raise self.DuplicateConvo(self.chat_id)
-        convo_dict = {"filters": self.filters, "response": None}
-        Config.CONVO_DICT[self.chat_id] = convo_dict
+        Conversation.CONVO_DICT[self.chat_id] = self
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        Config.CONVO_DICT.pop(self.chat_id, "")
+        Conversation.CONVO_DICT.pop(self.chat_id, None)

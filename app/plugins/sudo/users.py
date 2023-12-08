@@ -1,14 +1,21 @@
 from pyrogram.types import User
 
-from app import DB, Config, bot
-from app.core import Message
+from app import DB, Config, bot, Message, BOT
 from app.plugins.admin.fbans import _User
 from app.utils.db_utils import add_data, delete_data
 from app.utils.helpers import extract_user_data, get_name
 
 
+async def init_task():
+    sudo = await DB.SUDO.find_one({"_id": "sudo_switch"})
+    if sudo:
+        Config.SUDO = sudo["value"]
+    Config.SUDO_USERS = [sudo_user["_id"] async for sudo_user in DB.SUDO_USERS.find()]
+
+
+
 @bot.add_cmd(cmd="sudo")
-async def sudo(bot: bot, message: Message):
+async def sudo(bot: BOT, message: Message):
     if "-c" in message.flags:
         await message.reply(text=f"Sudo is enabled: <b>{Config.SUDO}</b> .", del_in=8)
         return
@@ -19,7 +26,7 @@ async def sudo(bot: bot, message: Message):
 
 
 @bot.add_cmd(cmd="addsudo")
-async def add_sudo(bot: bot, message: Message) -> Message | None:
+async def add_sudo(bot: BOT, message: Message) -> Message | None:
     response = await message.reply("Extracting User info...")
     user, _ = await message.extract_user_n_reason()
     if isinstance(user, str):
@@ -43,7 +50,7 @@ async def add_sudo(bot: bot, message: Message) -> Message | None:
 
 
 @bot.add_cmd(cmd="delsudo")
-async def remove_sudo(bot: bot, message: Message) -> Message | None:
+async def remove_sudo(bot: BOT, message: Message) -> Message | None:
     response = await message.reply("Extracting User info...")
     user, _ = await message.extract_user_n_reason()
     if isinstance(user, str):
@@ -66,7 +73,7 @@ async def remove_sudo(bot: bot, message: Message) -> Message | None:
 
 
 @bot.add_cmd(cmd="vsudo")
-async def sudo_list(bot: bot, message: Message):
+async def sudo_list(bot: BOT, message: Message):
     output: str = ""
     total = 0
     async for user in DB.SUDO_USERS.find():

@@ -5,8 +5,7 @@ from motor.core import AgnosticCollection
 from pyrogram import filters
 from pyrogram.types import Chat, User
 
-from app import DB, Config, bot
-from app.core import Message
+from app import DB, Config, bot, BOT, Message
 from app.utils.db_utils import add_data, delete_data
 from app.utils.helpers import get_name
 
@@ -35,7 +34,7 @@ class _User(User):
 
 
 @bot.add_cmd(cmd="addf")
-async def add_fed(bot: bot, message: Message):
+async def add_fed(bot: BOT, message: Message):
     data = dict(name=message.input or message.chat.title, type=str(message.chat.type))
     await add_data(collection=FED_LIST, id=message.chat.id, data=data)
     await message.reply(
@@ -47,7 +46,7 @@ async def add_fed(bot: bot, message: Message):
 
 
 @bot.add_cmd(cmd="delf")
-async def remove_fed(bot: bot, message: Message):
+async def remove_fed(bot: BOT, message: Message):
     if "-all" in message.flags:
         await FED_LIST.drop()
         await message.reply("FED LIST cleared.")
@@ -74,7 +73,7 @@ async def remove_fed(bot: bot, message: Message):
 
 
 @bot.add_cmd(cmd=["fban", "fbanp"])
-async def fed_ban(bot: bot, message: Message):
+async def fed_ban(bot: BOT, message: Message):
     progress: Message = await message.reply("❯")
     user, reason = await message.extract_user_n_reason()
     if isinstance(user, str):
@@ -131,7 +130,7 @@ async def fed_ban(bot: bot, message: Message):
 
 
 @bot.add_cmd(cmd="unfban")
-async def un_fban(bot: bot, message: Message):
+async def un_fban(bot: BOT, message: Message):
     progress: Message = await message.reply("❯")
     user, reason = await message.extract_user_n_reason()
     if isinstance(user, str):
@@ -171,7 +170,7 @@ async def un_fban(bot: bot, message: Message):
 
 
 @bot.add_cmd(cmd="listf")
-async def fed_list(bot: bot, message: Message):
+async def fed_list(bot: BOT, message: Message):
     output: str = ""
     total = 0
     async for fed in FED_LIST.find():

@@ -3,12 +3,11 @@ from typing import Awaitable
 
 from pyrogram.types import User
 
-from app import bot
-from app.core import Message
+from app import bot, BOT, Message
 
 
 @bot.add_cmd(cmd=["ban", "unban"])
-async def ban_or_unban(bot: bot, message: Message) -> None:
+async def ban_or_unban(bot: BOT, message: Message) -> None:
     user, reason = await message.extract_user_n_reason()
     if not isinstance(user, User):
         await message.reply(user, del_in=10)
@@ -31,7 +30,7 @@ async def ban_or_unban(bot: bot, message: Message) -> None:
 
 
 @bot.add_cmd(cmd="kick")
-async def kick_user(bot, message: Message):
+async def kick_user(bot: BOT, message: Message):
     user, reason = await message.extract_user_n_reason()
     if not isinstance(user, User):
         await message.reply(user, del_in=10)

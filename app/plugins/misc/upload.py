@@ -13,57 +13,56 @@ from app.utils.shell import check_audio, get_duration, take_ss
 async def video_upload(
     file: DownloadedFile, has_spoiler: bool
 ) -> dict[str, bot.send_video, bot.send_animation, dict]:
-    thumb = await take_ss(file.full_path)
+    thumb = await take_ss(file.full_path, path=file.path)
     if not (await check_audio(file.full_path)):  # fmt:skip
-        return {
-            "method": bot.send_animation,
-            "kwargs": {
-                "thumb": thumb,
-                "unsave": True,
-                "animation": file.full_path,
-                "duration": await get_duration(file.full_path),
-                "has_spoiler": has_spoiler,
-            },
-        }
-    return {
-        "method": bot.send_video,
-        "kwargs": {
-            "thumb": thumb,
-            "video": file.full_path,
-            "duration": await get_duration(file.full_path),
-            "has_spoiler": has_spoiler,
-        },
-    }
+        return dict(
+            method=bot.send_animation,
+            kwargs=dict(
+                thumb=thumb,
+                unsave=True,
+                animation=file.full_path,
+                duration=await get_duration(file.full_path),
+                has_spoiler=has_spoiler,
+            ),
+        )
+    return dict(
+        method=bot.send_video,
+        kwargs=dict(
+            thumb=thumb,
+            video=file.full_path,
+            duration=await get_duration(file.full_path),
+            has_spoiler=has_spoiler,
+        ),
+    )
 
 
 async def photo_upload(
     file: DownloadedFile, has_spoiler: bool
 ) -> dict[str, bot.send_photo, dict]:
-    return {
-        "method": bot.send_photo,
-        "kwargs": {"photo": file.full_path, "has_spoiler": has_spoiler},
-    }
+    return dict(
+        method=bot.send_photo,
+        kwargs=dict(photo=file.full_path, has_spoiler=has_spoiler),
+    )
 
 
 async def audio_upload(
     file: DownloadedFile, has_spoiler: bool
 ) -> dict[str, bot.send_audio, dict]:
-    return {
-        "method": bot.send_audio,
-        "kwargs": {
-            "audio": file.full_path,
-            "duration": await get_duration(file=file.full_path),
-        },
-    }
+    return dict(
+        method=bot.send_audio,
+        kwargs=dict(
+            audio=file.full_path, duration=await get_duration(file=file.full_path)
+        ),
+    )
 
 
 async def doc_upload(
     file: DownloadedFile, has_spoiler: bool
 ) -> dict[str, bot.send_document, dict]:
-    return {
-        "method": bot.send_document,
-        "kwargs": {"document": file.full_path, "force_document": True},
-    }
+    return dict(
+        method=bot.send_document,
+        kwargs=dict(document=file.full_path, force_document=True),
+    )
 
 
 FILE_TYPE_MAP = {
@@ -112,7 +111,7 @@ async def upload(bot: BOT, message: Message):
     elif file_check(input):
         file = DownloadedFile(
             name=input,
-            path=input,
+            path=os.path.dirname(input),
             full_path=input,
             size=bytes_to_mb(os.path.getsize(input)),
         )
@@ -122,13 +121,10 @@ async def upload(bot: BOT, message: Message):
     await response.edit("uploading....")
     progress_args = (response, "Uploading...", file.name, file.full_path)
     if "-d" in message.flags:
-        media: dict = {
-            "method": bot.send_document,
-            "kwargs": {
-                "document": file.full_path,
-                "force_document": True,
-            },
-        }
+        media: dict = dict(
+            method=bot.send_document,
+            kwargs=dict(document=file.full_path, force_document=True),
+        )
     else:
         media: dict = await FILE_TYPE_MAP[file.type](
             file, has_spoiler="-s" in message.flags

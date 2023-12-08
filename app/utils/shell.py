@@ -31,7 +31,7 @@ async def get_duration(file) -> int:
     duration = await run_shell_cmd(
         f"""ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {file}"""
     )
-    return int(duration or 0)
+    return round(float(duration.strip() or 0))
 
 
 class AsyncShell:

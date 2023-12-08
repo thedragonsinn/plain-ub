@@ -6,13 +6,11 @@ from io import StringIO
 
 from pyrogram.enums import ParseMode
 
-from app.core import Message
-
-from app import Config, bot, DB  # isort:skip
+from app import Config, bot, BOT, Message, DB  # isort:skip
 from app.utils import shell, aiohttp_tools as aio  # isort:skip
 
 
-async def executor(bot: bot, message: Message) -> Message | None:
+async def executor(bot: BOT, message: Message) -> Message | None:
     code: str = message.flt_input.strip()
     if not code:
         return await message.reply("exec Jo mama?")

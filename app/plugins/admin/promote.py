@@ -2,8 +2,7 @@ import asyncio
 
 from pyrogram.types import ChatPrivileges, User
 
-from app import bot
-from app.core import Message
+from app import bot, BOT, Message
 
 
 def get_privileges(
@@ -35,7 +34,7 @@ def get_privileges(
 
 
 @bot.add_cmd(cmd=["promote", "demote"])
-async def promote_or_demote(bot: bot, message: Message) -> None:
+async def promote_or_demote(bot: BOT, message: Message) -> None:
     response: Message = await message.reply(
         f"Trying to {message.cmd.capitalize()}....."
     )

@@ -1,9 +1,8 @@
-from app import Config, bot
-from app.core import Message
+from app import Config, bot, BOT, Message
 
 
 @bot.add_cmd(cmd="repo")
-async def sauce(bot: bot, message: Message) -> None:
+async def sauce(bot: BOT, message: Message) -> None:
     await bot.send_message(
         chat_id=message.chat.id,
         text=f"<a href='{Config.UPSTREAM_REPO}'>Plain-UB.</a>",

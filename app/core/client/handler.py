@@ -3,13 +3,13 @@ import traceback
 
 from pyrogram.types import Message as Msg
 
-from app import Config, bot
+from app import Config, bot, BOT
 from app.core import Message, filters
 
 
 @bot.on_message(filters.owner_filter | filters.sudo_filter, group=1)
 @bot.on_edited_message(filters.owner_filter | filters.sudo_filter, group=1)
-async def cmd_dispatcher(bot, message) -> None:
+async def cmd_dispatcher(bot: BOT, message: Message) -> None:
     message = Message.parse_message(message)
     func = Config.CMD_DICT[message.cmd]["func"]
     coro = func(bot, message)
@@ -20,16 +20,12 @@ async def cmd_dispatcher(bot, message) -> None:
 
 @bot.on_message(filters.convo_filter, group=0)
 @bot.on_edited_message(filters.convo_filter, group=0)
-async def convo_handler(bot: bot, message: Msg):
-    conv_dict: dict = Config.CONVO_DICT[message.chat.id]
-    conv_filters = conv_dict.get("filters")
-    if conv_filters:
-        check = await conv_filters(bot, message)
-        if not check:
-            message.continue_propagation()
-        conv_dict["response"] = message
+async def convo_handler(bot: BOT, message: Msg):
+    conv_obj: bot.Convo = bot.Convo.CONVO_DICT[message.chat.id]
+    if conv_obj.filters and not (await conv_obj.filters(bot, message)):
         message.continue_propagation()
-    conv_dict["response"] = message
+    conv_obj.responses.append(message)
+    conv_obj.response.set_result(message)
     message.continue_propagation()
 
 

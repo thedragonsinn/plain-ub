@@ -7,7 +7,6 @@ from pyrogram.types import Message as Msg
 from pyrogram.types import User
 
 from app import Config
-from app.core import Conversation
 
 
 class Message(Msg):
@@ -127,12 +126,12 @@ class Message(Msg):
 
     async def get_response(self, filters: Filter = None, timeout: int = 8):
         try:
-            async with Conversation(
+            async with self._client.Convo(
                 chat_id=self.chat.id, filters=filters, timeout=timeout
             ) as convo:
                 response: Message | None = await convo.get_response()
                 return response
-        except Conversation.TimeOutError:
+        except TimeoutError:
             return
 
     async def reply(

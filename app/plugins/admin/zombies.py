@@ -3,12 +3,11 @@ import asyncio
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait
 
-from app import bot
-from app.core import Message
+from app import bot, BOT, Message
 
 
 @bot.add_cmd(cmd="zombies")
-async def clean_zombies(bot: bot, message: Message):
+async def clean_zombies(bot: BOT, message: Message):
     me = await bot.get_chat_member(message.chat.id, bot.me.id)
     if me.status not in {ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER}:
         await message.reply("Cannot clean zombies without being admin.")

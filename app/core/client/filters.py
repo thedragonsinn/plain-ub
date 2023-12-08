@@ -1,7 +1,13 @@
 from pyrogram import filters as _filters
 from pyrogram.types import Message
 
-from app import Config
+from app.core.client.conversation import Conversation 
+from app import Config 
+
+convo_filter = _filters.create(
+    lambda _, __, message: (message.chat.id in Conversation.CONVO_DICT)
+    and (not message.reactions)
+)
 
 
 def cmd_check(message: Message, trigger: str, sudo: bool = False) -> bool:
@@ -17,7 +23,7 @@ def basic_check(message: Message):
         return True
 
 
-def owner_check(filter, client, message: Message) -> bool:
+def owner_check(filters, client, message: Message) -> bool:
     if (
         basic_check(message)
         or not message.text.startswith(Config.CMD_TRIGGER)
@@ -29,7 +35,10 @@ def owner_check(filter, client, message: Message) -> bool:
     return cmd
 
 
-def sudo_check(filter, client, message: Message) -> bool:
+owner_filter = _filters.create(owner_check)
+
+
+def sudo_check(filters, client, message: Message) -> bool:
     if (
         not Config.SUDO
         or basic_check(message)
@@ -41,11 +50,4 @@ def sudo_check(filter, client, message: Message) -> bool:
     return cmd
 
 
-owner_filter = _filters.create(owner_check)
-
 sudo_filter = _filters.create(sudo_check)
-
-convo_filter = _filters.create(
-    lambda _, __, message: (message.chat.id in Config.CONVO_DICT)
-    and (not message.reactions)
-)

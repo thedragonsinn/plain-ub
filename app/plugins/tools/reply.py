@@ -1,7 +1,6 @@
 from urllib.parse import urlparse
 
-from app import bot
-from app.core import Message
+from app import bot, BOT, Message
 
 
 def get_message(link: str) -> tuple[int | str, int]:
@@ -13,7 +12,7 @@ def get_message(link: str) -> tuple[int | str, int]:
 
 
 @bot.add_cmd(cmd="reply")
-async def reply(bot: bot, message: Message) -> None:
+async def reply(bot: BOT, message: Message) -> None:
     if "-r" in message.flags:
         input: list[str] = message.flt_input.split(" ", maxsplit=1)
         if len(input) < 2:

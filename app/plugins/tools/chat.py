@@ -3,12 +3,11 @@ import os
 from pyrogram.enums import ChatType
 from pyrogram.errors import BadRequest
 
-from app import bot
-from app.core import Message
+from app import bot, BOT, Message
 
 
 @bot.add_cmd(cmd="ids")
-async def get_ids(bot: bot, message: Message) -> None:
+async def get_ids(bot: BOT, message: Message) -> None:
     reply: Message = message.replied
     if reply:
         ids: str = ""
@@ -19,13 +18,15 @@ async def get_ids(bot: bot, message: Message) -> None:
             ids += f"<b>Replied {'Channel' if reply_forward.type == ChatType.CHANNEL else 'Chat'}</b> : `{reply_forward.id}`\n"
         if reply_user:
             ids += f"<b>User</b> : {reply.from_user.id}"
+    elif message.input:
+        ids: int = (await bot.get_chat(message.input[1:])).id
     else:
         ids: str = f"<b>Chat</b> :`{message.chat.id}`"
     await message.reply(ids)
 
 
 @bot.add_cmd(cmd="join")
-async def join_chat(bot: bot, message: Message) -> None:
+async def join_chat(bot: BOT, message: Message) -> None:
     chat: str = message.input
     try:
         await bot.join_chat(chat)
@@ -39,7 +40,7 @@ async def join_chat(bot: bot, message: Message) -> None:
 
 
 @bot.add_cmd(cmd="leave")
-async def leave_chat(bot: bot, message: Message) -> None:
+async def leave_chat(bot: BOT, message: Message) -> None:
     if message.input:
         chat = message.input
     else:

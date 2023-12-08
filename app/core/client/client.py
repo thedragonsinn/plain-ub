@@ -4,17 +4,16 @@ import importlib
 import inspect
 import os
 import sys
+import traceback
 from functools import wraps
 from io import BytesIO
 
 from pyrogram import Client, filters, idle
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
-from telegraph.aio import Telegraph
 
-from app import DB, Config
-from app.core import Conversation, Message, logger
-from app.utils import aiohttp_tools, helpers
+from app import DB, Config, Message, LOGGER
+from app.utils import aiohttp_tools
 
 
 def import_modules():
@@ -22,27 +21,11 @@ def import_modules():
         name = os.path.splitext(py_module)[0]
         py_name = name.replace("/", ".")
         try:
-            importlib.import_module(py_name)
-        except Exception as exc:
-            logger.LOGGER.error(exc.with_exception())
-
-
-async def init_tasks():
-    sudo = await DB.SUDO.find_one({"_id": "sudo_switch"})
-    if sudo:
-        Config.SUDO = sudo["value"]
-    Config.SUDO_USERS = [sudo_user["_id"] async for sudo_user in DB.SUDO_USERS.find()]
-    Config.SUDO_CMD_LIST = [
-        sudo_cmd["_id"] async for sudo_cmd in DB.SUDO_CMD_LIST.find()
-    ]
-
-    helpers.TELEGRAPH = Telegraph()
-    await helpers.TELEGRAPH.create_account(
-        short_name="Plain-UB", author_name="Plain-UB", author_url=Config.UPSTREAM_REPO
-    )
-
-    import_modules()
-    await aiohttp_tools.session_switch()
+            mod = importlib.import_module(py_name)
+            if hasattr(mod, "init_task"):
+                Config.INIT_TASK.append(mod.init_task())
+        except:
+            LOGGER.error(traceback.format_exc())
 
 
 class BOT(Client):
@@ -57,6 +40,9 @@ class BOT(Client):
             sleep_threshold=30,
             max_concurrent_transmissions=2,
         )
+        from app.core.client.conversation import Conversation
+
+        self.Convo = Conversation
 
     @staticmethod
     def add_cmd(cmd: str | list):
@@ -76,27 +62,34 @@ class BOT(Client):
 
         return the_decorator
 
-    @staticmethod
     async def get_response(
-        chat_id: int, filters: filters.Filter = None, timeout: int = 8
+        self, chat_id: int, filters: filters.Filter = None, timeout: int = 8
     ) -> Message | None:
         try:
-            async with Conversation(
+            async with self.Convo(
                 chat_id=chat_id, filters=filters, timeout=timeout
             ) as convo:
                 response: Message | None = await convo.get_response()
                 return response
-        except Conversation.TimeOutError:
+        except TimeoutError:
             return
 
     async def boot(self) -> None:
         await super().start()
-        logger.LOGGER.info("Started")
+        LOGGER.info("Started.")
+        import_modules()
+        LOGGER.info("Plugins Imported.")
+        await asyncio.gather(*Config.INIT_TASKS)
+        Config.INIT_TASKS.clear()
+        LOGGER.info("Init Tasks Completed.")
         await asyncio.gather(
-            init_tasks(), self.edit_restart_msg(), self.log(text="<i>Started</i>")
+            self.edit_restart_msg(),
+            self.log(text="<i>Started</i>"),
         )
+        LOGGER.info("Idling...")
         await idle()
-        await aiohttp_tools.session_switch()
+        await aiohttp_tools.init_task()
+        LOGGER.info("DB Closed.")
         DB._client.close()
 
     async def edit_restart_msg(self) -> None:
@@ -140,14 +133,15 @@ class BOT(Client):
         )
 
     async def restart(self, hard=False) -> None:
-        await aiohttp_tools.session_switch()
+        await aiohttp_tools.init_task()
         await super().stop(block=False)
+        LOGGER.info("Closing DB....")
         DB._client.close()
         if hard:
             os.remove("logs/app_logs.txt")
             os.execl("/bin/bash", "/bin/bash", "run")
+        LOGGER.info("Restarting......")
         os.execl(sys.executable, sys.executable, "-m", "app")
-
 
     async def send_message(
         self, chat_id: int | str, text, name: str = "output.txt", **kwargs

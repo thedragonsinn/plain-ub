@@ -13,11 +13,12 @@ class MediaType(Enum):
     GROUP = auto()
     MESSAGE = auto()
     PHOTO = auto()
+    STICKER = auto()
     VIDEO = auto()
 
 
 class MediaExts:
-    PHOTO = {".png", ".jpg", ".jpeg"}
+    PHOTO = {".png", ".jpg", ".jpeg", ".heic", ".webp"}
     VIDEO = {".mp4", ".mkv", ".webm"}
     GIF = {".gif"}
     AUDIO = {".aac", ".mp3", ".opus", ".m4a", ".ogg", ".flac"}
@@ -58,18 +59,18 @@ def get_tg_media_details(message: Message):
         case MessageMediaType.PHOTO:
             file = message.photo
             file.file_name = "photo.jpg"
+            return file
         case MessageMediaType.AUDIO:
-            file = message.audio
+            return message.audio
         case MessageMediaType.ANIMATION:
-            file = message.animation
+            return message.animation
         case MessageMediaType.DOCUMENT:
-            file = message.document
+            return message.document
         case MessageMediaType.STICKER:
-            file = message.sticker
+            return message.sticker
         case MessageMediaType.VIDEO:
-            file = message.video
+            return message.video
         case MessageMediaType.VOICE:
-            file = message.voice
+            return message.voice
         case _:
             return
-    return file

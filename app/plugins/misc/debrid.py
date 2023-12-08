@@ -2,8 +2,7 @@
 
 import os
 
-from app import bot
-from app.core import Message
+from app import bot, BOT, Message
 from app.utils import aiohttp_tools
 from app.utils.helpers import post_to_telegraph as post_tgh
 
@@ -35,7 +34,7 @@ async def get_json(endpoint: str, query: dict):
 
 # Unlock Links or magnets
 @bot.add_cmd("unrestrict")
-async def debrid(bot: bot, message: Message):
+async def debrid(bot: BOT, message: Message):
     if not message.flt_input:
         return await message.reply("Give a magnet or link to unrestrict.")
     for i in message.text_list[1:]:
@@ -73,7 +72,7 @@ async def debrid(bot: bot, message: Message):
 
 # Get Status via id or Last 5 torrents
 @bot.add_cmd("torrents")
-async def torrents(bot: bot, message: Message):
+async def torrents(bot: BOT, message: Message):
     endpoint = "/magnet/status"
     query = {}
 
@@ -138,7 +137,7 @@ async def torrents(bot: bot, message: Message):
 
 # Delete a Magnet
 @bot.add_cmd("del_t")
-async def delete_torrent(bot: bot, message: Message):
+async def delete_torrent(bot: BOT, message: Message):
     endpoint = "/magnet/delete"
     if not (id := message.flt_input):
         return await message.reply("Enter an ID to delete")

@@ -2,17 +2,12 @@ import json
 import os
 from typing import Callable
 
-from pyrogram.filters import Filter
-from pyrogram.types import Message
-
 
 class _Config:
     def __init__(self):
         self.CMD_DICT: dict[str, dict[str, Callable, str]] = {}
 
         self.CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
-
-        self.CONVO_DICT: dict[int, dict[str | int, Message | Filter | None]] = {}
 
         self.DEV_MODE: int = int(os.environ.get("DEV_MODE", 0))
 
@@ -21,6 +16,7 @@ class _Config:
         self.FBAN_LOG_CHANNEL: int = int(
             os.environ.get("FBAN_LOG_CHANNEL", os.environ.get("LOG_CHAT"))
         )
+        self.INIT_TASKS: list = []
 
         self.LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
 
