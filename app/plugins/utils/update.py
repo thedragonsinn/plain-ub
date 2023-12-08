@@ -16,7 +16,7 @@ async def get_commits(repo: Repo) -> str | None:
     limit: int = 0
     for commit in repo.iter_commits("HEAD..origin/main"):
         commits += f"""
-<b>#{commit.count()}</b> <a href='{Config.UPSTREAM_REPO}/commit/{commit}'>{commit.summary}</a> By <i>{commit.author}</i>
+<b>#{commit.count()}</b> <a href='{Config.UPSTREAM_REPO}/commit/{commit}'>{commit.message}</a> By <i>{commit.author}</i>
 """
         limit += 1
         if limit > 50:
