@@ -23,7 +23,7 @@ def import_modules():
         try:
             mod = importlib.import_module(py_name)
             if hasattr(mod, "init_task"):
-                Config.INIT_TASK.append(mod.init_task())
+                Config.INIT_TASKS.append(mod.init_task())
         except:
             LOGGER.error(traceback.format_exc())
 
