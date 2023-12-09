@@ -1,6 +1,6 @@
 from pyrogram.types import ChatPermissions, User
 
-from app import bot, BOT, Message
+from app import BOT, Message, bot
 
 
 @bot.add_cmd(cmd=["mute", "unmute"])

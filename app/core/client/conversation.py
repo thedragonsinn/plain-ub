@@ -27,7 +27,7 @@ class Conversation:
     def __str__(self):
         return json.dumps(self.__dict__, indent=4, ensure_ascii=False, default=str)
 
-    def set_future(self,*args,**kwargs):
+    def set_future(self, *args, **kwargs):
         future = asyncio.Future()
         future.add_done_callback(self.set_future)
         self.response = future
@@ -42,7 +42,11 @@ class Conversation:
             raise TimeoutError("Conversation Timeout")
 
     async def send_message(
-        self, text: str, timeout=0, get_response=False, **kwargs
+        self,
+        text: str,
+        timeout=0,
+        get_response=False,
+        **kwargs,
     ) -> Message | tuple[Message, Message]:
         message = await self._client.send_message(
             chat_id=self.chat_id, text=text, **kwargs
@@ -53,7 +57,12 @@ class Conversation:
         return message
 
     async def send_document(
-        self, document, caption="", timeout=0, get_response=False, **kwargs
+        self,
+        document,
+        caption="",
+        timeout=0,
+        get_response=False,
+        **kwargs,
     ) -> Message | tuple[Message, Message]:
         message = await self._client.send_document(
             chat_id=self.chat_id,
@@ -71,7 +80,7 @@ class Conversation:
         if isinstance(self.chat_id, str):
             self.chat_id = (await self._client.get_chat(self.chat_id)).id
         if (
-            self.chat_id in Conversation.CONVO_DICT
+            self.chat_id in Conversation.CONVO_DICT.keys()
             and Conversation.CONVO_DICT[self.chat_id].filters == self.filters
         ):
             raise self.DuplicateConvo(self.chat_id)
@@ -80,3 +89,5 @@ class Conversation:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         Conversation.CONVO_DICT.pop(self.chat_id, None)
+        if not self.response.done():
+            self.response.cancel()

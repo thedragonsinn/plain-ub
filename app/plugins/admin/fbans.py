@@ -5,7 +5,7 @@ from motor.core import AgnosticCollection
 from pyrogram import filters
 from pyrogram.types import Chat, User
 
-from app import DB, Config, bot, BOT, Message
+from app import BOT, DB, Config, Message, bot
 from app.utils.db_utils import add_data, delete_data
 from app.utils.helpers import get_name
 

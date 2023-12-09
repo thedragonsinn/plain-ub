@@ -2,7 +2,7 @@ import asyncio
 
 from git import Repo
 
-from app import Config, bot, BOT, Message
+from app import BOT, Config, Message, bot
 from app.plugins.utils.restart import restart
 
 
@@ -39,7 +39,7 @@ async def pull_commits(repo: Repo) -> None | bool:
 @bot.add_cmd(cmd="update")
 async def updater(bot: BOT, message: Message) -> None | Message:
     reply: Message = await message.reply("Checking for Updates....")
-    repo: Repo = Repo()
+    repo: Repo = Config.REPO
     commits: str = await get_commits(repo)
     if commits is None:
         await reply.edit("Timeout... Try again.")

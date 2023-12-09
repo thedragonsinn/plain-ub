@@ -2,7 +2,7 @@
 
 import os
 
-from app import bot, BOT, Message
+from app import BOT, Message, bot
 from app.utils import aiohttp_tools
 from app.utils.helpers import post_to_telegraph as post_tgh
 

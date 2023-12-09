@@ -1,6 +1,6 @@
 from pyrogram.types import User
 
-from app import DB, Config, bot, Message, BOT
+from app import BOT, DB, Config, Message, bot
 from app.plugins.admin.fbans import _User
 from app.utils.db_utils import add_data, delete_data
 from app.utils.helpers import extract_user_data, get_name
@@ -11,7 +11,6 @@ async def init_task():
     if sudo:
         Config.SUDO = sudo["value"]
     Config.SUDO_USERS = [sudo_user["_id"] async for sudo_user in DB.SUDO_USERS.find()]
-
 
 
 @bot.add_cmd(cmd="sudo")

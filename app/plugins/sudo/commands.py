@@ -1,11 +1,10 @@
-from app import DB, Config, bot, BOT, Message
+from app import BOT, DB, Config, Message, bot
 
 
 async def init_task():
     Config.SUDO_CMD_LIST = [
         sudo_cmd["_id"] async for sudo_cmd in DB.SUDO_CMD_LIST.find()
     ]
-
 
 
 @bot.add_cmd(cmd="addscmd")

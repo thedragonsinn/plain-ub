@@ -3,7 +3,7 @@ import inspect
 import sys
 import traceback
 
-from app import Config, bot, BOT, Message
+from app import BOT, Config, Message
 
 
 async def loader(bot: BOT, message: Message) -> Message | None:

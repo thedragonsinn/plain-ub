@@ -2,7 +2,7 @@ import asyncio
 
 from pyrogram.types import ChatPrivileges, User
 
-from app import bot, BOT, Message
+from app import BOT, Message, bot
 
 
 def get_privileges(

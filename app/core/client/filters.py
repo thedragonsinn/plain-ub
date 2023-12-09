@@ -1,11 +1,11 @@
 from pyrogram import filters as _filters
 from pyrogram.types import Message
 
-from app.core.client.conversation import Conversation 
-from app import Config 
+from app import Config
+from app.core.client.conversation import Conversation
 
 convo_filter = _filters.create(
-    lambda _, __, message: (message.chat.id in Conversation.CONVO_DICT)
+    lambda _, __, message: (message.chat.id in Conversation.CONVO_DICT.keys())
     and (not message.reactions)
 )
 
@@ -15,7 +15,7 @@ def cmd_check(message: Message, trigger: str, sudo: bool = False) -> bool:
     cmd = start_str.replace(trigger, "", 1)
     if sudo and cmd not in Config.SUDO_CMD_LIST:
         return False
-    return bool(cmd in Config.CMD_DICT)
+    return bool(cmd in Config.CMD_DICT.keys())
 
 
 def basic_check(message: Message):

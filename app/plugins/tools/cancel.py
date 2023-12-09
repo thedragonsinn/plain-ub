@@ -1,6 +1,6 @@
 import asyncio
 
-from app import bot, Message, BOT
+from app import BOT, Message, bot
 
 
 @bot.add_cmd(cmd="c")

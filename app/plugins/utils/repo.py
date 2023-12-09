@@ -1,4 +1,4 @@
-from app import Config, bot, BOT, Message
+from app import BOT, Config, Message, bot
 
 
 @bot.add_cmd(cmd="repo")

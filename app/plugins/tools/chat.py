@@ -3,7 +3,7 @@ import os
 from pyrogram.enums import ChatType
 from pyrogram.errors import BadRequest
 
-from app import bot, BOT, Message
+from app import BOT, Message, bot
 
 
 @bot.add_cmd(cmd="ids")

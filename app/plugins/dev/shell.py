@@ -3,7 +3,7 @@ import inspect
 
 from pyrogram.enums import ParseMode
 
-from app import Config, bot, BOT, Message
+from app import BOT, Config, Message
 from app.utils import shell
 
 

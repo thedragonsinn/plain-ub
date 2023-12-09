@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app import bot, BOT, Message
+from app import BOT, Message, bot
 
 
 # Not my Code

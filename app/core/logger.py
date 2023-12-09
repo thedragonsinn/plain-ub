@@ -1,5 +1,5 @@
 import os
-from logging import INFO, WARNING, basicConfig, getLogger, handlers, StreamHandler
+from logging import INFO, WARNING, StreamHandler, basicConfig, getLogger, handlers
 
 os.makedirs("logs", exist_ok=True)
 

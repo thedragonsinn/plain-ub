@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Callable
+from git import Repo
 
 
 class _Config:
@@ -19,6 +20,8 @@ class _Config:
         self.INIT_TASKS: list = []
 
         self.LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
+
+        self.REPO = Repo(".")
 
         self.SUDO: bool = False
 

@@ -159,7 +159,7 @@ async def video_kang(message: Message, ff=False) -> dict:
     input_file = os.path.join(down_dir, "input.mp4")
     output_file = os.path.join(down_dir, "sticker.webm")
     await message.download(input_file)
-    if not hasattr(vid,"duration"):
+    if not hasattr(vid, "duration"):
         duration = await get_duration(file=input_file)
     else:
         duration = vid.duration

@@ -1,12 +1,12 @@
 from app import BOT, bot
 from app.core import Message
-from app.plugins.tools.reply import get_message
+from app.plugins.tools.get_message import parse_link
 
 
 @bot.add_cmd(cmd="del")
 async def delete_message(bot: BOT, message: Message) -> None:
     if "-r" in message.flags:
-        chat_id, message_id = get_message(message.flt_input)
+        chat_id, message_id = parse_link(message.flt_input)
         await bot.delete_messages(chat_id=chat_id, message_ids=message_id, revoke=True)
         return
     await message.delete(reply=True)

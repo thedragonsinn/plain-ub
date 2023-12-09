@@ -12,7 +12,7 @@ from pyrogram import Client, filters, idle
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
 
-from app import DB, Config, Message, LOGGER
+from app import DB, LOGGER, Config, Message
 from app.utils import aiohttp_tools
 
 
@@ -24,7 +24,7 @@ def import_modules():
             mod = importlib.import_module(py_name)
             if hasattr(mod, "init_task"):
                 Config.INIT_TASKS.append(mod.init_task())
-        except:
+        except BaseException:
             LOGGER.error(traceback.format_exc())
 
 

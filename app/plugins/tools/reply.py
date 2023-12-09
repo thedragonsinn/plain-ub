@@ -1,14 +1,5 @@
-from urllib.parse import urlparse
-
-from app import bot, BOT, Message
-
-
-def get_message(link: str) -> tuple[int | str, int]:
-    parsed_url: str = urlparse(link).path.strip("/")
-    chat, id = parsed_url.lstrip("c/").split("/")
-    if chat.isdigit():
-        chat = int(f"-100{chat}")
-    return chat, int(id)
+from app import BOT, Message, bot
+from app.plugins.tools.get_message import parse_link
 
 
 @bot.add_cmd(cmd="reply")
@@ -19,7 +10,7 @@ async def reply(bot: BOT, message: Message) -> None:
             await message.reply("The '-r' flag requires a message link and text.")
             return
         message_link, text = input
-        chat_id, reply_to_message_id = get_message(message_link.strip())
+        chat_id, reply_to_message_id = parse_link(message_link.strip())
     else:
         text: str = message.input
         chat_id = message.chat.id

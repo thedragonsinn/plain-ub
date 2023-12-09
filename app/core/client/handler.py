@@ -3,7 +3,7 @@ import traceback
 
 from pyrogram.types import Message as Msg
 
-from app import Config, bot, BOT
+from app import BOT, Config, bot
 from app.core import Message, filters
 
 
