@@ -17,7 +17,7 @@ async def get_message(bot: BOT, message: Message):
         await message.reply("Give a Message link.")
     attr = None
     if len(message.text_list) == 3:
-        link, attr = message.text_list[0:]
+        link, attr = message.text_list[1:]
     else:
         link = message.input.strip()
     remote_message = await bot.get_messages(*parse_link(link))
@@ -27,4 +27,4 @@ async def get_message(bot: BOT, message: Message):
     if hasattr(remote_message, attr):
         await message.reply(str(getattr(remote_message, attr)))
         return
-    await message.reply("Message object has no attribute '{attr}'")
+    await message.reply(f"Message object has no attribute '{attr}'")
