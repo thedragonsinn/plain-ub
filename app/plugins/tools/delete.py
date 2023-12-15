@@ -5,6 +5,13 @@ from app.plugins.tools.get_message import parse_link
 
 @bot.add_cmd(cmd="del")
 async def delete_message(bot: BOT, message: Message) -> None:
+    """
+    CMD: DEL
+    INFO: Delete the replied message.
+    FLAGS: -r to remotely delete a text using its link.
+    USAGE: 
+        .del | .del -r t.me/......
+    """
     if "-r" in message.flags:
         chat_id, message_id = parse_link(message.flt_input)
         await bot.delete_messages(chat_id=chat_id, message_ids=message_id, revoke=True)

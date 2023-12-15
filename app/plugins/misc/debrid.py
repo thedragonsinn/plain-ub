@@ -6,24 +6,13 @@ from app import BOT, Message, bot
 from app.utils import aiohttp_tools
 from app.utils.helpers import post_to_telegraph as post_tgh
 
-# Your Alldbrid App token
-KEY = os.environ.get("DEBRID_TOKEN")
-
-
-TEMPLATE = """
-<b>Name</b>: <i>{name}</i>
-Status: <i>{status}</i>
-ID: {id}
-Size: {size}
-{uptobox}"""
-
 
 # Get response from api and return json or the error
-async def get_json(endpoint: str, query: dict):
-    if not KEY:
+async def get_json(endpoint: str, query: dict, key=os.environ.get("DEBRID_TOKEN")):
+    if not key:
         return "API key not found."
     api = "https://api.alldebrid.com/v4" + endpoint
-    params = {"agent": "bot", "apikey": KEY, **query}
+    params = {"agent": "bot", "apikey": key, **query}
     async with aiohttp_tools.SESSION.get(url=api, params=params) as ses:
         try:
             json = await ses.json()
@@ -120,9 +109,11 @@ async def torrents(bot: BOT, message: Message):
                 + " ]"
             )
         ret_str_list.append(
-            ret_val := TEMPLATE.format(
-                name=name, status=status, id=id, size=size, uptobox=uptobox
-            )
+            f"\n<b>Name</b>: <i>{name}</i>"
+            f"\nStatus: <i>{status}</i>"
+            f"\nID: {id}"
+            f"\nSize: {size}"
+            f"\n{uptobox}"
         )
 
     ret_str = "<br>".join(ret_str_list)

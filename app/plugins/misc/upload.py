@@ -80,13 +80,20 @@ def file_check(file: str):
 
 @bot.add_cmd(cmd="upload")
 async def upload(bot: BOT, message: Message):
+    """
+    CMD: UPLOAD
+    INFO: Upload Media/Local Files/Plugins to TG.
+    FLAGS: -d to upload as doc.
+    USAGE: 
+        .upload [-d] URL | Path to File | CMD
+    """
     input = message.flt_input
     if not input:
         await message.reply("give a file url | path to upload.")
         return
     response = await message.reply("checking input...")
     if input in Config.CMD_DICT:
-        await message.reply_document(document=Config.CMD_DICT[input]["path"])
+        await message.reply_document(document=Config.CMD_DICT[input].path)
         await response.delete()
         return
     elif input.startswith("http") and not file_check(input):

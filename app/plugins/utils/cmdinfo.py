@@ -5,11 +5,16 @@ from app import BOT, Config, Message, bot
 
 @bot.add_cmd(cmd="ci")
 async def cmd_info(bot: BOT, message=Message):
+    """
+    CMD: CI (CMD INFO)
+    INFO: Get Github File URL of a Command.
+    USAGE: .ci ci
+    """
     cmd = message.flt_input
     if not cmd or cmd not in Config.CMD_DICT.keys():
         await message.reply("Give a valid cmd.", del_in=5)
         return
-    cmd_path = Config.CMD_DICT[cmd]["path"]
+    cmd_path = Config.CMD_DICT[cmd].path
     plugin_path = os.path.relpath(cmd_path, os.curdir)
     repo = Config.REPO.remotes.origin.url
     branch = Config.REPO.active_branch

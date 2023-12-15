@@ -11,6 +11,12 @@ from app.utils.media_helper import get_tg_media_details
 
 @bot.add_cmd(cmd="download")
 async def down_load(bot: BOT, message: Message):
+    """
+    CMD: DOWNLOAD
+    INFO: Download Files/TG Media to Bot server.
+    USAGE: 
+        .download URL | Reply to Media
+    """
     response = await message.reply("Checking Input...")
     if (not message.replied or not message.replied.media) and not message.input:
         await response.edit(
@@ -63,6 +69,8 @@ async def telegram_download(
         media_obj.name,
         media_obj.full_path)
     await message.download(
-        file_name=media_obj.full_path, progress=progress, progress_args=progress_args,
+        file_name=media_obj.full_path,
+        progress=progress,
+        progress_args=progress_args,
     )
     return media_obj

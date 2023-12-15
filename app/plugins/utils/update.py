@@ -38,6 +38,13 @@ async def pull_commits(repo: Repo) -> None | bool:
 
 @bot.add_cmd(cmd="update")
 async def updater(bot: BOT, message: Message) -> None | Message:
+    """
+    CMD: UPDATE
+    INFO: Pull / Check for updates.
+    FLAGS: -pull to pull updates
+    USAGE: 
+        .update | .update -pull
+    """
     reply: Message = await message.reply("Checking for Updates....")
     repo: Repo = Config.REPO
     commits: str = await get_commits(repo)

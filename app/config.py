@@ -1,12 +1,18 @@
 import json
 import os
-from typing import Callable
+
 from git import Repo
 
 
 class _Config:
+    class CMD:
+        def __init__(self, func, path, doc):
+            self.func = func
+            self.path = path
+            self.doc = doc or "Not Documented."
+
     def __init__(self):
-        self.CMD_DICT: dict[str, dict[str, Callable, str]] = {}
+        self.CMD_DICT: dict[str, _Config.CMD] = {}
 
         self.CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
 

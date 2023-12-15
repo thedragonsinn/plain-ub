@@ -11,6 +11,13 @@ from app.utils import shell, aiohttp_tools as aio  # isort:skip
 
 
 async def executor(bot: BOT, message: Message) -> Message | None:
+    """
+    CMD: EXEC
+    INFO: Run Python Code.
+    FLAGS: -s to only show output.
+    USAGE: 
+        .exec [-s] return 1
+    """
     code: str = message.flt_input.strip()
     if not code:
         return await message.reply("exec Jo mama?")
@@ -50,4 +57,6 @@ async def executor(bot: BOT, message: Message) -> Message | None:
 
 
 if Config.DEV_MODE:
-    Config.CMD_DICT["exec"] = {"func": executor, "path": inspect.stack()[0][1]}
+    Config.CMD_DICT["exec"] = Config.CMD(
+        func=executor, path=inspect.stack()[0][1], doc=executor.__doc__
+    )

@@ -4,6 +4,13 @@ from app.plugins.tools.get_message import parse_link
 
 @bot.add_cmd(cmd="reply")
 async def reply(bot: BOT, message: Message) -> None:
+    """
+    CMD: REPLY
+    INFO: Reply to a Message.
+    FLAGS: -r to reply remotely using message link.
+    USAGE: 
+        .reply HI | .reply -r t.me/... HI
+    """
     if "-r" in message.flags:
         input: list[str] = message.flt_input.split(" ", maxsplit=1)
         if len(input) < 2:

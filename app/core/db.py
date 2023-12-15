@@ -19,10 +19,32 @@ class DataBase:
 
     def __getattr__(self, attr) -> AgnosticCollection:
         try:
-            return self.__dict__[attr]
+            collection: AgnosticCollection = self.__dict__[attr]
+            return collection
         except KeyError:
             self.__dict__[attr] = self.db[attr]
-            return self.__dict__[attr]
+            collection: AgnosticCollection = self.__dict__[attr]
+            return collection
+
+    @staticmethod
+    async def add_data(
+        collection: AgnosticCollection, id: int | str, data: dict
+    ) -> None:
+        found = await collection.find_one({"_id": id})
+        if not found:
+            await collection.insert_one({"_id": id, **data})
+        else:
+            await collection.update_one({"_id": id}, {"$set": data})
+
+    @staticmethod
+    async def delete_data(collection: AgnosticCollection, id: int | str) -> bool | None:
+        found = await collection.find_one({"_id": id})
+        if found:
+            await collection.delete_one({"_id": id})
+            return True
+
+    def close(self):
+        self._client.close()
 
 
 DB: DataBase = DataBase()

@@ -6,7 +6,6 @@ from pyrogram import filters
 from pyrogram.types import Chat, User
 
 from app import BOT, DB, Config, Message, bot
-from app.utils.db_utils import add_data, delete_data
 from app.utils.helpers import get_name
 
 FED_LIST: AgnosticCollection = DB.FED_LIST
@@ -35,8 +34,14 @@ class _User(User):
 
 @bot.add_cmd(cmd="addf")
 async def add_fed(bot: BOT, message: Message):
+    """
+    CMD: ADDF
+    INFO: Add a Fed Chat to DB.
+    USAGE: 
+        .addf | .addf NAME
+    """
     data = dict(name=message.input or message.chat.title, type=str(message.chat.type))
-    await add_data(collection=FED_LIST, id=message.chat.id, data=data)
+    await DB.add_data(collection=FED_LIST, id=message.chat.id, data=data)
     await message.reply(
         f"<b>{data['name']}</b> added to FED LIST.", del_in=5, block=False
     )
@@ -47,6 +52,13 @@ async def add_fed(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="delf")
 async def remove_fed(bot: BOT, message: Message):
+    """
+    CMD: DELF
+    INFO: Delete a Fed from DB.
+    FLAGS: -all to delete all feds.
+    USAGE: 
+        .delf | .delf id | .delf -all
+    """
     if "-all" in message.flags:
         await FED_LIST.drop()
         await message.reply("FED LIST cleared.")
@@ -58,7 +70,7 @@ async def remove_fed(bot: BOT, message: Message):
         chat = chat.id
     elif chat.lstrip("-").isdigit():
         chat = int(chat)
-    deleted: bool | None = await delete_data(collection=FED_LIST, id=chat)
+    deleted: bool | None = await DB.delete_data(collection=FED_LIST, id=chat)
     if deleted:
         await message.reply(
             f"<b>{name}</b><code>{chat}</code> removed from FED LIST.",
@@ -108,7 +120,7 @@ async def fed_ban(bot: BOT, message: Message):
             failed.append(fed["name"])
         elif "Would you like to update this reason" in response.text:
             await response.click("Update reason")
-        await asyncio.sleep(0.8)
+        await asyncio.sleep(1)
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
@@ -171,6 +183,12 @@ async def un_fban(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="listf")
 async def fed_list(bot: BOT, message: Message):
+    """
+    CMD: LISTF
+    INFO: View Connected Feds.
+    FLAGS: -id to list Fed Chat IDs.
+    USAGE: .listf | .listf -id
+    """
     output: str = ""
     total = 0
     async for fed in FED_LIST.find():
@@ -182,4 +200,4 @@ async def fed_list(bot: BOT, message: Message):
         await message.reply("You don't have any Feds Connected.")
         return
     output: str = f"List of <b>{total}</b> Connected Feds:\n\n{output}"
-    await message.reply(output, del_in=30, block=False)
+    await message.reply(output, del_in=30, block=True)

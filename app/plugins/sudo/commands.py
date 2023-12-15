@@ -9,6 +9,13 @@ async def init_task():
 
 @bot.add_cmd(cmd="addscmd")
 async def add_scmd(bot: BOT, message: Message):
+    """
+    CMD: ADDSCMD
+    INFO: Add Sudo Commands.
+    FLAGS: -all to instantly add all Commands.
+    USAGE:
+        .addscmd ping | .addscmd -all
+    """
     if "-all" in message.flags:
         cmds = [{"_id": cmd} for cmd in Config.CMD_DICT.keys()]
         Config.SUDO_CMD_LIST = list(Config.CMD_DICT.keys())
@@ -30,6 +37,13 @@ async def add_scmd(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="delscmd")
 async def del_scmd(bot: BOT, message: Message):
+    """
+    CMD: DELSCMD
+    INFO: Remove Sudo Commands.
+    FLAGS: -all to instantly remove all Commands.
+    USAGE: 
+        .delscmd ping | .delscmd -all
+    """
     if "-all" in message.flags:
         Config.SUDO_CMD_LIST = []
         await DB.SUDO_CMD_LIST.drop()

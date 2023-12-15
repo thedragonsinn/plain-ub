@@ -13,6 +13,12 @@ def parse_link(link: str) -> tuple[int | str, int]:
 
 @bot.add_cmd(cmd="gm")
 async def get_message(bot: BOT, message: Message):
+    """
+    CMD: Get Message
+    INFO: Get a Message Json/Attr by providing link.
+    USAGE: 
+        .gm t.me/.... | .gm t.me/... text [Returns message text]
+    """
     if not message.input:
         await message.reply("Give a Message link.")
     attr = None

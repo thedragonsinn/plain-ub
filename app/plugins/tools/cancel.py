@@ -5,6 +5,11 @@ from app import BOT, Message, bot
 
 @bot.add_cmd(cmd="c")
 async def cancel_task(bot: BOT, message: Message) -> Message | None:
+    """
+    CMD: CANCEL
+    INFO: Cancel a running command by replying to a message.
+    USAGE: .c
+    """
     task_id: str | None = message.replied_task_id
     if not task_id:
         return await message.reply(

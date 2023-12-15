@@ -21,6 +21,13 @@ EMOJIS = ("☕", "🤡", "🙂", "🤔", "🔪", "😂", "💀")
 
 @bot.add_cmd(cmd="kang")
 async def kang_sticker(bot: BOT, message: Message):
+    """
+    CMD: KANG
+    INFO: Save a sticker/image/gif/video to your sticker pack.
+    FLAGS: -f to fastforward video tp fit 3 sec duration.
+    USAGE: .kang | .kang -f
+    """
+
     response = await message.reply("Checking input")
     media_coro = get_sticker_media_coro(message)
     kwargs: dict = await media_coro

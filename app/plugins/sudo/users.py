@@ -2,7 +2,6 @@ from pyrogram.types import User
 
 from app import BOT, DB, Config, Message, bot
 from app.plugins.admin.fbans import _User
-from app.utils.db_utils import add_data, delete_data
 from app.utils.helpers import extract_user_data, get_name
 
 
@@ -15,17 +14,31 @@ async def init_task():
 
 @bot.add_cmd(cmd="sudo")
 async def sudo(bot: BOT, message: Message):
+    """
+    CMD: SUDO
+    INFO: Enable/Disable sudo..
+    FLAGS: -c to check sudo status.
+    USAGE: 
+        .sudo | .sudo -c
+    """
     if "-c" in message.flags:
         await message.reply(text=f"Sudo is enabled: <b>{Config.SUDO}</b> .", del_in=8)
         return
     value = not Config.SUDO
     Config.SUDO = value
-    await add_data(collection=DB.SUDO, id="sudo_switch", data={"value": value})
+    await DB.add_data(collection=DB.SUDO, id="sudo_switch", data={"value": value})
     await message.reply(text=f"Sudo is enabled: <b>{value}</b>!", del_in=8)
 
 
 @bot.add_cmd(cmd="addsudo")
 async def add_sudo(bot: BOT, message: Message) -> Message | None:
+    """
+    CMD: ADDSUDO
+    INFO: Add Sudo User.
+    FLAGS: -temp to temporarily add until bot restarts.
+    USAGE: 
+        .addsudo [-temp] [ UID | @ | Reply to Message ]
+    """
     response = await message.reply("Extracting User info...")
     user, _ = await message.extract_user_n_reason()
     if isinstance(user, str):
@@ -39,7 +52,7 @@ async def add_sudo(bot: BOT, message: Message) -> Message | None:
     response_str = f"{user.mention} added to Sudo List."
     Config.SUDO_USERS.append(user.id)
     if "-temp" not in message.flags:
-        await add_data(
+        await DB.add_data(
             collection=DB.SUDO_USERS, id=user.id, data=extract_user_data(user)
         )
     else:
@@ -50,6 +63,13 @@ async def add_sudo(bot: BOT, message: Message) -> Message | None:
 
 @bot.add_cmd(cmd="delsudo")
 async def remove_sudo(bot: BOT, message: Message) -> Message | None:
+    """
+    CMD: DELSUDO
+    INFO: Add Remove User.
+    FLAGS: -temp to temporarily remove until bot restarts.
+    USAGE: 
+        .delsudo [-temp] [ UID | @ | Reply to Message ]
+    """
     response = await message.reply("Extracting User info...")
     user, _ = await message.extract_user_n_reason()
     if isinstance(user, str):
@@ -64,7 +84,7 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
     Config.SUDO_USERS.remove(user.id)
     response_str = f"{user.mention} removed from Sudo List."
     if "-temp" not in message.flags:
-        await delete_data(collection=DB.SUDO_USERS, id=user.id)
+        await DB.delete_data(collection=DB.SUDO_USERS, id=user.id)
     else:
         response_str += "\n<b>Temporary</b>: True"
     await response.edit(text=response_str, del_in=5)
@@ -73,6 +93,13 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
 
 @bot.add_cmd(cmd="vsudo")
 async def sudo_list(bot: BOT, message: Message):
+    """
+    CMD: VSUDO
+    INFO: View Sudo Users.
+    FLAGS: -id to get UIDs
+    USAGE: 
+        .vsudo | .vsudo -id
+    """
     output: str = ""
     total = 0
     async for user in DB.SUDO_USERS.find():

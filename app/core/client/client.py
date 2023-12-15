@@ -53,9 +53,13 @@ class BOT(Client):
             def wrapper():
                 if isinstance(cmd, list):
                     for _cmd in cmd:
-                        Config.CMD_DICT[_cmd] = {"func": func, "path": path}
+                        Config.CMD_DICT[_cmd] = Config.CMD(
+                            func=func, path=path, doc=func.__doc__
+                        )
                 else:
-                    Config.CMD_DICT[cmd] = {"func": func, "path": path}
+                    Config.CMD_DICT[cmd] = Config.CMD(
+                        func=func, path=path, doc=func.__doc__
+                    )
 
             wrapper()
             return func
@@ -90,7 +94,7 @@ class BOT(Client):
         await idle()
         await aiohttp_tools.init_task()
         LOGGER.info("DB Closed.")
-        DB._client.close()
+        DB.close()
 
     async def edit_restart_msg(self) -> None:
         restart_msg = int(os.environ.get("RESTART_MSG", 0))
@@ -136,7 +140,7 @@ class BOT(Client):
         await aiohttp_tools.init_task()
         await super().stop(block=False)
         LOGGER.info("Closing DB....")
-        DB._client.close()
+        DB.close()
         if hard:
             os.remove("logs/app_logs.txt")
             os.execl("/bin/bash", "/bin/bash", "run")

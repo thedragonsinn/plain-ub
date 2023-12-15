@@ -10,14 +10,14 @@ TELEGRAPH: None | Telegraph = None
 
 PROGRESS_DICT = {}
 
-
+"""
 async def init_task():
     global TELEGRAPH
     TELEGRAPH = Telegraph()
     await TELEGRAPH.create_account(
         short_name="Plain-UB", author_name="Plain-UB", author_url=Config.UPSTREAM_REPO
     )
-
+"""
 
 async def post_to_telegraph(title: str, text: str):
     telegraph = await TELEGRAPH.create_page(

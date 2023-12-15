@@ -35,6 +35,15 @@ def get_privileges(
 
 @bot.add_cmd(cmd=["promote", "demote"])
 async def promote_or_demote(bot: BOT, message: Message) -> None:
+    """
+    CMD: PROMOTE | DEMOTE
+    INFO: Add/Remove an Admin.
+    FLAGS:
+        PROMOTE: -full for full rights, -anon for anon admin
+    USAGE:
+        PROMOTE: .promote [ -anon | -full ] [ UID | REPLY | @ ] Title[Optional]
+        DEMOTE: .demote [ UID | REPLY | @ ]
+    """
     response: Message = await message.reply(
         f"Trying to {message.cmd.capitalize()}....."
     )
