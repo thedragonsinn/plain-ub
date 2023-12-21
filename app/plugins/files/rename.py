@@ -1,5 +1,6 @@
 import asyncio
 import os
+import shutil
 import time
 
 from app import BOT, bot
@@ -59,6 +60,7 @@ async def rename(bot: BOT, message: Message):
             progress_args=progress_args,
             **media["kwargs"]
         )
+        shutil.rmtree(dl_path, ignore_errors=True)
         await response.delete()
     except asyncio.exceptions.CancelledError:
         await response.edit("Cancelled....")

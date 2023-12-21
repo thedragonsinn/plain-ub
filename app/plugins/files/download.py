@@ -30,7 +30,7 @@ async def down_load(bot: BOT, message: Message):
     file_name = None
     if message.replied and message.replied.media:
         if "-f" in message.flags:
-            file_name = message.input
+            file_name = message.flt_input
         download_coro = telegram_download(
             message=message.replied,
             response=response,
@@ -41,7 +41,7 @@ async def down_load(bot: BOT, message: Message):
         if "-f" in message.flags:
             file_name, url = message.flt_input.split()
         else:
-            file_name, url = None, message.input
+            url = message.flt_input
         dl_obj: Download = await Download.setup(
             url=url, path=dl_path, message_to_edit=response, custom_file_name=file_name
         )
