@@ -1,10 +1,9 @@
-import os
 import time
 
 from pyrogram.types import Message, User
 from telegraph.aio import Telegraph
 
-from app import Config, LOGGER
+from app import LOGGER, Config
 from app.utils.media_helper import bytes_to_mb
 
 TELEGRAPH: None | Telegraph = None
@@ -17,10 +16,13 @@ async def init_task():
     TELEGRAPH = Telegraph()
     try:
         await TELEGRAPH.create_account(
-            short_name="Plain-UB", author_name="Plain-UB", author_url=Config.UPSTREAM_REPO
+            short_name="Plain-UB",
+            author_name="Plain-UB",
+            author_url=Config.UPSTREAM_REPO,
         )
-    except Exception as e:
+    except Exception:
         LOGGER.error("Failed to Create Telegraph Account.")
+
 
 async def post_to_telegraph(title: str, text: str):
     telegraph = await TELEGRAPH.create_page(

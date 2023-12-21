@@ -8,7 +8,7 @@ async def reply(bot: BOT, message: Message) -> None:
     CMD: REPLY
     INFO: Reply to a Message.
     FLAGS: -r to reply remotely using message link.
-    USAGE: 
+    USAGE:
         .reply HI | .reply -r t.me/... HI
     """
     if "-r" in message.flags:

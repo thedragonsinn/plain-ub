@@ -37,7 +37,7 @@ async def add_fed(bot: BOT, message: Message):
     """
     CMD: ADDF
     INFO: Add a Fed Chat to DB.
-    USAGE: 
+    USAGE:
         .addf | .addf NAME
     """
     data = dict(name=message.input or message.chat.title, type=str(message.chat.type))
@@ -56,7 +56,7 @@ async def remove_fed(bot: BOT, message: Message):
     CMD: DELF
     INFO: Delete a Fed from DB.
     FLAGS: -all to delete all feds.
-    USAGE: 
+    USAGE:
         .delf | .delf id | .delf -all
     """
     if "-all" in message.flags:

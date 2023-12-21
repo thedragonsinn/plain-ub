@@ -83,8 +83,10 @@ async def upload(bot: BOT, message: Message):
     """
     CMD: UPLOAD
     INFO: Upload Media/Local Files/Plugins to TG.
-    FLAGS: -d to upload as doc.
-    USAGE: 
+    FLAGS:
+        -d: to upload as doc.
+        -s: spoiler.
+    USAGE:
         .upload [-d] URL | Path to File | CMD
     """
     input = message.flt_input

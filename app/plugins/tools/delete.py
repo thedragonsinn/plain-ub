@@ -9,7 +9,7 @@ async def delete_message(bot: BOT, message: Message) -> None:
     CMD: DEL
     INFO: Delete the replied message.
     FLAGS: -r to remotely delete a text using its link.
-    USAGE: 
+    USAGE:
         .del | .del -r t.me/......
     """
     if "-r" in message.flags:

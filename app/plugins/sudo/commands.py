@@ -41,7 +41,7 @@ async def del_scmd(bot: BOT, message: Message):
     CMD: DELSCMD
     INFO: Remove Sudo Commands.
     FLAGS: -all to instantly remove all Commands.
-    USAGE: 
+    USAGE:
         .delscmd ping | .delscmd -all
     """
     if "-all" in message.flags:

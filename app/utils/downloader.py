@@ -44,6 +44,8 @@ class Download:
             download path without file name.
         message_to_edit:
             response message to edit for progress.
+        custom_file_name:
+            override the file name.
 
     Returns:
         ON success a DownloadedFile object is returned.
@@ -68,11 +70,13 @@ class Download:
         file_session: aiohttp.ClientResponse,
         session: aiohttp.client,
         headers: aiohttp.ClientResponse.headers,
+        custom_file_name: str | None = None,
         message_to_edit: Message | Msg | None = None,
     ):
         self.url: str = url
         self.path: str = path
         self.headers: aiohttp.ClientResponse.headers = headers
+        self.custom_file_name: str = custom_file_name
         self.file_session: aiohttp.ClientResponse = file_session
         self.session: aiohttp.ClientSession = session
         self.message_to_edit: Message | Msg | None = message_to_edit
@@ -100,6 +104,8 @@ class Download:
 
     @cached_property
     def file_name(self):
+        if self.custom_file_name:
+            return self.custom_file_name
         content_disposition = self.headers.get("Content-Disposition", "")
         filename_match = re.search(r'filename="(.+)"', content_disposition)
         if filename_match:
@@ -157,7 +163,11 @@ class Download:
 
     @classmethod
     async def setup(
-        cls, url: str, path: str = "downloads", message_to_edit=None
+        cls,
+        url: str,
+        path: str = "downloads",
+        message_to_edit=None,
+        custom_file_name=None,
     ) -> "Download":
         session = aiohttp.ClientSession()
         file_session = await session.get(url=url)
@@ -169,6 +179,7 @@ class Download:
             session=session,
             headers=headers,
             message_to_edit=message_to_edit,
+            custom_file_name=custom_file_name,
         )
         await obj.check_disk_space()
         await obj.check_duplicates()

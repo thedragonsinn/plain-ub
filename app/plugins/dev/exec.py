@@ -15,7 +15,7 @@ async def executor(bot: BOT, message: Message) -> Message | None:
     CMD: EXEC
     INFO: Run Python Code.
     FLAGS: -s to only show output.
-    USAGE: 
+    USAGE:
         .exec [-s] return 1
     """
     code: str = message.flt_input.strip()

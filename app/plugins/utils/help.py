@@ -25,4 +25,6 @@ async def cmd_list(bot: BOT, message: Message) -> None:
             f"Invalid <b>{cmd}</b>, check {message.trigger}help", del_in=5
         )
     else:
-        await message.reply(f"<pre language=js>Doc:{Config.CMD_DICT[cmd].doc}</pre>", del_in=30)
+        await message.reply(
+            f"<pre language=js>Doc:{Config.CMD_DICT[cmd].doc}</pre>", del_in=30
+        )

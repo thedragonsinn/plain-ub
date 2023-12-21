@@ -18,7 +18,7 @@ async def sudo(bot: BOT, message: Message):
     CMD: SUDO
     INFO: Enable/Disable sudo..
     FLAGS: -c to check sudo status.
-    USAGE: 
+    USAGE:
         .sudo | .sudo -c
     """
     if "-c" in message.flags:
@@ -36,7 +36,7 @@ async def add_sudo(bot: BOT, message: Message) -> Message | None:
     CMD: ADDSUDO
     INFO: Add Sudo User.
     FLAGS: -temp to temporarily add until bot restarts.
-    USAGE: 
+    USAGE:
         .addsudo [-temp] [ UID | @ | Reply to Message ]
     """
     response = await message.reply("Extracting User info...")
@@ -67,7 +67,7 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
     CMD: DELSUDO
     INFO: Add Remove User.
     FLAGS: -temp to temporarily remove until bot restarts.
-    USAGE: 
+    USAGE:
         .delsudo [-temp] [ UID | @ | Reply to Message ]
     """
     response = await message.reply("Extracting User info...")
@@ -97,7 +97,7 @@ async def sudo_list(bot: BOT, message: Message):
     CMD: VSUDO
     INFO: View Sudo Users.
     FLAGS: -id to get UIDs
-    USAGE: 
+    USAGE:
         .vsudo | .vsudo -id
     """
     output: str = ""

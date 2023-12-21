@@ -42,7 +42,7 @@ async def updater(bot: BOT, message: Message) -> None | Message:
     CMD: UPDATE
     INFO: Pull / Check for updates.
     FLAGS: -pull to pull updates
-    USAGE: 
+    USAGE:
         .update | .update -pull
     """
     reply: Message = await message.reply("Checking for Updates....")

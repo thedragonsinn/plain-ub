@@ -11,7 +11,7 @@ async def restart(bot: BOT, message: Message, u_resp: Message | None = None) -> 
     CMD: RESTART
     INFO: Restart the Bot.
     FLAGS: -h for hard restart and clearing logs
-    Usage: 
+    Usage:
         .restart | .restart -h
     """
     reply: Message = u_resp or await message.reply("restarting....")
