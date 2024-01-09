@@ -68,7 +68,7 @@ class Message(Msg):
 
     @cached_property
     def text_list(self) -> list:
-        return self.text.split() if self.text else return []
+        return self.text.split() if self.text else []
 
     @cached_property
     def trigger(self):
