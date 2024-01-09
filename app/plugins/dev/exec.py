@@ -6,7 +6,7 @@ from io import StringIO
 
 from pyrogram.enums import ParseMode
 
-from app import Config, bot, BOT, Message, DB  # isort:skip
+from app import Config, bot, BOT, Message, DB, DB_CLIENT, try_  # isort:skip
 from app.utils import shell, aiohttp_tools as aio  # isort:skip
 
 

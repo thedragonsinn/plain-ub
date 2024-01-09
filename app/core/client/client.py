@@ -1,18 +1,17 @@
 import asyncio
 import glob
 import importlib
-import inspect
 import os
 import sys
 import traceback
-from functools import wraps
 from io import BytesIO
 
 from pyrogram import Client, filters, idle
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
 
-from app import DB, LOGGER, Config, Message
+from app import DB_CLIENT, LOGGER, Config, Message
+from app.core.decorators.add_cmd import AddCmd
 from app.utils import aiohttp_tools
 
 
@@ -28,7 +27,7 @@ def import_modules():
             LOGGER.error(traceback.format_exc())
 
 
-class BOT(Client):
+class BOT(Client, AddCmd):
     def __init__(self):
         super().__init__(
             name="bot",
@@ -43,28 +42,7 @@ class BOT(Client):
         from app.core.client.conversation import Conversation
 
         self.Convo = Conversation
-
-    @staticmethod
-    def add_cmd(cmd: str | list):
-        def the_decorator(func):
-            path = inspect.stack()[1][1]
-
-            @wraps(func)
-            def wrapper():
-                if isinstance(cmd, list):
-                    for _cmd in cmd:
-                        Config.CMD_DICT[_cmd] = Config.CMD(
-                            func=func, path=path, doc=func.__doc__
-                        )
-                else:
-                    Config.CMD_DICT[cmd] = Config.CMD(
-                        func=func, path=path, doc=func.__doc__
-                    )
-
-            wrapper()
-            return func
-
-        return the_decorator
+        self.log = LOGGER
 
     async def get_response(
         self, chat_id: int, filters: filters.Filter = None, timeout: int = 8
@@ -80,67 +58,48 @@ class BOT(Client):
 
     async def boot(self) -> None:
         await super().start()
-        LOGGER.info("Started.")
+        LOGGER.info("Connected to TG.")
         import_modules()
         LOGGER.info("Plugins Imported.")
         await asyncio.gather(*Config.INIT_TASKS)
         Config.INIT_TASKS.clear()
         LOGGER.info("Init Tasks Completed.")
-        await asyncio.gather(
-            self.edit_restart_msg(),
-            self.log(text="<i>Started</i>"),
-        )
+        await self.log_text(text="<i>Started</i>")
         LOGGER.info("Idling...")
         await idle()
         await aiohttp_tools.init_task()
         LOGGER.info("DB Closed.")
-        DB.close()
+        DB_CLIENT.close()
 
-    async def edit_restart_msg(self) -> None:
-        restart_msg = int(os.environ.get("RESTART_MSG", 0))
-        restart_chat = int(os.environ.get("RESTART_CHAT", 0))
-        if restart_msg and restart_chat:
-            await super().get_chat(restart_chat)
-            await super().edit_message_text(
-                chat_id=restart_chat, message_id=restart_msg, text="__Started__"
-            )
-            os.environ.pop("RESTART_MSG", "")
-            os.environ.pop("RESTART_CHAT", "")
-
-    async def log(
+    async def log_text(
         self,
-        text="",
-        traceback="",
-        chat=None,
-        func=None,
-        message: Message | Msg | None = None,
+        text,
         name="log.txt",
         disable_web_page_preview=True,
         parse_mode=ParseMode.HTML,
+        type: str = "",
     ) -> Message | Msg:
-        if message:
-            return (await message.copy(chat_id=Config.LOG_CHAT))  # fmt: skip
-        if traceback:
-            text = (
-                "#Traceback"
-                f"\n<b>Function:</b> {func}"
-                f"\n<b>Chat:</b> {chat}"
-                f"\n<b>Traceback:</b>"
-                f"\n<code>{traceback}</code>"
-            )
-        return await self.send_message(
+        if type:
+            if hasattr(LOGGER, type):
+                getattr(LOGGER, type)(text)
+            text = f"#{type}\n{text}"
+
+        return (await self.send_message(
             chat_id=Config.LOG_CHAT,
             text=text,
             name=name,
             disable_web_page_preview=disable_web_page_preview,
             parse_mode=parse_mode,
-        )
+        ))  # fmt:skip
+
+    async def log_message(self, message: Message | Msg):
+        return (await message.copy(chat_id=Config.LOG_CHAT))  # fmt: skip
 
     async def restart(self, hard=False) -> None:
         await aiohttp_tools.init_task()
         await super().stop(block=False)
         LOGGER.info("Closing DB....")
-        DB.close()
+        DB_CLIENT.close()
         if hard:
             os.remove("logs/app_logs.txt")
             os.execl("/bin/bash", "/bin/bash", "run")

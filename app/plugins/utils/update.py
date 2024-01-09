@@ -63,7 +63,9 @@ async def updater(bot: BOT, message: Message) -> None | Message:
         await reply.edit("Timeout...Try again.")
         return
     await asyncio.gather(
-        bot.log(text=f"#Updater\nPulled:\n{commits}", disable_web_page_preview=True),
+        bot.log_text(
+            text=f"#Updater\nPulled:\n{commits}", disable_web_page_preview=True
+        ),
         reply.edit("<b>Update Found</b>\n<i>Pulling....</i>"),
     )
     await restart(bot, message, reply)

@@ -1,25 +1,28 @@
 import asyncio
 from functools import cached_property
 
-from motor.core import AgnosticCollection
 from pyrogram import filters
 from pyrogram.types import Chat, User
 
-from app import BOT, DB, Config, Message, bot
+from app import BOT, Config, CustomDB, Message, bot
 from app.utils.helpers import get_name
 
-FED_LIST: AgnosticCollection = DB.FED_LIST
+DB = CustomDB("FED_LIST")
 
-FILTERS: filters.Filter = (
-    filters.user([609517172, 2059887769]) & ~filters.service
-)  # NOQA
+BASIC_FILTER = filters.user([609517172, 2059887769]) & ~filters.service  # NOQA
 
-FBAN_REGEX: filters.Filter = filters.regex(
-    r"(New FedBan|starting a federation ban|Starting a federation ban|start a federation ban|FedBan Reason update|FedBan reason updated|Would you like to update this reason)"
+FBAN_REGEX = filters.regex(
+    r"(New FedBan|"
+    r"starting a federation ban|"
+    r"Starting a federation ban|"
+    r"start a federation ban|"
+    r"FedBan Reason update|"
+    r"FedBan reason updated|"
+    r"Would you like to update this reason)"
 )
 
 
-UNFBAN_REGEX: filters.Filter = filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)")
+UNFBAN_REGEX = filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)")
 
 
 class _User(User):
@@ -41,13 +44,14 @@ async def add_fed(bot: BOT, message: Message):
         .addf | .addf NAME
     """
     data = dict(name=message.input or message.chat.title, type=str(message.chat.type))
-    await DB.add_data(collection=FED_LIST, id=message.chat.id, data=data)
-    await message.reply(
-        f"<b>{data['name']}</b> added to FED LIST.", del_in=5, block=False
-    )
-    await bot.log(
-        text=f"#FBANS\n<b>{data['name']}</b> <code>{message.chat.id}</code> added to FED LIST."
-    )
+    await DB.add_data({"_id": message.chat.id, **data})
+    await (
+        await message.reply(
+            f"#FBANS\n<b>{data['name']}</b>: <code>{message.chat.id}</code> added to FED LIST.",
+            del_in=5,
+            block=False,
+        )
+    ).log()
 
 
 @bot.add_cmd(cmd="delf")
@@ -60,7 +64,7 @@ async def remove_fed(bot: BOT, message: Message):
         .delf | .delf id | .delf -all
     """
     if "-all" in message.flags:
-        await FED_LIST.drop()
+        await DB.drop()
         await message.reply("FED LIST cleared.")
         return
     chat: int | str | Chat = message.input or message.chat
@@ -70,16 +74,15 @@ async def remove_fed(bot: BOT, message: Message):
         chat = chat.id
     elif chat.lstrip("-").isdigit():
         chat = int(chat)
-    deleted: bool | None = await DB.delete_data(collection=FED_LIST, id=chat)
+    deleted: bool | None = await DB.delete_data(id=chat)
     if deleted:
-        await message.reply(
-            f"<b>{name}</b><code>{chat}</code> removed from FED LIST.",
-            del_in=8,
-            block=False,
-        )
-        await bot.log(
-            text=f"#FBANS\n<b>{name}</b><code>{chat}</code> removed from FED LIST."
-        )
+        await (
+            await message.reply(
+                text=f"#FBANS\n<b>{name}</b><code>{chat}</code> removed from FED LIST.",
+                del_in=8,
+                block=False,
+            )
+        ).log()
     else:
         await message.reply(f"<b>{name or chat}</b> not in FED LIST.", del_in=8)
 
@@ -109,13 +112,15 @@ async def fed_ban(bot: BOT, message: Message):
     failed: list[str] = []
     reason = f"{reason}{proof_str}"
     fban_cmd: str = f"/fban <a href='tg://user?id={user.id}'>{user.id}</a> {reason}"
-    async for fed in FED_LIST.find():
+    async for fed in DB.find():
         chat_id = int(fed["_id"])
         total += 1
         cmd: Message = await bot.send_message(
             chat_id=chat_id, text=fban_cmd, disable_web_page_preview=True
         )
-        response: Message | None = await cmd.get_response(filters=FILTERS, timeout=8)
+        response: Message | None = await cmd.get_response(
+            filters=BASIC_FILTER, timeout=8
+        )
         if not response or not (await FBAN_REGEX(bot, response)):  # NOQA
             failed.append(fed["name"])
         elif "Would you like to update this reason" in response.text:
@@ -155,16 +160,18 @@ async def un_fban(bot: BOT, message: Message):
     total: int = 0
     failed: list[str] = []
     unfban_cmd: str = f"/unfban <a href='tg://user?id={user.id}'>{user.id}</a> {reason}"
-    async for fed in FED_LIST.find():
+    async for fed in DB.find():
         chat_id = int(fed["_id"])
         total += 1
         cmd: Message = await bot.send_message(
             chat_id=chat_id, text=unfban_cmd, disable_web_page_preview=True
         )
-        response: Message | None = await cmd.get_response(filters=FILTERS, timeout=8)
+        response: Message | None = await cmd.get_response(
+            filters=BASIC_FILTER, timeout=8
+        )
         if not response or not (await UNFBAN_REGEX(bot, response)):
             failed.append(fed["name"])
-        await asyncio.sleep(0.8)
+        await asyncio.sleep(1)
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
@@ -191,7 +198,7 @@ async def fed_list(bot: BOT, message: Message):
     """
     output: str = ""
     total = 0
-    async for fed in FED_LIST.find():
+    async for fed in DB.find():
         output += f'<b>• {fed["name"]}</b>\n'
         if "-id" in message.flags:
             output += f'  <code>{fed["_id"]}</code>\n'

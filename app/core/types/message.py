@@ -17,8 +17,12 @@ class Message(Msg):
 
     @cached_property
     def cmd(self) -> str | None:
+        if self.is_from_owner:
+            trigger = Config.CMD_TRIGGER
+        else:
+            trigger = Config.SUDO_TRIGGER
         raw_cmd = self.text_list[0]
-        cmd = raw_cmd[1:]
+        cmd = raw_cmd.replace(trigger, "", 1)
         return cmd if cmd in Config.CMD_DICT else None
 
     @cached_property
@@ -59,6 +63,13 @@ class Message(Msg):
         return self.replied.task_id if self.replied else None
 
     @cached_property
+    def reply_text_list(self) -> list:
+        reply_text_list = []
+        if self.replied:
+            reply_text_list = self.replied.text_list
+        return reply_text_list
+
+    @cached_property
     def task_id(self) -> str:
         return f"{self.chat.id}-{self.id}"
 
@@ -91,11 +102,11 @@ class Message(Msg):
     async def edit(self, text, del_in: int = 0, block=True, **kwargs) -> "Message":
         if len(str(text)) < 4096:
             kwargs.pop("name", "")
-            task = self.edit_text(text, **kwargs)
+            task = super().edit_text(text=text, **kwargs)
             if del_in:
                 reply = await self.async_deleter(task=task, del_in=del_in, block=block)
             else:
-                reply = await task
+                reply = Message.parse_message(await task)
         else:
             _, reply = await asyncio.gather(
                 super().delete(), self.reply(text, **kwargs)
@@ -133,6 +144,9 @@ class Message(Msg):
                 return response
         except TimeoutError:
             return
+
+    async def log(self):
+        return (await self.copy(Config.LOG_CHAT))  # fmt:skip
 
     async def reply(
         self, text, del_in: int = 0, block: bool = True, **kwargs

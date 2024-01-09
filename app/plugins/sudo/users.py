@@ -1,15 +1,18 @@
 from pyrogram.types import User
 
-from app import BOT, DB, Config, Message, bot
+from app import BOT, Config, CustomDB, Message, bot
 from app.plugins.admin.fbans import _User
 from app.utils.helpers import extract_user_data, get_name
 
+SUDO = CustomDB("SUDO")
+SUDO_USERS = CustomDB("SUDO_USERS")
+
 
 async def init_task():
-    sudo = await DB.SUDO.find_one({"_id": "sudo_switch"})
+    sudo = await SUDO.find_one({"_id": "sudo_switch"})
     if sudo:
         Config.SUDO = sudo["value"]
-    Config.SUDO_USERS = [sudo_user["_id"] async for sudo_user in DB.SUDO_USERS.find()]
+    Config.SUDO_USERS = [sudo_user["_id"] async for sudo_user in SUDO_USERS.find()]
 
 
 @bot.add_cmd(cmd="sudo")
@@ -26,7 +29,7 @@ async def sudo(bot: BOT, message: Message):
         return
     value = not Config.SUDO
     Config.SUDO = value
-    await DB.add_data(collection=DB.SUDO, id="sudo_switch", data={"value": value})
+    await SUDO.add_data({"_id": "sudo_switch", "value": value})
     await message.reply(text=f"Sudo is enabled: <b>{value}</b>!", del_in=8)
 
 
@@ -52,13 +55,11 @@ async def add_sudo(bot: BOT, message: Message) -> Message | None:
     response_str = f"{user.mention} added to Sudo List."
     Config.SUDO_USERS.append(user.id)
     if "-temp" not in message.flags:
-        await DB.add_data(
-            collection=DB.SUDO_USERS, id=user.id, data=extract_user_data(user)
-        )
+        await SUDO_USERS.add_data({"_id": user.id, **extract_user_data(user)})
     else:
         response_str += "\n<b>Temporary</b>: True"
     await response.edit(text=response_str, del_in=5)
-    await bot.log(text=response_str)
+    await response.log()
 
 
 @bot.add_cmd(cmd="delsudo")
@@ -84,11 +85,11 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
     Config.SUDO_USERS.remove(user.id)
     response_str = f"{user.mention} removed from Sudo List."
     if "-temp" not in message.flags:
-        await DB.delete_data(collection=DB.SUDO_USERS, id=user.id)
+        await SUDO_USERS.delete_data(id=user.id)
     else:
         response_str += "\n<b>Temporary</b>: True"
     await response.edit(text=response_str, del_in=5)
-    await bot.log(text=response_str)
+    await response.log()
 
 
 @bot.add_cmd(cmd="vsudo")
@@ -102,7 +103,7 @@ async def sudo_list(bot: BOT, message: Message):
     """
     output: str = ""
     total = 0
-    async for user in DB.SUDO_USERS.find():
+    async for user in SUDO_USERS.SUDO_USERS.find():
         output += f'<b>• {user["name"]}</b>\n'
         if "-id" in message.flags:
             output += f'  <code>{user["_id"]}</code>\n'

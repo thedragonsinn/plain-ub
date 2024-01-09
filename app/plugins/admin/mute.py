@@ -26,7 +26,7 @@ async def mute_or_unmute(bot: BOT, message: Message):
             chat_id=message.chat.id, user_id=user.id, permissions=perms
         )
         await message.reply(
-            text=f"{message.cmd.capitalize()}d: {user.mention}\nReason: {reason}."
+            text=f"{message.cmd.capitalize()}d: {user.mention}\nReason: {reason}"
         )
     except Exception as e:
         await message.reply(text=e, del_in=10)

@@ -29,17 +29,19 @@ async def convo_handler(bot: BOT, message: Msg):
     message.continue_propagation()
 
 
-async def run_coro(coro, message) -> None | int:
+async def run_coro(coro, message: Message) -> None | int:
     try:
         task = asyncio.Task(coro, name=message.task_id)
         await task
     except asyncio.exceptions.CancelledError:
-        await bot.log(text=f"<b>#Cancelled</b>:\n<code>{message.text}</code>")
+        await bot.log_text(text=f"<b>#Cancelled</b>:\n<code>{message.text}</code>")
     except BaseException:
-        await bot.log(
-            traceback=f"<pre language=python>{traceback.format_exc()}</pre>",
-            chat=message.chat.title or message.chat.first_name,
-            func=coro.__name__,
-            name="traceback.txt",
+        text = (
+            "#Traceback"
+            f"\n<b>Function:</b> {coro.__name__}"
+            f"\n<b>Chat:</b> {message.chat.title or message.from_user.first_name}"
+            f"\n<b>Traceback:</b>"
+            f"\n<pre language=python>{traceback.format_exc()}</pre>"
         )
+        await bot.log_text(text=text, type="error")
         return 1
