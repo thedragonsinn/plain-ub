@@ -17,12 +17,8 @@ class Message(Msg):
 
     @cached_property
     def cmd(self) -> str | None:
-        if self.is_from_owner:
-            trigger = Config.CMD_TRIGGER
-        else:
-            trigger = Config.SUDO_TRIGGER
         raw_cmd = self.text_list[0]
-        cmd = raw_cmd.replace(trigger, "", 1)
+        cmd = raw_cmd.replace(self.trigger, "", 1)
         return cmd if cmd in Config.CMD_DICT else None
 
     @cached_property
@@ -64,10 +60,7 @@ class Message(Msg):
 
     @cached_property
     def reply_text_list(self) -> list:
-        reply_text_list = []
-        if self.replied:
-            reply_text_list = self.replied.text_list
-        return reply_text_list
+        return self.replied.text_list if self.replied else []
 
     @cached_property
     def task_id(self) -> str:
@@ -75,7 +68,7 @@ class Message(Msg):
 
     @cached_property
     def text_list(self) -> list:
-        return self.text.split()
+        return self.text.split() if self.text else return []
 
     @cached_property
     def trigger(self):
