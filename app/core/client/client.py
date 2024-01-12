@@ -6,12 +6,13 @@ import sys
 import traceback
 from io import BytesIO
 
-from app import DB_CLIENT, LOGGER, Config, Message
-from app.core.decorators.add_cmd import AddCmd
-from app.utils.aiohttp_tools import aio
 from pyrogram import Client, filters, idle
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
+
+from app import DB_CLIENT, LOGGER, Config, Message
+from app.core.decorators.add_cmd import AddCmd
+from app.utils.aiohttp_tools import aio
 
 
 def import_modules():
@@ -67,6 +68,7 @@ class BOT(Client, AddCmd):
         LOGGER.info("Idling...")
         await idle()
         await aio.session.close()
+        await aio.runner.cleanup()
         LOGGER.info("DB Closed.")
         DB_CLIENT.close()
 
@@ -100,6 +102,7 @@ class BOT(Client, AddCmd):
         await super().stop(block=False)
         LOGGER.info("Closing DB...")
         DB_CLIENT.close()
+        await aio.runner.cleanup()
         if hard:
             os.remove("logs/app_logs.txt")
             os.execl("/bin/bash", "/bin/bash", "run")

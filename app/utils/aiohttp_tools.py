@@ -12,7 +12,6 @@ class Aio:
     def __init__(self):
         self.session: ClientSession | None = None
         self.app = None
-        self.site = None
         self.port = os.environ.get("API_PORT", 0)
         self.runner = None
         if self.port:
@@ -28,8 +27,10 @@ class Aio:
         self.app.router.add_get(path="/", handler=self.handle_request)
         self.runner = web.AppRunner(self.app)
         await self.runner.setup()
-        self.site = web.TCPSite(self.runner, "0.0.0.0", self.port)
-        await self.site.start()
+        site = web.TCPSite(
+            self.runner, "0.0.0.0", self.port, reuse_address=True, reuse_port=True
+        )
+        await site.start()
 
     async def handle_request(self, _):
         return web.Response(text="Web Server Running...")
