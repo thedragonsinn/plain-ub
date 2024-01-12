@@ -103,8 +103,7 @@ async def allow_pm(bot: BOT, message: Message):
         await message.reply(f"{name} is already approved.")
         return
     ALLOWED_USERS.append(user_id)
-    if user_id in RECENT_USERS:
-        RECENT_USERS.remove(user_id)
+    RECENT_USERS.pop(user_id, 0)
     await asyncio.gather(
         message.reply(text=f"{name} allowed to PM.", del_in=8),
         PM_USERS.insert_one({"_id": user_id}),
