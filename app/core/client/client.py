@@ -6,13 +6,12 @@ import sys
 import traceback
 from io import BytesIO
 
-from pyrogram import Client, filters, idle
-from pyrogram.enums import ParseMode
-from pyrogram.types import Message as Msg
-
 from app import DB_CLIENT, LOGGER, Config, Message
 from app.core.decorators.add_cmd import AddCmd
 from app.utils.aiohttp_tools import aio
+from pyrogram import Client, filters, idle
+from pyrogram.enums import ParseMode
+from pyrogram.types import Message as Msg
 
 
 def import_modules():
@@ -126,5 +125,6 @@ class BOT(Client, AddCmd):
             return Message.parse_message(message=message)
         doc = BytesIO(bytes(text, encoding="utf-8"))
         doc.name = name
-        # fmt:skip
-        return await super().send_document(chat_id=chat_id, document=doc, **kwargs)
+        return (await super().send_document(
+            chat_id=chat_id, document=doc, **kwargs
+        ))  # fmt: skip

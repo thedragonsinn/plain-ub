@@ -29,7 +29,9 @@ async def init_task():
 
 
 @bot.on_message(
-    (guard_check & filters.private & filters.incoming) & ~allowed_filter, group=0
+    (guard_check & filters.private & filters.incoming)
+    & (~allowed_filter & ~filters.bot),
+    group=0,
 )
 async def handle_new_pm(bot: BOT, message: Message):
     user_id = message.from_user.id
@@ -55,14 +57,16 @@ async def handle_new_pm(bot: BOT, message: Message):
         )
 
 
-@bot.on_message(guard_check & filters.private & filters.outgoing, group=2)
+@bot.on_message(
+    (guard_check & filters.private & filters.outgoing) & ~filters.bot, group=2
+)
 async def auto_approve(bot: BOT, message: Message):
     if message.chat.id in ALLOWED_USERS:
         return
     message = Message.parse_message(message=message)
     await message.reply("Auto-Approved to PM.", del_in=5)
-    await PM_USERS.insert_one({"_id": message.chat.id})
     ALLOWED_USERS.append(message.chat.id)
+    await PM_USERS.insert_one({"_id": message.chat.id})
 
 
 @bot.add_cmd(cmd="pmguard")
@@ -99,6 +103,8 @@ async def allow_pm(bot: BOT, message: Message):
         await message.reply(f"{name} is already approved.")
         return
     ALLOWED_USERS.append(user_id)
+    if user_id in RECENT_USERS:
+        RECENT_USERS.remove(user_id)
     await asyncio.gather(
         message.reply(text=f"{name} allowed to PM.", del_in=8),
         PM_USERS.insert_one({"_id": user_id}),
