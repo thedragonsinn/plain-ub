@@ -1,3 +1,5 @@
+import asyncio
+
 from pyrogram.types import User
 
 from app import BOT, Config, CustomDB, Message, bot
@@ -29,8 +31,10 @@ async def sudo(bot: BOT, message: Message):
         return
     value = not Config.SUDO
     Config.SUDO = value
-    await SUDO.add_data({"_id": "sudo_switch", "value": value})
-    await message.reply(text=f"Sudo is enabled: <b>{value}</b>!", del_in=8)
+    await asyncio.gather(
+        SUDO.add_data({"_id": "sudo_switch", "value": value}),
+        message.reply(text=f"Sudo is enabled: <b>{value}</b>!", del_in=8),
+    )
 
 
 @bot.add_cmd(cmd="addsudo")

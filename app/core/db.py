@@ -17,13 +17,21 @@ class CustomDB(AsyncIOMotorCollection):
         super().__init__(database=DB, name=collection_name)
 
     async def add_data(self, data: dict) -> None:
-        found = await self.find_one(data)
+        """
+        :param data: {"_id": db_id, rest of the data}
+        entry is added or updated if exists.
+        """
+        found = await self.find_one({"_id": data["_id"]})
         if not found:
             await self.insert_one(data)
         else:
             await self.update_one({"_id": data.pop("_id")}, {"$set": data})
 
     async def delete_data(self, id: int | str) -> bool | None:
+        """
+        :param id: the db id key to delete.
+        :return: True if entry was deleted.
+        """
         found = await self.find_one({"_id": id})
         if found:
             await self.delete_one({"_id": id})

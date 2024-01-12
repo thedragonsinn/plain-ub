@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import yt_dlp
 
 from app import Message, bot
-from app.utils.aiohttp_tools import in_memory_dl
+from app.utils.aiohttp_tools import aio
 
 domains = [
     "www.youtube.com",
@@ -63,7 +63,7 @@ async def song_dl(bot: bot, message: Message) -> None | Message:
         yt_info: str = yt_info["entries"][0]
     duration: int = yt_info["duration"]
     artist: str = yt_info["channel"]
-    thumb = await in_memory_dl(yt_info["thumbnail"])
+    thumb = await aio.in_memory_dl(yt_info["thumbnail"])
     down_path: list = glob.glob(dl_path + "*")
     if not down_path:
         return await response.edit("Not found")

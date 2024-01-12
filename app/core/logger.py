@@ -24,3 +24,4 @@ basicConfig(
 
 getLogger("pyrogram").setLevel(WARNING)
 getLogger("httpx").setLevel(WARNING)
+getLogger("aiohttp.access").setLevel(WARNING)

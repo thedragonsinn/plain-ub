@@ -27,6 +27,8 @@ class _Config:
 
         self.LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
 
+        self.PM_GUARD: bool = False
+
         self.REPO = Repo(".")
 
         self.SUDO: bool = False

@@ -7,7 +7,8 @@ from io import StringIO
 from pyrogram.enums import ParseMode
 
 from app import Config, bot, BOT, Message, DB, DB_CLIENT, try_  # isort:skip
-from app.utils import shell, aiohttp_tools as aio  # isort:skip
+from app.utils import shell  # isort:skip
+from app.utils.aiohttp_tools import aio  # isort:skip
 
 
 async def executor(bot: BOT, message: Message) -> Message | None:

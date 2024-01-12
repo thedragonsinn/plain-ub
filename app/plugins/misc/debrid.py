@@ -3,7 +3,7 @@
 import os
 
 from app import BOT, Message, bot
-from app.utils import aiohttp_tools
+from app.utils.aiohttp_tools import aio
 from app.utils.helpers import post_to_telegraph as post_tgh
 
 
@@ -13,7 +13,7 @@ async def get_json(endpoint: str, query: dict, key=os.environ.get("DEBRID_TOKEN"
         return "API key not found."
     api = "https://api.alldebrid.com/v4" + endpoint
     params = {"agent": "bot", "apikey": key, **query}
-    async with aiohttp_tools.SESSION.get(url=api, params=params) as ses:
+    async with aio.session.get(url=api, params=params) as ses:
         try:
             json = await ses.json()
             return json
