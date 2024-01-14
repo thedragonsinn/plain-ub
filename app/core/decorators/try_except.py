@@ -15,7 +15,7 @@ def try_(func):
                 return result
             except BaseException:
                 text = (
-                    f"<b>FUNC</b>:{func.__name__}"
+                    f"<b>FUNC</b>: {func.__name__}"
                     f"\n</b>TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>"
                 )
                 await bot.log_text(text=text, name="traceback.txt", type="error")
@@ -29,7 +29,7 @@ def try_(func):
                 return result
             except BaseException:
                 text = (
-                    f"<b>FUNC</b>:{func.__name__}"
+                    f"<b>FUNC</b>: {func.__name__}"
                     f"\n</b>TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>"
                 )
                 bot.log_text(text=text, name="traceback.txt", type="error")

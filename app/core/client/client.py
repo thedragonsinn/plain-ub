@@ -67,8 +67,12 @@ class BOT(Client, AddCmd):
         await self.log_text(text="<i>Started</i>")
         LOGGER.info("Idling...")
         await idle()
-        await aio.session.close()
-        await aio.runner.cleanup()
+        await self.shut_down()
+
+    async def shut_down(self):
+        await aio.close()
+        if Config.TLOGGER_TASK:
+            Config.TLOGGER_TASK.cancel()
         LOGGER.info("DB Closed.")
         DB_CLIENT.close()
 
@@ -98,11 +102,8 @@ class BOT(Client, AddCmd):
         return (await message.copy(chat_id=Config.LOG_CHAT))  # fmt: skip
 
     async def restart(self, hard=False) -> None:
-        await aio.session.close()
         await super().stop(block=False)
-        LOGGER.info("Closing DB...")
-        DB_CLIENT.close()
-        await aio.runner.cleanup()
+        await self.shut_down()
         if hard:
             os.remove("logs/app_logs.txt")
             os.execl("/bin/bash", "/bin/bash", "run")

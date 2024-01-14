@@ -18,6 +18,12 @@ class Aio:
             Config.INIT_TASKS.append(self.set_site())
         Config.INIT_TASKS.append(self.set_session())
 
+    async def close(self):
+        if not self.session.closed:
+            await self.session.close()
+        if self.runner:
+            await self.runner.cleanup()
+
     async def set_session(self):
         self.session = ClientSession()
 

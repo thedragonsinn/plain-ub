@@ -35,6 +35,12 @@ class _Config:
 
         self.SUDO_TRIGGER: str = os.environ.get("SUDO_TRIGGER", "!")
 
+        self.TLOGGER: bool = False
+
+        self.TLOGGER_CHAT: int = int(os.environ.get("TLOGGER_CHAT", self.LOG_CHAT))
+
+        self.TLOGGER_TASK = None
+
         self.OWNER_ID = int(os.environ.get("OWNER_ID"))
 
         self.SUDO_CMD_LIST: list[str] = []

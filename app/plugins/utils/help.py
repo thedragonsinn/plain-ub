@@ -11,7 +11,7 @@ async def cmd_list(bot: BOT, message: Message) -> None:
     """
     cmd = message.input.strip()
     if not cmd:
-        commands: str = "  ".join(
+        commands: str = "\n".join(
             [
                 f"<code>{message.trigger}{cmd}</code>"
                 for cmd in sorted(Config.CMD_DICT.keys())
@@ -26,5 +26,5 @@ async def cmd_list(bot: BOT, message: Message) -> None:
         )
     else:
         await message.reply(
-            f"<pre language=js>Doc:{Config.CMD_DICT[cmd].doc}</pre>", del_in=30
+            f"<pre language=js>Docs: {Config.CMD_DICT[cmd].doc}</pre>", del_in=30
         )

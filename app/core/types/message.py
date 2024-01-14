@@ -150,7 +150,7 @@ class Message(Msg):
         if del_in:
             await self.async_deleter(task=task, del_in=del_in, block=block)
         else:
-            return await task
+            return Message.parse_message((await task))  # fmt:skip
 
     @classmethod
     def parse_message(cls, message: Msg) -> "Message":

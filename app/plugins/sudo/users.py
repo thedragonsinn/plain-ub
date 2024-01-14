@@ -6,14 +6,15 @@ from app import BOT, Config, CustomDB, Message, bot
 from app.plugins.admin.fbans import _User
 from app.utils.helpers import extract_user_data, get_name
 
-SUDO = CustomDB("SUDO")
+SUDO = CustomDB("COMMON_SETTINGS")
 SUDO_USERS = CustomDB("SUDO_USERS")
 
 
 async def init_task():
     sudo = await SUDO.find_one({"_id": "sudo_switch"})
-    if sudo:
-        Config.SUDO = sudo["value"]
+    if not sudo:
+        return
+    Config.SUDO = sudo["value"]
     Config.SUDO_USERS = [sudo_user["_id"] async for sudo_user in SUDO_USERS.find()]
 
 
@@ -27,7 +28,7 @@ async def sudo(bot: BOT, message: Message):
         .sudo | .sudo -c
     """
     if "-c" in message.flags:
-        await message.reply(text=f"Sudo is enabled: <b>{Config.SUDO}</b> .", del_in=8)
+        await message.reply(text=f"Sudo is enabled: <b>{Config.SUDO}</b>", del_in=8)
         return
     value = not Config.SUDO
     Config.SUDO = value

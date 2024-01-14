@@ -2,6 +2,7 @@ import asyncio
 from functools import cached_property
 
 from pyrogram import filters
+from pyrogram.enums import ChatMemberStatus
 from pyrogram.types import Chat, User
 
 from app import BOT, Config, CustomDB, Message, bot
@@ -107,10 +108,18 @@ async def fed_ban(bot: BOT, message: Message):
         proof = await message.replied.forward(Config.FBAN_LOG_CHANNEL)
         proof_str = f"\n{ {proof.link} }"
 
+    reason = f"{reason}{proof_str}"
+
+    if message.replied:
+        me = await userge.get_chat_member(message.chat.id, "me")
+        if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
+            await message.reply(
+                f"!dban {reason}", disable_web_page_preview=True, del_in=3, block=False
+            )
+
     await progress.edit("❯❯")
     total: int = 0
     failed: list[str] = []
-    reason = f"{reason}{proof_str}"
     fban_cmd: str = f"/fban <a href='tg://user?id={user.id}'>{user.id}</a> {reason}"
     async for fed in DB.find():
         chat_id = int(fed["_id"])

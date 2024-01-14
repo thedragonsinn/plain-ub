@@ -8,11 +8,13 @@ from app.utils.helpers import get_name
 
 PM_USERS = CustomDB("PM_USERS")
 
-PM_GUARD = CustomDB("PM_GUARD")
+PM_GUARD = CustomDB("COMMON_SETTINGS")
 
 ALLOWED_USERS: list[int] = []
 
-allowed_filter = filters.create(lambda _, __, m: m.from_user.id in ALLOWED_USERS)
+allowed_filter = filters.create(
+    lambda _, __, m: m.chat.id in ALLOWED_USERS and m.chat.id != bot.me.id
+)
 
 guard_check = filters.create(lambda _, __, ___: Config.PM_GUARD)
 
@@ -58,11 +60,11 @@ async def handle_new_pm(bot: BOT, message: Message):
 
 
 @bot.on_message(
-    (guard_check & filters.private & filters.outgoing) & ~filters.bot, group=2
+    (guard_check & filters.private & filters.outgoing)
+    & (~allowed_filter & ~filters.bot),
+    group=2,
 )
 async def auto_approve(bot: BOT, message: Message):
-    if message.chat.id in ALLOWED_USERS:
-        return
     message = Message.parse_message(message=message)
     await message.reply("Auto-Approved to PM.", del_in=5)
     ALLOWED_USERS.append(message.chat.id)
@@ -80,7 +82,7 @@ async def pmguard(bot: BOT, message: Message):
     """
     if "-c" in message.flags:
         await message.reply(
-            text=f"PM Guard is enabled: <b>{Config.PM_GUARD}</b> .", del_in=8
+            text=f"PM Guard is enabled: <b>{Config.PM_GUARD}</b>", del_in=8
         )
         return
     value = not Config.PM_GUARD
