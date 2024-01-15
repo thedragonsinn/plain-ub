@@ -28,7 +28,7 @@ async def sudo(bot: BOT, message: Message):
         .sudo | .sudo -c
     """
     if "-c" in message.flags:
-        await message.reply(text=f"Sudo is enabled: <b>{Config.SUDO}</b>", del_in=8)
+        await message.reply(text=f"Sudo is enabled: <b>{Config.SUDO}</b>!", del_in=8)
         return
     value = not Config.SUDO
     Config.SUDO = value
@@ -36,6 +36,7 @@ async def sudo(bot: BOT, message: Message):
         SUDO.add_data({"_id": "sudo_switch", "value": value}),
         message.reply(text=f"Sudo is enabled: <b>{value}</b>!", del_in=8),
     )
+    await init_task()
 
 
 @bot.add_cmd(cmd="addsudo")

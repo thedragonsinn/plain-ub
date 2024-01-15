@@ -1,116 +1,171 @@
 import asyncio
 
 from pyrogram import filters
-from pyrogram.enums import ChatType, MessageEntityType
+from pyrogram.enums import MessageEntityType
 from pyrogram.errors import MessageIdInvalid
 
-from app import BOT, Config, CustomDB, Message, bot
+from app import BOT, Config, CustomDB, Message, bot, try_
 
-TLOGGER = CustomDB("COMMON_SETTINGS")
+LOGGER = CustomDB("COMMON_SETTINGS")
 
 MESSAGE_CACHE: dict[int, list[Message]] = {}
 
 
 async def init_task():
-    log_check = await TLOGGER.find_one({"_id": "tlogger_switch"})
-    if not log_check:
-        return
-    Config.TLOGGER = log_check["value"]
-    Config.TLOGGER_TASK = asyncio.create_task(tlogger_runner())
+    tag_check = await LOGGER.find_one({"_id": "tag_logger_switch"})
+    pm_check = await LOGGER.find_one({"_id": "pm_logger_switch"})
+    if tag_check:
+        Config.TAG_LOGGER = tag_check["value"]
+    if pm_check:
+        Config.PM_LOGGER = pm_check["value"]
+    Config.MESSAGE_LOGGER_TASK = asyncio.create_task(runner())
 
 
-@bot.add_cmd(cmd="tlogger")
+@bot.add_cmd(cmd=["taglogger", "pmlogger"])
 async def logger_switch(bot: BOT, message: Message):
     """
-    CMD: TLOGGER
-    INFO: Enable/Disable PM and Tag Logger.
+    CMD: TAGLOGGER | PMLOGGER
+    INFO: Enable/Disable PM or Tag Logger.
     FLAGS: -c to check status.
-    USAGE:
-        .tlogger | .tlogger -c
     """
+    text = "pm" if message.cmd == "pmlogger" else "tag"
+    conf_str = f"{text.upper()}_LOGGER"
     if "-c" in message.flags:
         await message.reply(
-            text=f"PM and Tag Logger is enabled: <b>{Config.TLOGGER}</b>", del_in=8
+            text=f"{text.capitalize()} Logger is enabled: <b>{getattr(Config, conf_str)}</b>!",
+            del_in=8,
         )
         return
-    value = not Config.TLOGGER
-    Config.TLOGGER = value
+    value: bool = not getattr(Config, conf_str)
+    setattr(Config, conf_str, value)
     await asyncio.gather(
-        TLOGGER.add_data({"_id": "tlogger_switch", "value": value}),
-        message.reply(text=f"PM and Tag Logger is enabled: <b>{value}</b>!", del_in=8),
+        LOGGER.add_data({"_id": f"{text}_logger_switch", "value": value}),
+        message.reply(
+            text=f"{text.capitalize()} Logger is enabled: <b>{value}</b>!", del_in=8
+        ),
+        bot.log_text(
+            text=f"#{text.capitalize()}Logger is enabled: <b>{value}</b>!", type="info"
+        ),
     )
+    Config.MESSAGE_LOGGER_TASK = asyncio.create_task(runner())
 
 
+basic_filters = (
+    ~filters.channel
+    & ~filters.bot
+    & ~filters.service
+    & ~filters.chat(chats=[bot.me.id])
+)
+
+
+@try_
 @bot.on_message(
-    filters=(~filters.channel & ~filters.bot & ~filters.service) & filters.incoming,
+    filters=basic_filters
+    & filters.private
+    & filters.create(lambda _, __, ___: Config.PM_LOGGER),
     group=2,
 )
-async def tlogger_cacher(bot: BOT, message: Message):
-    if not Config.TLOGGER:
-        return
-    if message.chat.type == ChatType.PRIVATE:
+async def pm_logger(bot: BOT, message: Message):
+    cache_message(message)
+
+
+tag_filter = filters.create(lambda _, __, ___: Config.TAG_LOGGER)
+
+
+@try_
+@bot.on_message(
+    filters=(basic_filters & filters.reply & tag_filter) & ~filters.private, group=2
+)
+async def reply_logger(bot: BOT, message: Message):
+    if (
+        message.reply_to_message
+        and message.reply_to_message.from_user
+        and message.reply_to_message.from_user.id == bot.me.id
+    ):
         cache_message(message)
-        return
-    if message.mentioned:
-        for entity in message.entities:
-            if (
-                entity.type == MessageEntityType.MENTION
-                and entity.user
-                and entity.user.id == bot.me.id
-            ):
-                cache_message(message)
-                if message.reply_to_message:
-                    cache_message(message.reply_to_message)
-                return
-    text = message.text or message.caption
-    if text and bot.me.username and bot.me.username in text:
-        cache_message(message)
+    message.continue_propagation()
+
+
+@try_
+@bot.on_message(
+    filters=(basic_filters & filters.mentioned & tag_filter) & ~filters.private, group=2
+)
+async def mention_logger(bot: BOT, message: Message):
+    for entity in message.entities or []:
+        if (
+            entity.type == MessageEntityType.MENTION
+            and entity.user
+            and entity.user.id == bot.me.id
+        ):
+            if message.reply_to_message:
+                cache_message(message.reply_to_message)
+            cache_message(message)
+    message.continue_propagation()
+
+
+@try_
+@bot.on_message(
+    filters=(basic_filters & (filters.text | filters.media) & tag_filter)
+    & ~filters.private,
+    group=2,
+)
+async def username_logger(bot: BOT, message: Message):
+    text = message.text or message.caption or ""
+    if bot.me.username and bot.me.username in text:
         if message.reply_to_message:
             cache_message(message.reply_to_message)
+        cache_message(message)
+    message.continue_propagation()
 
 
+@try_
 def cache_message(message: Message):
     id = message.chat.id
     if id in MESSAGE_CACHE.keys():
+        if len(MESSAGE_CACHE[id]) > 10:
+            bot.log.error("Flood detected, Message not cached.")
+            return
         MESSAGE_CACHE[id].append(message)
     else:
         MESSAGE_CACHE[id] = [message]
 
 
-async def tlogger_runner():
-    if not Config.TLOGGER:
+@try_
+async def runner():
+    if not (Config.TAG_LOGGER or Config.PM_LOGGER):
         return
     while True:
-        for cache_id, cached_list in MESSAGE_CACHE.items():
+        for cache_id, cached_list in list(MESSAGE_CACHE.items()):
             if not cached_list:
                 MESSAGE_CACHE.pop(cache_id)
                 continue
             for msg in cached_list:
                 try:
-                    await msg.forward(Config.TLOGGER_CHAT)
-                    await bot.send_message(
-                        chat_id=Config.TLOGGER_CHAT,
-                        text=f"{msg.from_user.mention} [{msg.from_user.id}] in Chat:\n{msg.link}",
+                    logged_message = await msg.forward(Config.MESSAGE_LOGGER_CHAT)
+                    await logged_message.reply(
+                        text=f"{msg.from_user.mention} [{msg.from_user.id}]\nMessage: <a href='{msg.link}'>Link</a>",
                     )
                 except MessageIdInvalid:
                     await log_deleted_message(msg)
                 MESSAGE_CACHE[cache_id].remove(msg)
-                await asyncio.sleep(15)
-            await asyncio.sleep(30)
+                await asyncio.sleep(5)
+            await asyncio.sleep(15)
         await asyncio.sleep(5)
 
 
+@try_
 async def log_deleted_message(message: Message):
-    notice = f"{message.from_user.mention} [{message.from_user.id}] deleted this message.\n\nLink: {message.link}\n\nText:\n"
+    notice = f"{message.from_user.mention} [{message.from_user.id}] deleted this message.\n\n---\n\nMessage: <a href='{message.link}'>Link</a>\n\n---\n\n"
     if not message.media:
         await bot.send_message(
-            chat_id=Config.TLOGGER_CHAT,
-            text=notice + message.text,
+            chat_id=Config.MESSAGE_LOGGER_CHAT,
+            text=f"{notice}Text:\n{message.text}",
             disable_web_page_preview=True,
         )
         return
     kwargs = dict(
-        chat_id=Config.TLOGGER_CHAT, caption=f"{notice}Caption:\n\n{message.caption}"
+        chat_id=Config.MESSAGE_LOGGER_CHAT,
+        caption=f"{notice}Caption:\n{message.caption or 'No Caption in media.'}",
     )
     if message.photo:
         await bot.send_photo(**kwargs, photo=message.photo.file_id)
@@ -130,7 +185,7 @@ async def log_deleted_message(message: Message):
         await bot.send_voice(**kwargs, voice=message.voice.file_id)
     elif message.sticker:
         await bot.send_sticker(
-            chat_id=Config.TLOGGER_CHAT, sticker=message.sticker.file_id
+            chat_id=Config.MESSAGE_LOGGER_CHAT, sticker=message.sticker.file_id
         )
     else:
-        await bot.send_message(chat_id=Config.TLOGGER_CHAT, text=str(message))
+        await bot.send_message(chat_id=Config.MESSAGE_LOGGER_CHAT, text=str(message))

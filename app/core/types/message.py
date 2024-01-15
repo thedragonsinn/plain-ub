@@ -41,14 +41,12 @@ class Message(Msg):
 
     @cached_property
     def is_from_owner(self) -> bool:
-        if self.from_user and self.from_user.id == Config.OWNER_ID:
-            return True
-        return False
+        return self.from_user and self.from_user.id == Config.OWNER_ID
 
     @cached_property
     def replied(self) -> "Message":
         if self.reply_to_message:
-            return Message.parse_message(self.reply_to_message)
+            return Message.parse(self.reply_to_message)
 
     @cached_property
     def reply_id(self) -> int | None:
@@ -99,7 +97,8 @@ class Message(Msg):
             if del_in:
                 reply = await self.async_deleter(task=task, del_in=del_in, block=block)
             else:
-                reply = Message.parse_message(await task)
+                reply = Message.parse((await task))  # fmt:skip
+            self.text = text
         else:
             _, reply = await asyncio.gather(
                 super().delete(), self.reply(text, **kwargs)
@@ -150,8 +149,8 @@ class Message(Msg):
         if del_in:
             await self.async_deleter(task=task, del_in=del_in, block=block)
         else:
-            return Message.parse_message((await task))  # fmt:skip
+            return Message.parse((await task))  # fmt:skip
 
     @classmethod
-    def parse_message(cls, message: Msg) -> "Message":
+    def parse(cls, message: Msg) -> "Message":
         return cls(message)

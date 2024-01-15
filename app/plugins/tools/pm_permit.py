@@ -12,9 +12,7 @@ PM_GUARD = CustomDB("COMMON_SETTINGS")
 
 ALLOWED_USERS: list[int] = []
 
-allowed_filter = filters.create(
-    lambda _, __, m: m.chat.id in ALLOWED_USERS and m.chat.id != bot.me.id
-)
+allowed_filter = filters.create(lambda _, __, m: m.chat.id in ALLOWED_USERS)
 
 guard_check = filters.create(lambda _, __, ___: Config.PM_GUARD)
 
@@ -32,7 +30,8 @@ async def init_task():
 
 @bot.on_message(
     (guard_check & filters.private & filters.incoming)
-    & (~allowed_filter & ~filters.bot),
+    & (~allowed_filter & ~filters.bot)
+    & ~filters.chat(chats=[bot.me.id]),
     group=0,
 )
 async def handle_new_pm(bot: BOT, message: Message):
@@ -61,11 +60,12 @@ async def handle_new_pm(bot: BOT, message: Message):
 
 @bot.on_message(
     (guard_check & filters.private & filters.outgoing)
-    & (~allowed_filter & ~filters.bot),
+    & (~allowed_filter & ~filters.bot)
+    & ~filters.chat(chats=[bot.me.id]),
     group=2,
 )
 async def auto_approve(bot: BOT, message: Message):
-    message = Message.parse_message(message=message)
+    message = Message.parse(message=message)
     await message.reply("Auto-Approved to PM.", del_in=5)
     ALLOWED_USERS.append(message.chat.id)
     await PM_USERS.insert_one({"_id": message.chat.id})
@@ -91,6 +91,7 @@ async def pmguard(bot: BOT, message: Message):
         PM_GUARD.add_data({"_id": "guard_switch", "value": value}),
         message.reply(text=f"PM Guard is enabled: <b>{value}</b>!", del_in=8),
     )
+    await init_task()
 
 
 @bot.add_cmd(cmd=["a", "allow"])

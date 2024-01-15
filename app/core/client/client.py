@@ -69,10 +69,11 @@ class BOT(Client, AddCmd):
         await idle()
         await self.shut_down()
 
-    async def shut_down(self):
+    @staticmethod
+    async def shut_down():
         await aio.close()
-        if Config.TLOGGER_TASK:
-            Config.TLOGGER_TASK.cancel()
+        if Config.MESSAGE_LOGGER_TASK:
+            Config.MESSAGE_LOGGER_TASK.cancel()
         LOGGER.info("DB Closed.")
         DB_CLIENT.close()
 
@@ -126,7 +127,7 @@ class BOT(Client, AddCmd):
                 disable_web_page_preview=disable_web_page_preview,
                 **kwargs,
             )
-            return Message.parse_message(message=message)
+            return Message.parse(message=message)
         doc = BytesIO(bytes(text, encoding="utf-8"))
         doc.name = name
         return (await super().send_document(

@@ -10,7 +10,7 @@ from app.core import Message, filters
 @bot.on_message(filters.owner_filter | filters.sudo_filter, group=1)
 @bot.on_edited_message(filters.owner_filter | filters.sudo_filter, group=1)
 async def cmd_dispatcher(bot: BOT, message: Message) -> None:
-    message = Message.parse_message(message)
+    message = Message.parse(message)
     func = Config.CMD_DICT[message.cmd].func
     coro = func(bot, message)
     x = await run_coro(coro, message)

@@ -18,6 +18,7 @@ class Conversation:
         self.chat_id = chat_id
         self.filters = filters
         self.timeout = timeout
+        self.response = None
         self.responses: list = []
         self.set_future()
         from app import bot

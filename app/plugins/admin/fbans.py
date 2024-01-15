@@ -111,7 +111,7 @@ async def fed_ban(bot: BOT, message: Message):
     reason = f"{reason}{proof_str}"
 
     if message.replied:
-        me = await userge.get_chat_member(message.chat.id, "me")
+        me = await bot.get_chat_member(message.chat.id, "me")
         if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
             await message.reply(
                 f"!dban {reason}", disable_web_page_preview=True, del_in=3, block=False
@@ -138,7 +138,12 @@ async def fed_ban(bot: BOT, message: Message):
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
-    resp_str = f"❯❯❯ <b>FBanned</b> {user.mention}\n<b>ID</b>: {user.id}\n<b>Reason</b>: {reason}\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
+    resp_str = (
+        f"❯❯❯ <b>FBanned</b> {user.mention}"
+        f"\n<b>ID</b>: {user.id}"
+        f"\n<b>Reason</b>: {reason}"
+        f"\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
+    )
     if failed:
         resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(
             failed

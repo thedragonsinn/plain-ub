@@ -35,11 +35,15 @@ class _Config:
 
         self.SUDO_TRIGGER: str = os.environ.get("SUDO_TRIGGER", "!")
 
-        self.TLOGGER: bool = False
+        self.PM_LOGGER: bool = False
 
-        self.TLOGGER_CHAT: int = int(os.environ.get("TLOGGER_CHAT", self.LOG_CHAT))
+        self.TAG_LOGGER: bool = False
 
-        self.TLOGGER_TASK = None
+        self.MESSAGE_LOGGER_CHAT: int = int(
+            os.environ.get("MESSAGE_LOGGER_CHAT", self.LOG_CHAT)
+        )
+
+        self.MESSAGE_LOGGER_TASK = None
 
         self.OWNER_ID = int(os.environ.get("OWNER_ID"))
 

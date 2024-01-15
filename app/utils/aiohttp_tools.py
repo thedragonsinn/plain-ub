@@ -38,7 +38,8 @@ class Aio:
         )
         await site.start()
 
-    async def handle_request(self, _):
+    @staticmethod
+    async def handle_request(_):
         return web.Response(text="Web Server Running...")
 
     async def get_json(
@@ -70,7 +71,7 @@ class Aio:
     async def thumb_dl(self, thumb) -> BytesIO | str | None:
         if not thumb or not thumb.startswith("http"):
             return thumb
-        return await in_memory_dl(thumb)  # NOQA
+        return await self.in_memory_dl(thumb)  # NOQA
 
 
 aio = Aio()
