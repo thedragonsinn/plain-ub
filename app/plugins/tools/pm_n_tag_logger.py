@@ -146,8 +146,6 @@ async def runner():
         cached_list = MESSAGE_CACHE.copy()[first_key]
         if not cached_list:
             MESSAGE_CACHE.pop(first_key)
-        global LAST_PM_LOGGED_ID
-        LAST_PM_LOGGED_ID = first_key
         for msg in cached_list:
             if msg.chat.type == ChatType.PRIVATE:
                 await log_pm(message=msg, key=first_key)
@@ -155,6 +153,8 @@ async def runner():
                 await log_chat(message=msg)
             MESSAGE_CACHE[first_key].remove(msg)
             await asyncio.sleep(5)
+        global LAST_PM_LOGGED_ID
+        LAST_PM_LOGGED_ID = first_key
         await asyncio.sleep(15)
 
 
