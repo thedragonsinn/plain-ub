@@ -55,6 +55,7 @@ basic_filters = (
     & ~filters.bot
     & ~filters.service
     & ~filters.chat(chats=[bot.me.id])
+    & ~filters.me
 )
 
 
