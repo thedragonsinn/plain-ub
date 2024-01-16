@@ -10,8 +10,6 @@ LOGGER = CustomDB("COMMON_SETTINGS")
 
 MESSAGE_CACHE: dict[int, list[Message]] = {}
 
-LAST_PM_LOGGED_ID = 0
-
 
 async def init_task():
     tag_check = await LOGGER.find_one({"_id": "tag_logger_switch"})
@@ -137,6 +135,7 @@ def cache_message(message: Message):
 async def runner():
     if not (Config.TAG_LOGGER or Config.PM_LOGGER):
         return
+    last_pm_logged_id = 0
     while True:
         cached_keys = list(MESSAGE_CACHE.keys())
         if not cached_keys:
@@ -148,9 +147,8 @@ async def runner():
             MESSAGE_CACHE.pop(first_key)
         for idx, msg in enumerate(cached_list):
             if msg.chat.type == ChatType.PRIVATE:
-                if LAST_PM_LOGGED_ID != first_key:
-                    global LAST_PM_LOGGED_ID
-                    LAST_PM_LOGGED_ID = first_key
+                if last_pm_logged_id != first_key:
+                    last_pm_logged_id = first_key
                     log_info = True
                 else:
                     log_info = False
@@ -162,7 +160,7 @@ async def runner():
         await asyncio.sleep(15)
 
 
-async def log_pm(message: Message, log_info: bool):
+async def log_pm(message: Message, log_info:bool):
     if log_info:
         await bot.send_message(
             chat_id=Config.MESSAGE_LOGGER_CHAT,
