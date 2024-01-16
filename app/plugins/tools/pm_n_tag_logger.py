@@ -148,10 +148,13 @@ async def runner():
             MESSAGE_CACHE.pop(first_key)
         for idx, msg in enumerate(cached_list):
             if msg.chat.type == ChatType.PRIVATE:
-                if idx == 0:
+                if LAST_PM_LOGGED_ID != first_key:
                     global LAST_PM_LOGGED_ID
                     LAST_PM_LOGGED_ID = first_key
-                await log_pm(message=msg, key=first_key)
+                    log_info = True
+                else:
+                    log_info = False
+                await log_pm(message=msg, log_info=log_info)
             else:
                 await log_chat(message=msg)
             MESSAGE_CACHE[first_key].remove(msg)
@@ -159,8 +162,8 @@ async def runner():
         await asyncio.sleep(15)
 
 
-async def log_pm(message: Message, key):
-    if LAST_PM_LOGGED_ID != key:
+async def log_pm(message: Message, log_info: bool):
+    if log_info:
         await bot.send_message(
             chat_id=Config.MESSAGE_LOGGER_CHAT,
             text=f"#PM\n{message.from_user.mention} [{message.from_user.id}]",
