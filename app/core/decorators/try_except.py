@@ -13,12 +13,16 @@ def try_(func):
             try:
                 result = await func(*args, **kwargs)
                 return result
+            except asyncio.exceptions.CancelledError:
+                text, type = f"<b>FUNC</b>: {func.__name__} Cancelled.", "info"
             except BaseException:
-                text = (
+                text, type = (
                     f"<b>FUNC</b>: {func.__name__}"
-                    f"\n</b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>"
+                    f"\n</b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>",
+                    "error",
                 )
-                await bot.log_text(text=text, name="traceback.txt", type="error")
+            if text:
+                await bot.log_text(text=text, name="traceback.txt", type=type)
 
     else:
 
@@ -27,11 +31,18 @@ def try_(func):
             try:
                 result = func(*args, **kwargs)
                 return result
+            except asyncio.exceptions.CancelledError:
+                text, type = f"<b>FUNC</b>: {func.__name__} Cancelled.", "info"
             except BaseException:
-                text = (
+                text, type = (
                     f"<b>FUNC</b>: {func.__name__}"
-                    f"\n</b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>"
+                    f"\n</b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>",
+                    "error",
                 )
-                bot.log_text(text=text, name="traceback.txt", type="error")
+            if text:
+                asyncio.run_coroutine_threadsafe(
+                    coro=bot.log_text(text=text, name="traceback.txt", type=type),
+                    loop=bot.loop,
+                )
 
     return run_func

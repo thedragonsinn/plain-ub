@@ -1,7 +1,7 @@
 import asyncio
 
 from pyrogram import filters
-from pyrogram.enums import MessageEntityType
+from pyrogram.enums import ChatType, MessageEntityType
 from pyrogram.errors import MessageIdInvalid
 
 from app import BOT, Config, CustomDB, Message, bot, try_
@@ -9,6 +9,8 @@ from app import BOT, Config, CustomDB, Message, bot, try_
 LOGGER = CustomDB("COMMON_SETTINGS")
 
 MESSAGE_CACHE: dict[int, list[Message]] = {}
+
+LAST_PM_LOGGED_ID = 0
 
 
 async def init_task():
@@ -136,22 +138,46 @@ async def runner():
     if not (Config.TAG_LOGGER or Config.PM_LOGGER):
         return
     while True:
-        for cache_id, cached_list in list(MESSAGE_CACHE.items()):
-            if not cached_list:
-                MESSAGE_CACHE.pop(cache_id)
-                continue
-            for msg in cached_list:
-                try:
-                    logged_message = await msg.forward(Config.MESSAGE_LOGGER_CHAT)
-                    await logged_message.reply(
-                        text=f"{msg.from_user.mention} [{msg.from_user.id}]\nMessage: <a href='{msg.link}'>Link</a>",
-                    )
-                except MessageIdInvalid:
-                    await log_deleted_message(msg)
-                MESSAGE_CACHE[cache_id].remove(msg)
-                await asyncio.sleep(5)
-            await asyncio.sleep(15)
-        await asyncio.sleep(5)
+        cached_keys = list(MESSAGE_CACHE.keys())
+        if not cached_keys:
+            await asyncio.sleep(5)
+            continue
+        first_key = cached_keys[0]
+        cached_list = MESSAGE_CACHE.copy()[first_key]
+        if not cached_list:
+            MESSAGE_CACHE.pop(first_key)
+        global LAST_PM_LOGGED_ID
+        LAST_PM_LOGGED_ID = first_key
+        for msg in cached_list:
+            if msg.chat.type == ChatType.PRIVATE:
+                await log_pm(message=msg, key=first_key)
+            else:
+                await log_chat(message=msg)
+            MESSAGE_CACHE[first_key].remove(msg)
+            await asyncio.sleep(5)
+        await asyncio.sleep(15)
+
+
+async def log_pm(message: Message, key):
+    if LAST_PM_LOGGED_ID != key:
+        await bot.send_message(
+            chat_id=Config.MESSAGE_LOGGER_CHAT,
+            text=f"#PM\n{message.from_user.mention} [{message.from_user.id}]",
+        )
+    try:
+        await message.forward(Config.MESSAGE_LOGGER_CHAT)
+    except MessageIdInvalid:
+        await log_deleted_message(message)
+
+
+async def log_chat(message: Message):
+    try:
+        logged = await message.forward(Config.MESSAGE_LOGGER_CHAT)
+        await logged.reply(
+            text=f"#TAG\n{message.from_user.mention} [{message.from_user.id}]\nMessage: <a href='{message.link}'>Link</a>",
+        )
+    except MessageIdInvalid:
+        await log_deleted_message(message)
 
 
 @try_

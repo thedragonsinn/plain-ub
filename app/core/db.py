@@ -1,14 +1,14 @@
+import os
+
 import dns.resolver
 from motor.core import AgnosticClient, AgnosticDatabase
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
-
-from app import Config
 
 dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
 dns.resolver.default_resolver.nameservers = ["8.8.8.8"]
 
 
-DB_CLIENT: AgnosticClient = AsyncIOMotorClient(Config.DB_URL)
+DB_CLIENT: AgnosticClient = AsyncIOMotorClient(os.environ.get("DB_URL"))
 DB: AgnosticDatabase = DB_CLIENT["plain_ub"]
 
 

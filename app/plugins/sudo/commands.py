@@ -7,7 +7,7 @@ async def init_task():
     Config.SUDO_CMD_LIST = [sudo_cmd["_id"] async for sudo_cmd in DB.find()]
 
 
-@bot.add_cmd(cmd="addscmd")
+@bot.add_cmd(cmd="addscmd", allow_sudo=False)
 async def add_scmd(bot: BOT, message: Message):
     """
     CMD: ADDSCMD
@@ -17,18 +17,28 @@ async def add_scmd(bot: BOT, message: Message):
         .addscmd ping | .addscmd -all
     """
     if "-all" in message.flags:
-        cmds = [{"_id": cmd} for cmd in Config.CMD_DICT.keys()]
-        Config.SUDO_CMD_LIST = list(Config.CMD_DICT.keys())
+        cmds = []
+        for cmd, func in Config.CMD_DICT.items():
+            if func.sudo:
+                Config.SUDO_CMD_LIST.append(cmd)
+                cmds.append({"_id": cmd})
         await DB.drop()
         await DB.insert_many(cmds)
         await (await message.reply("All Commands Added to Sudo!")).log()
         return
     cmd = message.flt_input
     response = await message.reply(f"Adding <b>{cmd}</b> to sudo....")
-    if cmd in Config.SUDO_CMD_LIST:
-        await response.edit(f"<b>{cmd}</b> already in Sudo!")
+    func = Config.CMD_DICT.get(cmd, None)
+    if not func:
+        await response.edit(text=f"<b>{cmd}</b> not a valid command.", del_in=10)
         return
-    resp_str = f"<b>{cmd}</b> added to Sudo!"
+    elif not func.sudo:
+        await response.edit(text=f"<b>{cmd}</b> is disabled for sudo users.", del_in=10)
+        return
+    elif cmd in Config.SUDO_CMD_LIST:
+        await response.edit(text=f"<b>{cmd}</b> already in Sudo!", del_in=10)
+        return
+    resp_str = f"#SUDO\n<b>{cmd}</b> added to Sudo!"
     if "-temp" in message.flags:
         resp_str += "\nTemp: True"
     else:
@@ -37,7 +47,7 @@ async def add_scmd(bot: BOT, message: Message):
     await (await response.edit(resp_str)).log()
 
 
-@bot.add_cmd(cmd="delscmd")
+@bot.add_cmd(cmd="delscmd", allow_sudo=False)
 async def del_scmd(bot: BOT, message: Message):
     """
     CMD: DELSCMD
@@ -57,7 +67,7 @@ async def del_scmd(bot: BOT, message: Message):
         await response.edit(f"<b>{cmd}</b> not in Sudo!")
         return
     Config.SUDO_CMD_LIST.remove(cmd)
-    resp_str = f"<b>{cmd}</b> removed from Sudo!"
+    resp_str = f"#SUDO\n<b>{cmd}</b> removed from Sudo!"
     if "-temp" in message.flags:
         resp_str += "\nTemp: True"
     else:

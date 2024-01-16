@@ -76,7 +76,7 @@ class Message(Msg):
         if block:
             x = await task
             await asyncio.sleep(del_in)
-            await x.delete()
+            return x
         else:
             asyncio.create_task(
                 self.async_deleter(del_in=del_in, task=task, block=True)
@@ -98,7 +98,7 @@ class Message(Msg):
                 reply = await self.async_deleter(task=task, del_in=del_in, block=block)
             else:
                 reply = Message.parse((await task))  # fmt:skip
-            self.text = text
+            self.text = reply.text
         else:
             _, reply = await asyncio.gather(
                 super().delete(), self.reply(text, **kwargs)

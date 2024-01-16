@@ -88,7 +88,7 @@ class BOT(Client, AddCmd):
         if type:
             if hasattr(LOGGER, type):
                 getattr(LOGGER, type)(text)
-            text = f"#{type}\n{text}"
+            text = f"#{type.upper()}\n{text}"
 
         return (await self.send_message(
             chat_id=Config.LOG_CHAT,

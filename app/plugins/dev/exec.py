@@ -59,5 +59,8 @@ async def executor(bot: BOT, message: Message) -> Message | None:
 
 if Config.DEV_MODE:
     Config.CMD_DICT["py"] = Config.CMD(
-        func=executor, path=inspect.stack()[0][1], doc=executor.__doc__
+        func=executor,
+        path=inspect.stack()[0][1],
+        doc=executor.__doc__,
+        sudo=False,
     )

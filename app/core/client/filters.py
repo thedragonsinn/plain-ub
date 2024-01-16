@@ -13,14 +13,15 @@ convo_filter = _filters.create(
 def cmd_check(message: Message, trigger: str, sudo: bool = False) -> bool:
     start_str = message.text.split(maxsplit=1)[0]
     cmd = start_str.replace(trigger, "", 1)
-    if sudo and cmd not in Config.SUDO_CMD_LIST:
-        return False
-    return bool(cmd in Config.CMD_DICT.keys())
+    return (
+        bool(cmd in Config.SUDO_CMD_LIST)
+        if sudo
+        else bool(cmd in Config.CMD_DICT.keys())
+    )
 
 
 def basic_check(message: Message):
-    if message.reactions or not message.text or not message.from_user:
-        return True
+    return message.reactions or not message.text or not message.from_user
 
 
 def owner_check(filters, client, message: Message) -> bool:
@@ -31,8 +32,7 @@ def owner_check(filters, client, message: Message) -> bool:
         or (message.chat.id != Config.OWNER_ID and not message.outgoing)
     ):
         return False
-    cmd = cmd_check(message, Config.CMD_TRIGGER)
-    return cmd
+    return cmd_check(message, Config.CMD_TRIGGER)
 
 
 owner_filter = _filters.create(owner_check)
@@ -46,8 +46,21 @@ def sudo_check(filters, client, message: Message) -> bool:
         or message.from_user.id not in Config.SUDO_USERS
     ):
         return False
-    cmd = cmd_check(message, Config.SUDO_TRIGGER, sudo=True)
-    return cmd
+    return cmd_check(message, Config.SUDO_TRIGGER, sudo=True)
 
 
 sudo_filter = _filters.create(sudo_check)
+
+
+def super_user_check(filter, client, message: Message):
+    if (
+        basic_check(message)
+        or not message.text.startswith(Config.SUDO_TRIGGER)
+        or message.from_user.id not in Config.SUPERUSERS
+        or message.from_user.id in Config.DISABLED_SUPERUSERS
+    ):
+        return False
+    return cmd_check(message, Config.SUDO_TRIGGER)
+
+
+super_user_filter = _filters.create(super_user_check)
