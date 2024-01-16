@@ -16,6 +16,7 @@ async def cmd_dispatcher(bot: BOT, message: Message) -> None:
     x = await run_coro(coro, message)
     if not x and message.is_from_owner:
         await message.delete()
+    message.stop_propagation()
 
 
 @bot.on_message(filters.convo_filter, group=0)
