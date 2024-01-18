@@ -107,7 +107,7 @@ class Download:
         if self.custom_file_name:
             return self.custom_file_name
         content_disposition = self.headers.get("Content-Disposition", "")
-        filename_match = re.search(r'filename="(.+)"', content_disposition)
+        filename_match = re.search(r"filename=(.+)", content_disposition)
         if filename_match:
             return filename_match.group(1)
         return get_filename(self.url)
