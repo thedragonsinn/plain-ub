@@ -141,7 +141,7 @@ async def sudo_list(bot: BOT, message: Message):
         if "-id" in message.flags:
             output += f'\n  ID: <code>{user["_id"]}</code>'
         output += f'\n  Super: <b>{user.get("super", False)}</b>'
-        output += f'\n  Disabled: <b>{user.get("disabled", False)}</b>'
+        output += f'\n  Disabled: <b>{user.get("disabled", False)}</b>\n'
         total += 1
     if not total:
         await message.reply("You don't have any SUDO USERS.")
