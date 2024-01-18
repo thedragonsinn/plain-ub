@@ -137,13 +137,14 @@ async def sudo_list(bot: BOT, message: Message):
     output: str = ""
     total = 0
     async for user in SUDO_USERS.find():
-        output += f'<b>• {user["name"]}</b>\n'
+        output += f'\n<b>• {user["name"]}</b>'
         if "-id" in message.flags:
-            output += f'  ID: <code>{user["_id"]}</code>\n'
-        output += f'  Disabled: <b>{user.get("disabled", False)}</b>'
+            output += f'\n  ID: <code>{user["_id"]}</code>'
+        output += f'\n  Super: <b>{user.get("super", False)}</b>'
+        output += f'\n  Disabled: <b>{user.get("disabled", False)}</b>'
         total += 1
     if not total:
         await message.reply("You don't have any SUDO USERS.")
         return
-    output: str = f"List of <b>{total}</b> SUDO USERS:\n\n{output}"
+    output: str = f"List of <b>{total}</b> SUDO USERS:\n{output}"
     await message.reply(output, del_in=30, block=True)
