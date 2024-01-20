@@ -103,10 +103,9 @@ class BOT(Client, AddCmd):
         return (await message.copy(chat_id=Config.LOG_CHAT))  # fmt: skip
 
     async def restart(self, hard=False) -> None:
-        await super().stop(block=False)
         await self.shut_down()
+        await super().stop(block=False)
         if hard:
-            os.remove("logs/app_logs.txt")
             os.execl("/bin/bash", "/bin/bash", "run")
         LOGGER.info("Restarting...")
         os.execl(sys.executable, sys.executable, "-m", "app")

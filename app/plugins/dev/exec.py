@@ -46,9 +46,9 @@ async def executor(bot: BOT, message: Message) -> Message | None:
         await reply.delete()
         return
     if "-s" in message.flags:
-        output = f">> `{output}`"
+        output = f">> ```\n{output}```"
     else:
-        output = f"```python\n> {code}```\n\n>> `{output}`"
+        output = f"```python\n{code}```\n\n```\n{output}```"
     await reply.edit(
         output,
         name="exec.txt",
@@ -59,6 +59,7 @@ async def executor(bot: BOT, message: Message) -> Message | None:
 
 if Config.DEV_MODE:
     Config.CMD_DICT["py"] = Config.CMD(
+        cmd="py",
         func=executor,
         path=inspect.stack()[0][1],
         doc=executor.__doc__,

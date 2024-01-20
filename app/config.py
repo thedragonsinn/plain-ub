@@ -6,9 +6,11 @@ from git import Repo
 
 class _Config:
     class CMD:
-        def __init__(self, func, path: str, doc: str, sudo: bool):
+        def __init__(self, cmd: str, func, path: str, doc: str, sudo: bool):
+            self.cmd = cmd
             self.func = func
             self.path: str = path
+            self.dirname: str = os.path.basename(os.path.dirname(path))
             self.doc: str = doc or "Not Documented."
             self.sudo: bool = sudo
 

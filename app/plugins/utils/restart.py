@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from pyrogram.enums import ChatType
 
@@ -22,7 +23,10 @@ async def restart(bot: BOT, message: Message, u_resp: Message | None = None) -> 
     """
     CMD: RESTART
     INFO: Restart the Bot.
-    FLAGS: -h for hard restart and clearing logs
+    FLAGS:
+        -h: for hard restart.
+        -cl: for clearing logs.
+        -cp: for clearing temp plugins.
     Usage:
         .restart | .restart -h
     """
@@ -30,4 +34,8 @@ async def restart(bot: BOT, message: Message, u_resp: Message | None = None) -> 
     if reply.chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
         os.environ["RESTART_MSG"] = str(reply.id)
         os.environ["RESTART_CHAT"] = str(reply.chat.id)
+    if "-cl" in message.flags:
+        os.remove("logs/app_logs.txt")
+    if "-cp" in message.flags:
+        shutil.rmtree("app/temp")
     await bot.restart(hard="-h" in message.flags)

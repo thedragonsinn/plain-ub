@@ -76,6 +76,7 @@ class Message(Msg):
         if block:
             x = await task
             await asyncio.sleep(del_in)
+            await x.delete()
             return x
         else:
             asyncio.create_task(

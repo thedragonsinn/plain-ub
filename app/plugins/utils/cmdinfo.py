@@ -20,8 +20,8 @@ async def cmd_info(bot: BOT, message: Message):
     branch = Config.REPO.active_branch
     remote_url = os.path.join(str(repo), "blob", str(branch), plugin_path)
     resp_str = (
-        f"<pre language=JS>CMD: {cmd}"
-        f"\nLocal_Path: {cmd_path}</pre>"
+        f"<pre language=css>Command: {cmd}"
+        f"\nPath: {cmd_path}</pre>"
         f"\nLink: <a href='{remote_url}'>Github</a>"
     )
     await message.reply(resp_str, disable_web_page_preview=True)

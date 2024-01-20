@@ -15,11 +15,15 @@ class AddCmd:
                 if isinstance(cmd, list):
                     for _cmd in cmd:
                         Config.CMD_DICT[_cmd] = Config.CMD(
-                            func=func, path=path, doc=func.__doc__, sudo=allow_sudo
+                            cmd=_cmd,
+                            func=func,
+                            path=path,
+                            doc=func.__doc__,
+                            sudo=allow_sudo,
                         )
                 else:
                     Config.CMD_DICT[cmd] = Config.CMD(
-                        func=func, path=path, doc=func.__doc__, sudo=allow_sudo
+                        cmd=cmd, func=func, path=path, doc=func.__doc__, sudo=allow_sudo
                     )
 
             wrapper()
