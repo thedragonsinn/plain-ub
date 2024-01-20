@@ -1,6 +1,6 @@
 import re
 
-from app import BOT, bot, Message
+from app import BOT, Message, bot
 
 
 @bot.add_cmd(cmd="resp")

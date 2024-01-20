@@ -1,8 +1,8 @@
 import importlib
 import inspect
+import os
 import sys
 import traceback
-import os
 
 from app import BOT, Config, Message
 

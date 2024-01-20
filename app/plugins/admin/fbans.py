@@ -46,13 +46,13 @@ async def add_fed(bot: BOT, message: Message):
     """
     data = dict(name=message.input or message.chat.title, type=str(message.chat.type))
     await DB.add_data({"_id": message.chat.id, **data})
-    await (
-        await message.reply(
-            f"#FBANS\n<b>{data['name']}</b>: <code>{message.chat.id}</code> added to FED LIST.",
-            del_in=5,
-            block=False,
-        )
-    ).log()
+    text = f"#FBANS\n<b>{data['name']}</b>: <code>{message.chat.id}</code> added to FED LIST."
+    await message.reply(
+        text=text,
+        del_in=5,
+        block=True,
+    )
+    await bot.log_text(text=text, type="info")
 
 
 @bot.add_cmd(cmd="delf")
@@ -77,13 +77,13 @@ async def remove_fed(bot: BOT, message: Message):
         chat = int(chat)
     deleted: bool | None = await DB.delete_data(id=chat)
     if deleted:
-        await (
-            await message.reply(
-                text=f"#FBANS\n<b>{name}</b><code>{chat}</code> removed from FED LIST.",
-                del_in=8,
-                block=False,
-            )
-        ).log()
+        text = f"#FBANS\n<b>{name}</b><code>{chat}</code> removed from FED LIST."
+        await message.reply(
+            text=text,
+            del_in=8,
+            block=True,
+        )
+        await bot.log_text(text=text, type="info")
     else:
         await message.reply(f"<b>{name or chat}</b> not in FED LIST.", del_in=8)
 

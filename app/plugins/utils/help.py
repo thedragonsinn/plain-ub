@@ -1,5 +1,6 @@
-from app import BOT, Config, Message, bot
 from collections import defaultdict
+
+from app import BOT, Config, Message, bot
 
 
 @bot.add_cmd(cmd="help")
