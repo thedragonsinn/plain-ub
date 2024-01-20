@@ -18,7 +18,7 @@ async def respond(bot: BOT, message: Message):
             chat_id = match.group(1)
             text = message.input
     elif message.input:
-        chat_id, text = message.input.split(" ")
+        chat_id, text = message.input.split(" ", maxsplit=1)
     else:
         await message.reply("Unable to extract chat_id and text.")
         return
