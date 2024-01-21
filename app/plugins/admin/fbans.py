@@ -113,7 +113,7 @@ async def fed_ban(bot: BOT, message: Message):
     if message.replied:
         me = await bot.get_chat_member(message.chat.id, "me")
         if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
-            await message.reply(
+            await message.replied.reply(
                 f"!dban {reason}", disable_web_page_preview=True, del_in=3, block=False
             )
 
