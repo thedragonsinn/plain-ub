@@ -122,8 +122,6 @@ def cache_message(message: Message):
 
 
 async def runner():
-    await asyncio.sleep(20)
-    raise TypeError()
     if not (Config.TAG_LOGGER or Config.PM_LOGGER):
         return
     last_pm_logged_id = 0
