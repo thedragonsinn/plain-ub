@@ -18,7 +18,7 @@ def try_(func):
             except BaseException:
                 text, type = (
                     f"<b>FUNC</b>: {func.__name__}"
-                    f"\n</b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>",
+                    f"\n<b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>",
                     "error",
                 )
             if text:
@@ -36,7 +36,7 @@ def try_(func):
             except BaseException:
                 text, type = (
                     f"<b>FUNC</b>: {func.__name__}"
-                    f"\n</b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>",
+                    f"\n<b>#TRACEBACK</b>:\n<pre language=python>{traceback.format_exc()}</pre>",
                     "error",
                 )
             if text:

@@ -48,7 +48,8 @@ async def logger_switch(bot: BOT, message: Message):
             text=f"#{text.capitalize()}Logger is enabled: <b>{value}</b>!", type="info"
         ),
     )
-    Config.MESSAGE_LOGGER_TASK = asyncio.create_task(runner())
+    if not Config.MESSAGE_LOGGER_TASK or Config.MESSAGE_LOGGER_TASK.done():
+        Config.MESSAGE_LOGGER_TASK = asyncio.create_task(runner())
 
 
 basic_filters = (
@@ -179,7 +180,7 @@ async def log_chat(message: Message):
     try:
         logged = await message.forward(Config.MESSAGE_LOGGER_CHAT)
         await logged.reply(
-            text=f"#TAG\n{mention} [{u_id}]\nMessage: <a href='{message.link}'>Link</a>",
+            text=f"#TAG\n{mention} [{u_id}]\nMessage: \n<a href='{message.link}'>{message.chat.title}</a> ({message.chat.id})",
         )
     except MessageIdInvalid:
         await log_deleted_message(message, data=(mention, u_id))
@@ -191,7 +192,7 @@ async def log_deleted_message(message: Message, data: tuple | None = None):
         mention, u_id = data
     else:
         mention, u_id = message.from_user.mention, message.from_user.id
-    notice = f"{mention} [{u_id}] deleted this message.\n\n---\n\nMessage: <a href='{message.link}'>Link</a>\n\n---\n\n"
+    notice = f"{mention} [{u_id}] deleted this message.\n\n---\n\nMessage: \n<a href='{message.link}'>{message.chat.title or message.chat.first_name}</a> ({message.chat.id})\n\n---\n\n"
     if not message.media:
         await bot.send_message(
             chat_id=Config.MESSAGE_LOGGER_CHAT,
