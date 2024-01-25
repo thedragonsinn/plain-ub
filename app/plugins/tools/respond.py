@@ -13,7 +13,7 @@ async def respond(bot: BOT, message: Message):
     """
     if message.replied:
         inp_text = message.replied.text
-        pattern = r"\((\d+)\)" if "#TAG" in inp_text else r"\[(\d+)\]"
+        pattern = r"\((-\d+)\)" if "#TAG" in inp_text else r"\[(\d+)\]"
         match = re.search(pattern=pattern, string=inp_text)
         if match:
             chat_id = match.group(1)
