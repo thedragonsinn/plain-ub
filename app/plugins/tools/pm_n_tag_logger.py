@@ -5,7 +5,7 @@ from pyrogram import filters
 from pyrogram.enums import ChatType, MessageEntityType, ParseMode
 from pyrogram.errors import MessageIdInvalid
 
-from app import BOT, Config, CustomDB, Message, bot, try_
+from app import BOT, Config, CustomDB, Message, bot
 
 LOGGER = CustomDB("COMMON_SETTINGS")
 
@@ -61,7 +61,6 @@ basic_filters = (
 )
 
 
-@try_
 @bot.on_message(
     filters=basic_filters
     & filters.private
@@ -75,7 +74,6 @@ async def pm_logger(bot: BOT, message: Message):
 tag_filter = filters.create(lambda _, __, ___: Config.TAG_LOGGER)
 
 
-@try_
 @bot.on_message(
     filters=(basic_filters & filters.reply & tag_filter) & ~filters.private, group=2
 )
@@ -89,7 +87,6 @@ async def reply_logger(bot: BOT, message: Message):
     message.continue_propagation()
 
 
-@try_
 @bot.on_message(
     filters=(basic_filters & filters.mentioned & tag_filter) & ~filters.private, group=2
 )
@@ -104,7 +101,6 @@ async def mention_logger(bot: BOT, message: Message):
     message.continue_propagation()
 
 
-@try_
 @bot.on_message(
     filters=(basic_filters & (filters.text | filters.media) & tag_filter)
     & ~filters.private,
@@ -117,7 +113,6 @@ async def username_logger(bot: BOT, message: Message):
     message.continue_propagation()
 
 
-@try_
 def cache_message(message: Message):
     m_id = message.chat.id
     if len(MESSAGE_CACHE[m_id]) > 10:
@@ -126,8 +121,9 @@ def cache_message(message: Message):
     MESSAGE_CACHE[m_id].append(message)
 
 
-@try_
 async def runner():
+    await asyncio.sleep(20)
+    raise TypeError()
     if not (Config.TAG_LOGGER or Config.PM_LOGGER):
         return
     last_pm_logged_id = 0
@@ -186,7 +182,6 @@ async def log_chat(message: Message):
         await log_deleted_message(message, data=(mention, u_id))
 
 
-@try_
 async def log_deleted_message(message: Message, data: tuple | None = None):
     if data:
         mention, u_id = data

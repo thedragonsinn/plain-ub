@@ -14,6 +14,9 @@ class _Config:
             self.doc: str = doc or "Not Documented."
             self.sudo: bool = sudo
 
+        def __str__(self):
+            return json.dumps(self.__dict__, indent=4, ensure_ascii=False, default=str)
+
     def __init__(self):
         self.CMD_DICT: dict[str, _Config.CMD] = {}
 

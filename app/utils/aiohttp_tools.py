@@ -1,11 +1,14 @@
 import json
+import logging
 import os
 from io import BytesIO
 
 from aiohttp import ClientSession, web
 
-from app import LOGGER, Config
+from app import Config
 from app.utils.media_helper import get_filename
+
+LOGGER = logging.getLogger("PLAIN-UB")
 
 
 class Aio:

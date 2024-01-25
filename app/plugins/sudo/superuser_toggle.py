@@ -1,6 +1,6 @@
 from pyrogram import filters
 
-from app import BOT, Config, Message, bot, try_
+from app import BOT, Config, Message, bot
 from app.plugins.sudo.users import SUDO_USERS
 
 
@@ -16,7 +16,6 @@ async def disable_su(bot: BOT, message: Message):
     )
 
 
-@try_
 @bot.on_message(
     filters=filters.command(commands="enable_su", prefixes=Config.SUDO_TRIGGER)
     & filters.create(
