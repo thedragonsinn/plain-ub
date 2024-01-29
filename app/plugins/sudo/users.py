@@ -3,7 +3,6 @@ import asyncio
 from pyrogram.types import User
 
 from app import BOT, Config, CustomDB, Message, bot
-from app.plugins.admin.fbans import _User
 from app.utils.helpers import extract_user_data, get_name
 
 SUDO = CustomDB("COMMON_SETTINGS")
@@ -53,23 +52,22 @@ async def add_sudo(bot: BOT, message: Message) -> Message | None:
     """
     response = await message.reply("Extracting User info...")
     user, _ = await message.extract_user_n_reason()
-    if isinstance(user, str):
-        await response.edit(user)
-        return
     if not isinstance(user, User):
-        user: _User = _User(id=message.text_list[1])
-    config, text = (
-        (Config.SUPERUSERS, "Super Users")
-        if "-su" in message.flags
-        else (Config.SUDO_USERS, "Sudo Users.")
-    )
-    if user.id in config:
+        await response.edit("unable to extract user info.")
+        return
+    if "-su" in message.flags:
+        add_list, remove_list = Config.SUPERUSERS, Config.SUDO_USERS
+        text = "Super Users"
+    else:
+        add_list, remove_list = Config.SUDO_USERS, Config.SUPERUSERS
+        text = "Sudo Users"
+    if user.id in add_list:
         await response.edit(
             text=f"{get_name(user)} already in Sudo with same privileges!", del_in=5
         )
         return
     response_str = f"#SUDO\n{user.mention} added to {text} List."
-    config.append(user.id)
+    add_and_remove(user.id, add_list, remove_list)
     if "-temp" not in message.flags:
         await SUDO_USERS.add_data(
             {
@@ -102,27 +100,36 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
         await response.edit(user)
         return
     if not isinstance(user, User):
-        user: _User = _User(id=message.text_list[1])
-    config, text = (
-        (Config.SUPERUSERS, "Super Users")
-        if "-su" in message.flags
-        else (Config.SUDO_USERS, "Sudo Users.")
-    )
-    if user.id not in config:
-        await response.edit(text=f"{get_name(user)} not in {text}!", del_in=5)
+        await response.edit("unable to extract user info.")
         return
-    config.remove(user.id)
-    response_str = f"{user.mention} removed from {text} List"
+    if user.id not in {*Config.SUDO_USERS, *Config.SUPERUSERS}:
+        await response.edit(text=f"{get_name(user)} not in Sudo!", del_in=5)
+        return
+    if "-su" in message.flags:
+        response_str = f"{user.mention}'s Super User access is revoked to Sudo only."
+        add_and_remove(user.id, Config.SUDO_USERS, Config.SUPERUSERS)
+    else:
+        add_and_remove(user.id, remove_list=Config.SUPERUSERS)
+        add_and_remove(user.id, remove_list=Config.SUDO_USERS)
+        response_str = f"{user.mention}'s access to bot has been removed."
     if "-temp" not in message.flags:
         if "-su" in message.flags:
-            response_str += " and added to Sudo."
-            await SUDO_USERS.add_data({"_id": user.id, "super": "-su" in message.flags})
+            await SUDO_USERS.add_data({"_id": user.id, "super": False})
         else:
             await SUDO_USERS.delete_data(id=user.id)
     else:
         response_str += "\n<b>Temporary</b>: True"
     await response.edit(text=response_str, del_in=5)
     await response.log()
+
+
+def add_and_remove(
+    u_id: int, add_list: list | None = None, remove_list: list | None = None
+):
+    if add_list is not None and u_id not in add_list:
+        add_list.append(u_id)
+    if remove_list is not None and u_id in remove_list:
+        remove_list.remove(u_id)
 
 
 @bot.add_cmd(cmd="vsudo")

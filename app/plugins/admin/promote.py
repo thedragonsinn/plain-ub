@@ -67,8 +67,6 @@ async def promote_or_demote(bot: BOT, message: Message) -> None:
             chat_id=message.chat.id, user_id=user.id, privileges=privileges
         )
         if promote:
-            # Let server promote admin before setting title
-            # Bot is too fast moment 😂😂😂
             await asyncio.sleep(1)
             await bot.set_administrator_title(
                 chat_id=message.chat.id, user_id=user.id, title=title or "Admin"

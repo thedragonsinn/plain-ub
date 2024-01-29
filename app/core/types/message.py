@@ -1,12 +1,14 @@
 import asyncio
 from functools import cached_property
 
+from pyrogram.enums import MessageEntityType
 from pyrogram.errors import MessageDeleteForbidden
 from pyrogram.filters import Filter
 from pyrogram.types import Message as Msg
 from pyrogram.types import User
 
 from app import Config
+from app.core.conversation import Conversation
 
 
 class Message(Msg):
@@ -19,7 +21,7 @@ class Message(Msg):
     def cmd(self) -> str | None:
         raw_cmd = self.text_list[0]
         cmd = raw_cmd.replace(self.trigger, "", 1)
-        return cmd if cmd in Config.CMD_DICT else None
+        return cmd if cmd in Config.CMD_DICT.keys() else None
 
     @cached_property
     def flags(self) -> list:
@@ -27,7 +29,7 @@ class Message(Msg):
 
     @cached_property
     def flt_input(self) -> str:
-        split_lines = self.input.split("\n", maxsplit=1)
+        split_lines = self.input.split(sep="\n", maxsplit=1)
         split_lines[0] = " ".join(
             [word for word in split_lines[0].split(" ") if word not in self.flags]
         )
@@ -91,9 +93,10 @@ class Message(Msg):
         except MessageDeleteForbidden:
             pass
 
-    async def edit(self, text, del_in: int = 0, block=True, **kwargs) -> "Message":
+    async def edit(
+        self, text, del_in: int = 0, block=True, name: str = "output.txt", **kwargs
+    ) -> "Message":
         if len(str(text)) < 4096:
-            kwargs.pop("name", "")
             task = super().edit_text(text=text, **kwargs)
             if del_in:
                 reply = await self.async_deleter(task=task, del_in=del_in, block=block)
@@ -102,41 +105,41 @@ class Message(Msg):
             self.text = reply.text
         else:
             _, reply = await asyncio.gather(
-                super().delete(), self.reply(text, **kwargs)
+                super().delete(), self.reply(text, name=name, **kwargs)
             )
         return reply
 
-    async def extract_user_n_reason(self) -> list[User | str | Exception, str | None]:
+    async def extract_user_n_reason(self) -> tuple[User | str | Exception, str | None]:
         if self.replied:
-            return [self.replied.from_user, self.flt_input]
-        inp_list = self.flt_input.split(maxsplit=1)
-        if not inp_list:
-            return [
+            return self.replied.from_user, self.flt_input
+        input_text_list = self.flt_input.split(maxsplit=1)
+        if not input_text_list:
+            return (
                 "Unable to Extract User info.\nReply to a user or input @ | id.",
-                "",
-            ]
-        user = inp_list[0]
+                None,
+            )
+        user = input_text_list[0]
         reason = None
-        if len(inp_list) >= 2:
-            reason = inp_list[1]
+        if len(input_text_list) >= 2:
+            reason = input_text_list[1]
+        if self.entities:
+            for entity in self.entities:
+                if entity == MessageEntityType.MENTION:
+                    return entity.user, reason
         if user.isdigit():
             user = int(user)
         elif user.startswith("@"):
             user = user.strip("@")
         try:
-            return [await self._client.get_users(user_ids=user), reason]
-        except Exception as e:
-            return [e, reason]
+            return (await self._client.get_users(user_ids=user)), reason
+        except Exception:
+            return user, reason
 
     async def get_response(self, filters: Filter = None, timeout: int = 8):
-        try:
-            async with self._client.Convo(
-                chat_id=self.chat.id, filters=filters, timeout=timeout
-            ) as convo:
-                response: Message | None = await convo.get_response()
-                return response
-        except TimeoutError:
-            return
+        response: Message | None = await Conversation.get_resp(
+            client=self._client, chat_id=self.chat.id, filters=filters, timeout=timeout
+        )
+        return response
 
     async def log(self):
         return (await self.copy(Config.LOG_CHAT))  # fmt:skip

@@ -1,8 +1,7 @@
 import asyncio
-from functools import cached_property
 
 from pyrogram import filters
-from pyrogram.enums import ChatMemberStatus
+from pyrogram.enums import ChatMemberStatus, ChatType
 from pyrogram.types import Chat, User
 
 from app import BOT, Config, CustomDB, Message, bot
@@ -10,7 +9,7 @@ from app.utils.helpers import get_name
 
 DB = CustomDB("FED_LIST")
 
-BASIC_FILTER = filters.user([609517172, 2059887769]) & ~filters.service  # NOQA
+BASIC_FILTER = filters.user([609517172, 2059887769]) & ~filters.service
 
 FBAN_REGEX = filters.regex(
     r"(New FedBan|"
@@ -24,16 +23,6 @@ FBAN_REGEX = filters.regex(
 
 
 UNFBAN_REGEX = filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)")
-
-
-class _User(User):
-    def __init__(self, id):
-        super().__init__(id=id)
-        self.first_name = id
-
-    @cached_property
-    def mention(self) -> str:
-        return f"<a href='tg://user?id={self.id}'>{self.id}</a>"
 
 
 @bot.add_cmd(cmd="addf")
@@ -96,8 +85,12 @@ async def fed_ban(bot: BOT, message: Message):
         await progress.edit(user)
         return
     if not isinstance(user, User):
-        user = _User(id=message.text_list[1])
-    if user.id in [Config.OWNER_ID, *Config.SUDO_USERS]:
+        user_id = user
+        user_mention = f"<a href='tg://user?id={user_id}'>{user_id}</a>"
+    else:
+        user_id = user.id
+        user_mention = user.mention
+    if user_id in [Config.OWNER_ID, *Config.SUDO_USERS, *Config.SUDO_USERS]:
         await progress.edit("Cannot Fban Owner/Sudo users.")
         return
     proof_str: str = ""
@@ -110,17 +103,20 @@ async def fed_ban(bot: BOT, message: Message):
 
     reason = f"{reason}{proof_str}"
 
-    if message.replied:
-        me = await bot.get_chat_member(message.chat.id, "me")
+    if message.replied and not message.chat.type == ChatType.PRIVATE:
+        me = await bot.get_chat_member(chat_id=message.chat.id, user_id="me")
         if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
             await message.replied.reply(
-                f"!dban {reason}", disable_web_page_preview=True, del_in=3, block=False
+                text=f"!dban {reason}",
+                disable_web_page_preview=True,
+                del_in=3,
+                block=False,
             )
 
     await progress.edit("❯❯")
     total: int = 0
     failed: list[str] = []
-    fban_cmd: str = f"/fban <a href='tg://user?id={user.id}'>{user.id}</a> {reason}"
+    fban_cmd: str = f"/fban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"
     async for fed in DB.find():
         chat_id = int(fed["_id"])
         total += 1
@@ -139,8 +135,8 @@ async def fed_ban(bot: BOT, message: Message):
         await progress.edit("You Don't have any feds connected!")
         return
     resp_str = (
-        f"❯❯❯ <b>FBanned</b> {user.mention}"
-        f"\n<b>ID</b>: {user.id}"
+        f"❯❯❯ <b>FBanned</b> {user_mention}"
+        f"\n<b>ID</b>: {user_id}"
         f"\n<b>Reason</b>: {reason}"
         f"\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
     )
@@ -168,12 +164,16 @@ async def un_fban(bot: BOT, message: Message):
         await progress.edit(user)
         return
     if not isinstance(user, User):
-        user = _User(id=message.text_list[1])
+        user_id = user
+        user_mention = f"<a href='tg://user?id={user_id}'>{user_id}</a>"
+    else:
+        user_id = user.id
+        user_mention = user.mention
 
     await progress.edit("❯❯")
     total: int = 0
     failed: list[str] = []
-    unfban_cmd: str = f"/unfban <a href='tg://user?id={user.id}'>{user.id}</a> {reason}"
+    unfban_cmd: str = f"/unfban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"
     async for fed in DB.find():
         chat_id = int(fed["_id"])
         total += 1
@@ -189,7 +189,9 @@ async def un_fban(bot: BOT, message: Message):
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
-    resp_str = f"❯❯❯ <b>Un-FBanned {user.mention}\nID: {user.id}\nReason: {reason}\n"
+    resp_str = (
+        f"❯❯❯ <b>Un-FBanned {user_mention}" f"\nID: {user_id}" f"\nReason: {reason}\n"
+    )
     if failed:
         resp_str += f"Failed in: {len(failed)}/{total}\n• " + "\n• ".join(failed)
     else:

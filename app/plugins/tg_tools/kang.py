@@ -42,7 +42,7 @@ async def kang_sticker(bot: BOT, message: Message):
             text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>"
         )
         return
-    async with bot.Convo(chat_id="stickers", timeout=60) as convo:
+    async with bot.Convo(client=bot, chat_id="stickers", timeout=60) as convo:
         await convo.send_message(text="/addsticker", get_response=True, timeout=5)
         await convo.send_message(text=pack_name, get_response=True, timeout=5)
         if kwargs.get("sticker"):
@@ -66,7 +66,7 @@ async def kang_sticker(bot: BOT, message: Message):
 async def create_n_kang(
     kwargs: dict, pack_title: str, pack_name: str, message: Message
 ):
-    async with bot.Convo(chat_id="stickers", timeout=60) as convo:
+    async with bot.Convo(client=bot, chat_id="stickers", timeout=60) as convo:
         await convo.send_message(text=kwargs["cmd"], get_response=True, timeout=5)
         await convo.send_message(text=pack_title, get_response=True, timeout=5)
         if kwargs.get("sticker"):
@@ -177,11 +177,7 @@ async def video_kang(message: Message, ff=False) -> dict:
     limit = 50
     is_video = True
     return dict(
-        cmd=cmd,
-        limit=limit,
-        is_video=is_video,
-        file=output_file,
-        path=down_dir,
+        cmd=cmd, limit=limit, is_video=is_video, file=output_file, path=down_dir
     )
 
 
@@ -223,9 +219,5 @@ async def sticker_kang(message: Message) -> dict:
         input_file: BytesIO = await message.download(in_memory=True)
         input_file.seek(0)
         return dict(
-            emoji=emoji,
-            file=input_file,
-            cmd="/newvideo",
-            is_video=True,
-            limit=50,
+            emoji=emoji, file=input_file, cmd="/newvideo", is_video=True, limit=50
         )

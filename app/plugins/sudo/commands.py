@@ -28,7 +28,7 @@ async def add_scmd(bot: BOT, message: Message):
         return
     cmd = message.flt_input
     response = await message.reply(f"Adding <b>{cmd}</b> to sudo....")
-    func = Config.CMD_DICT.get(cmd, None)
+    func = Config.CMD_DICT.get(cmd)
     if not func:
         await response.edit(text=f"<b>{cmd}</b> not a valid command.", del_in=10)
         return

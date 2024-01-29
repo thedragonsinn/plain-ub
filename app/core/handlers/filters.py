@@ -2,7 +2,7 @@ from pyrogram import filters as _filters
 from pyrogram.types import Message
 
 from app import Config
-from app.core.client.conversation import Conversation
+from app.core.conversation import Conversation
 
 convo_filter = _filters.create(
     lambda _, __, message: (message.chat.id in Conversation.CONVO_DICT.keys())
@@ -13,11 +13,14 @@ convo_filter = _filters.create(
 def cmd_check(message: Message, trigger: str, sudo: bool = False) -> bool:
     start_str = message.text.split(maxsplit=1)[0]
     cmd = start_str.replace(trigger, "", 1)
-    return (
-        bool(cmd in Config.SUDO_CMD_LIST)
-        if sudo
-        else bool(cmd in Config.CMD_DICT.keys())
-    )
+    cmd_obj = Config.CMD_DICT.get(cmd)
+    if not cmd_obj:
+        return False
+    if sudo:
+        in_sudo = cmd in Config.SUDO_CMD_LIST
+        has_access = Config.CMD_DICT[cmd].sudo
+        return in_sudo and has_access
+    return True
 
 
 def basic_check(message: Message):

@@ -62,6 +62,5 @@ if Config.DEV_MODE:
         cmd="py",
         func=executor,
         path=inspect.stack()[0][1],
-        doc=executor.__doc__,
         sudo=False,
     )

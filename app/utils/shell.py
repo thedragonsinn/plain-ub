@@ -1,6 +1,5 @@
 import asyncio
 import os
-from typing import AsyncIterable
 
 
 async def run_shell_cmd(cmd: str) -> str:
@@ -35,24 +34,28 @@ async def get_duration(file) -> int:
 
 
 class AsyncShell:
-    def __init__(self, process: asyncio.create_subprocess_shell):
+    def __init__(
+        self,
+        process: asyncio.create_subprocess_shell,
+    ):
         self.process: asyncio.create_subprocess_shell = process
         self.full_std: str = ""
+        self.last_line: str = ""
         self.is_done: bool = False
         self._task: asyncio.Task | None = None
 
     async def read_output(self) -> None:
-        while True:
-            line: str = (await self.process.stdout.readline()).decode("utf-8")
-            if not line:
-                break
-            self.full_std += line
+        async for line in self.process.stdout:
+            decoded_line = line.decode("utf-8")
+            self.full_std += decoded_line
+            self.last_line = decoded_line
         self.is_done = True
         await self.process.wait()
 
-    async def get_output(self) -> AsyncIterable:
+    async def get_output(self):
         while not self.is_done:
-            yield self.full_std
+            yield self.full_std if len(self.full_std) < 4000 else self.last_line
+            await asyncio.sleep(0)
 
     def cancel(self) -> None:
         if not self.is_done:

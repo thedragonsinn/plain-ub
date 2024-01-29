@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 from logging import (
     ERROR,
     INFO,
@@ -11,28 +11,40 @@ from logging import (
     handlers,
 )
 
-os.makedirs("logs", exist_ok=True)
+from app import bot
+
+os.makedirs(name="logs", exist_ok=True)
+
+LOGGER = getLogger("PLAIN-UB")
 
 
 class TgErrorHandler(Handler):
     def emit(self, log_record):
-        if log_record.levelno < ERROR:
-            return
-        from app import bot
         if not bot.is_connected:
-            return 
+            return
+        self.format(log_record)
+        chat = ""
+        if hasattr(log_record, "tg_message"):
+            chat = (
+                log_record.tg_message.chat.title
+                or log_record.tg_message.chat.first_name
+            )
         text = (
             f"#{log_record.levelname} #TRACEBACK"
+            f"<b>\nChat</b>: {chat}"
             f"\n<b>Line No</b>: <code>{log_record.lineno}</code>"
             f"\n<b>Func</b>: <code>{log_record.funcName}</code>"
             f"\n<b>Module</b>: <code>{log_record.module}</code>"
             f"\n<b>Time</b>: <code>{log_record.asctime}</code>"
-            f"\n<b>Error Message</b>:\n<pre language=python>{log_record.message}</pre>"
+            f"\n<b>Error Message</b>:\n<pre language=python>{log_record.exc_text or log_record.message}</pre>"
         )
         asyncio.run_coroutine_threadsafe(
             coro=bot.log_text(text=text, name="traceback.txt"), loop=bot.loop
         )
 
+
+custom_handler = TgErrorHandler()
+custom_handler.setLevel(ERROR)
 
 basicConfig(
     level=INFO,
@@ -45,10 +57,10 @@ basicConfig(
             maxBytes=5 * 1024 * 1024,
             backupCount=2,
             encoding=None,
-            delay=0,
+            delay=False,
         ),
         StreamHandler(),
-        TgErrorHandler(),
+        custom_handler,
     },
 )
 

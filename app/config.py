@@ -1,21 +1,19 @@
-import json
 import os
 
 from git import Repo
 
+from app.utils import Str
 
-class _Config:
-    class CMD:
-        def __init__(self, cmd: str, func, path: str, doc: str, sudo: bool):
+
+class _Config(Str):
+    class CMD(Str):
+        def __init__(self, cmd: str, func, path: str, sudo: bool):
             self.cmd = cmd
             self.func = func
             self.path: str = path
             self.dirname: str = os.path.basename(os.path.dirname(path))
-            self.doc: str = doc or "Not Documented."
+            self.doc: str = func.__doc__ or "Not Documented."
             self.sudo: bool = sudo
-
-        def __str__(self):
-            return json.dumps(self.__dict__, indent=4, ensure_ascii=False, default=str)
 
     def __init__(self):
         self.CMD_DICT: dict[str, _Config.CMD] = {}
@@ -63,9 +61,6 @@ class _Config:
         self.UPSTREAM_REPO: str = os.environ.get(
             "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"
         )
-
-    def __str__(self):
-        return json.dumps(self.__dict__, indent=4, ensure_ascii=False, default=str)
 
 
 Config = _Config()

@@ -3,7 +3,7 @@ import asyncio
 from git import Repo
 
 from app import BOT, Config, Message, bot
-from app.plugins.utils.restart import restart
+from app.plugins.sys_utils.restart import restart
 
 
 async def get_commits(repo: Repo) -> str | None:

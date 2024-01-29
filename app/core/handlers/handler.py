@@ -1,10 +1,9 @@
 import asyncio
-import traceback
 
 from pyrogram.types import Message as Msg
 
-from app import BOT, Config, bot
-from app.core import Message, filters
+from app import BOT, Config, Message, bot
+from app.core.handlers import filters
 
 
 @bot.on_message(
@@ -16,10 +15,15 @@ from app.core import Message, filters
 async def cmd_dispatcher(bot: BOT, message: Message) -> None:
     message = Message.parse(message)
     func = Config.CMD_DICT[message.cmd].func
-    coro = func(bot, message)
-    x = await run_coro(coro, message)
-    if not x and message.is_from_owner:
-        await message.delete()
+    task = asyncio.Task(func(bot, message), name=message.task_id)
+    try:
+        await task
+        if message.is_from_owner:
+            await message.delete()
+    except asyncio.exceptions.CancelledError:
+        await bot.log_text(text=f"<b>#Cancelled</b>:\n<code>{message.text}</code>")
+    except Exception as e:
+        bot.log.error(e, exc_info=True, extra={"tg_message": message})
     message.stop_propagation()
 
 
@@ -32,21 +36,3 @@ async def convo_handler(bot: BOT, message: Msg):
     conv_obj.responses.append(message)
     conv_obj.response.set_result(message)
     message.continue_propagation()
-
-
-async def run_coro(coro, message: Message) -> None | int:
-    try:
-        task = asyncio.Task(coro, name=message.task_id)
-        await task
-    except asyncio.exceptions.CancelledError:
-        await bot.log_text(text=f"<b>#Cancelled</b>:\n<code>{message.text}</code>")
-    except BaseException:
-        text = (
-            "#Traceback"
-            f"\n<b>Function:</b> {coro.__name__}"
-            f"\n<b>Chat:</b> {message.chat.title or message.from_user.first_name}"
-            f"\n<b>Traceback:</b>"
-            f"\n<pre language=python>{traceback.format_exc()}</pre>"
-        )
-        await bot.log_text(text=text, type="error")
-        return 1

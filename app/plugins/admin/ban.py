@@ -23,7 +23,7 @@ async def ban_or_unban(bot: BOT, message: Message) -> None:
     try:
         await action
         await message.reply(
-            text=f"{message.cmd.capitalize()}ned: {user.mention}\nReason: {reason}."
+            text=f"{message.cmd.capitalize()}ned: {user.mention}\nReason: {reason}"
         )
     except Exception as e:
         await message.reply(text=e, del_in=10)
@@ -40,7 +40,7 @@ async def kick_user(bot: BOT, message: Message):
         await asyncio.sleep(1)
         await bot.unban_chat_member(chat_id=message.chat.id, user_id=user.id)
         await message.reply(
-            text=f"{message.cmd.capitalize()}ed: {user.mention}\nReason: {reason}."
+            text=f"{message.cmd.capitalize()}ed: {user.mention}\nReason: {reason}"
         )
     except Exception as e:
         await message.reply(text=e, del_in=10)

@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import shutil
@@ -9,11 +8,12 @@ import aiohttp
 from pyrogram.types import Message as Msg
 
 from app.core.types.message import Message
+from app.utils import Str
 from app.utils.helpers import progress
 from app.utils.media_helper import bytes_to_mb, get_filename, get_type
 
 
-class DownloadedFile:
+class DownloadedFile(Str):
     def __init__(
             self,
             name: str,
@@ -26,15 +26,8 @@ class DownloadedFile:
         self.size = size
         self.type = get_type(path=name)
 
-    def __str__(self):
-        return json.dumps(
-            self.__dict__,
-            indent=4,
-            ensure_ascii=False,
-            default=str)
 
-
-class Download:
+class Download(Str):
     """Download a file in async using aiohttp.
 
     Attributes:

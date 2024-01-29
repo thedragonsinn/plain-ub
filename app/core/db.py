@@ -4,15 +4,17 @@ import dns.resolver
 from motor.core import AgnosticClient, AgnosticDatabase
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 
+from app.utils import Str
+
 dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
 dns.resolver.default_resolver.nameservers = ["8.8.8.8"]
 
 
-DB_CLIENT: AgnosticClient = AsyncIOMotorClient(os.environ.get("DB_URL"))
+DB_CLIENT: AgnosticClient = AsyncIOMotorClient(os.environ.get("DB_URL").strip())
 DB: AgnosticDatabase = DB_CLIENT["plain_ub"]
 
 
-class CustomDB(AsyncIOMotorCollection):
+class CustomDB(AsyncIOMotorCollection, Str):
     def __init__(self, collection_name: str):
         super().__init__(database=DB, name=collection_name)
 

@@ -1,5 +1,5 @@
 from app import BOT, Message, bot
-from app.plugins.tools.get_message import parse_link
+from app.plugins.tg_tools.get_message import parse_link
 
 
 @bot.add_cmd(cmd="reply")

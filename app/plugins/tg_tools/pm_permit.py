@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 
 from pyrogram import filters
 from pyrogram.enums import ChatType
@@ -16,15 +17,12 @@ allowed_filter = filters.create(lambda _, __, m: m.chat.id in ALLOWED_USERS)
 
 guard_check = filters.create(lambda _, __, ___: Config.PM_GUARD)
 
-RECENT_USERS: dict = {}
+RECENT_USERS: dict = defaultdict(int)
 
 
 async def init_task():
     guard = await PM_GUARD.find_one({"_id": "guard_switch"})
-    if not guard:
-        return
-    global ALLOWED_USERS
-    ALLOWED_USERS = [user_id["_id"] async for user_id in PM_USERS.find()]
+    [ALLOWED_USERS.append(user_id["_id"]) async for user_id in PM_USERS.find()]
     Config.PM_GUARD = guard["value"]
 
 
@@ -36,7 +34,6 @@ async def init_task():
 )
 async def handle_new_pm(bot: BOT, message: Message):
     user_id = message.from_user.id
-    RECENT_USERS[user_id] = RECENT_USERS.get(user_id, 0)
     if RECENT_USERS[user_id] == 0:
         await bot.log_text(
             text=f"#PMGUARD\n{message.from_user.mention} [{user_id}] has messaged you.",
@@ -66,9 +63,11 @@ async def handle_new_pm(bot: BOT, message: Message):
 )
 async def auto_approve(bot: BOT, message: Message):
     message = Message.parse(message=message)
-    await message.reply("Auto-Approved to PM.", del_in=5)
     ALLOWED_USERS.append(message.chat.id)
-    await PM_USERS.insert_one({"_id": message.chat.id})
+    await asyncio.gather(
+        PM_USERS.insert_one({"_id": message.chat.id}),
+        message.reply("Auto-Approved to PM.", del_in=5),
+    )
 
 
 @bot.add_cmd(cmd="pmguard")
@@ -91,12 +90,16 @@ async def pmguard(bot: BOT, message: Message):
         PM_GUARD.add_data({"_id": "guard_switch", "value": value}),
         message.reply(text=f"PM Guard is enabled: <b>{value}</b>!", del_in=8),
     )
-    await init_task()
 
 
 @bot.add_cmd(cmd=["a", "allow"])
 async def allow_pm(bot: BOT, message: Message):
-    user_id, name = get_user_name(message)
+    """
+    CMD: A | ALLOW
+    INFO: Approve a User to PM.
+    USAGE: .a|.allow [reply to a user or in pm]
+    """
+    user_id, name = get_userID_name(message)
     if not user_id:
         await message.reply(
             "Unable to extract User to allow.\n<code>Give user id | Reply to a user | use in PM.</code>"
@@ -115,7 +118,7 @@ async def allow_pm(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="nopm")
 async def no_pm(bot: BOT, message: Message):
-    user_id, name = get_user_name(message)
+    user_id, name = get_userID_name(message)
     if not user_id:
         await message.reply(
             "Unable to extract User to Dis-allow.\n<code>Give user id | Reply to a user | use in PM.</code>"
@@ -131,7 +134,7 @@ async def no_pm(bot: BOT, message: Message):
     )
 
 
-def get_user_name(message: Message) -> tuple:
+def get_userID_name(message: Message) -> tuple:
     if message.flt_input and message.flt_input.isdigit():
         user_id = int(message.flt_input)
         return user_id, user_id
