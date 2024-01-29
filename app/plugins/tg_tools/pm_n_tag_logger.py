@@ -163,7 +163,7 @@ async def log_pm(message: Message, log_info: bool):
             f"\n\n---\n\n"
             f"Message: \n<a href='{message.link}'>{message.chat.title or message.chat.first_name}</a> ({message.chat.id})"
             f"\n\n---\n\n"
-            f"{notice}Caption:\n{message.caption or 'No Caption in media.'}"
+            f"Caption:\n{message.caption or 'No Caption in media.'}"
         )
 
         await message.copy(Config.MESSAGE_LOGGER_CHAT, caption=notice)
@@ -179,7 +179,7 @@ async def log_chat(message: Message):
         f"\n\n---\n\n"
         f"Message: \n<a href='{message.link}'>{message.chat.title or message.chat.first_name}</a> ({message.chat.id})"
         f"\n\n---\n\n"
-        f"{notice}Caption:\n{message.caption or 'No Caption in media.'}"
+        f"Caption:\n{message.caption or 'No Caption in media.'}"
     )
 
     if message.reply_to_message:
