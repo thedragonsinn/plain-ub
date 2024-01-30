@@ -21,9 +21,9 @@ RECENT_USERS: dict = defaultdict(int)
 
 
 async def init_task():
-    guard = await PM_GUARD.find_one({"_id": "guard_switch"})
+    guard = (await PM_GUARD.find_one({"_id": "guard_switch"})) or {}
     [ALLOWED_USERS.append(user_id["_id"]) async for user_id in PM_USERS.find()]
-    Config.PM_GUARD = guard["value"]
+    Config.PM_GUARD = guard.get("value", False)
 
 
 @bot.on_message(
