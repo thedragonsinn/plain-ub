@@ -22,9 +22,9 @@ async def rename(bot: BOT, message: Message):
     """
     input = message.flt_input
     response = await message.reply("Checking input...")
-    if (not message.replied or not message.replied.media) and not message.flt_input:
+    if not message.replied or not message.replied.media or not message.flt_input:
         await response.edit(
-            "Invalid input...\nReply to a message containing media or give a link and filename with cmd."
+            "Invalid input...\nReply to a message containing media or give a link and a filename with cmd."
         )
         return
     dl_path = os.path.join("downloads", str(time.time()))
@@ -37,7 +37,7 @@ async def rename(bot: BOT, message: Message):
             response=response,
         )
     else:
-        url, file_name = input.split()
+        url, file_name = input.split(maxsplit=1)
         dl_obj: Download = await Download.setup(
             url=url, path=dl_path, message_to_edit=response, custom_file_name=file_name
         )

@@ -21,14 +21,14 @@ async def take_ss(video: str, path: str) -> None | str:
 
 async def check_audio(file) -> int:
     result = await run_shell_cmd(
-        f"ffprobe -v error -show_entries format=nb_streams -of default=noprint_wrappers=1:nokey=1 {file}"
+        f'''ffprobe -v error -show_entries format=nb_streams -of default=noprint_wrappers=1:nokey=1 "{file}"'''
     )
     return int(result or 0) - 1
 
 
 async def get_duration(file) -> int:
     duration = await run_shell_cmd(
-        f"""ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {file}"""
+        f'''ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{file}"'''
     )
     return round(float(duration.strip() or 0))
 

@@ -39,7 +39,7 @@ async def down_load(bot: BOT, message: Message):
         )
     else:
         if "-f" in message.flags:
-            file_name, url = message.flt_input.split()
+            file_name, url = message.flt_input.split(maxsplit=1)
         else:
             url = message.flt_input
         dl_obj: Download = await Download.setup(
