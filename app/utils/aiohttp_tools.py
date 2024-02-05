@@ -6,7 +6,7 @@ from io import BytesIO
 from aiohttp import ClientSession, web
 
 from app import Config
-from app.utils.media_helper import get_filename
+from app.utils.media_helper import get_filename_from_url
 
 LOGGER = logging.getLogger("PLAIN-UB")
 
@@ -61,20 +61,20 @@ class Aio:
                     return await ses.json()
                 else:
                     return json.loads(await ses.text())
-        except BaseException:
-            return
+        except json.JSONDecodeError:
+            ...
 
     async def in_memory_dl(self, url: str) -> BytesIO:
         async with self.session.get(url) as remote_file:
             bytes_data = await remote_file.read()
         file = BytesIO(bytes_data)
-        file.name = get_filename(url)
+        file.name = get_filename_from_url(url, tg_safe=True)
         return file
 
     async def thumb_dl(self, thumb) -> BytesIO | str | None:
         if not thumb or not thumb.startswith("http"):
             return thumb
-        return await self.in_memory_dl(thumb)  # NOQA
+        return (await self.in_memory_dl(thumb))  # fmt:skip
 
 
 aio = Aio()

@@ -59,7 +59,7 @@ class BOT(AddCmd, SendMessage, ChannelLogger, Client):
     @staticmethod
     async def shut_down():
         await aio.close()
-        if Config.MESSAGE_LOGGER_TASK:
+        if Config.MESSAGE_LOGGER_TASK and not Config.MESSAGE_LOGGER_TASK.done():
             Config.MESSAGE_LOGGER_TASK.cancel()
         LOGGER.info("DB Closed.")
         DB_CLIENT.close()

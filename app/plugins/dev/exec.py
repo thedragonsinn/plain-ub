@@ -35,7 +35,7 @@ async def executor(bot: BOT, message: Message) -> Message | None:
         )
     except asyncio.exceptions.CancelledError:
         return await reply.edit("`Cancelled....`")
-    except BaseException:
+    except Exception:
         func_out = str(traceback.format_exc())
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__

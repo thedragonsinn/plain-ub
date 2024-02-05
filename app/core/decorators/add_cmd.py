@@ -1,13 +1,14 @@
 import inspect
 from functools import wraps
+from typing import Callable
 
 from app import Config
 
 
 class AddCmd:
     @staticmethod
-    def add_cmd(cmd: str | list, allow_sudo: bool = True):
-        def the_decorator(func):
+    def add_cmd(cmd: str | list[str], allow_sudo: bool = True):
+        def the_decorator(func: Callable):
             path = inspect.stack()[1][1]
 
             @wraps(func)

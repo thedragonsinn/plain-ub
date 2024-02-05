@@ -14,8 +14,8 @@ async def init_task() -> None:
         await bot.edit_message_text(
             chat_id=restart_chat, message_id=restart_msg, text="__Started__"
         )
-        os.environ.pop("RESTART_MSG", "")
-        os.environ.pop("RESTART_CHAT", "")
+        os.environ.pop("RESTART_MSG")
+        os.environ.pop("RESTART_CHAT")
 
 
 @bot.add_cmd(cmd="restart")

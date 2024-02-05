@@ -26,7 +26,7 @@ class ChannelLogger(Client):
         return (await self.send_message(
             chat_id=Config.LOG_CHAT,
             text=text,
-            name=name,
+            name=name,  # NOQA
             disable_web_page_preview=disable_web_page_preview,
             parse_mode=parse_mode,
         ))  # fmt:skip

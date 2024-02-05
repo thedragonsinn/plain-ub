@@ -8,7 +8,7 @@ pymongo==4.4.0
 gitpython>=3.1.32
 pyrogram==2.0.106
 python-dotenv==0.21.0
-tgCrypto==1.2.3
+tgcrypto
 telegraph==2.2.0
 uvloop==0.17.0
 yt-dlp

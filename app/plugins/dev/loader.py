@@ -31,7 +31,7 @@ async def loader(bot: BOT, message: Message) -> Message | None:
     status: str = "Reloaded" if reload else "Loaded"
     try:
         importlib.import_module(module)
-    except Exception as e:
+    except Exception:
         await reply.edit(str(traceback.format_exc()))
         return
     await reply.edit(f"{status} {module}")

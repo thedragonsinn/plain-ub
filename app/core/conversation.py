@@ -1,5 +1,7 @@
 import asyncio
+from typing import Self
 
+from pyrogram import Client
 from pyrogram.filters import Filter
 from pyrogram.types import Message
 
@@ -15,20 +17,25 @@ class Conversation(Str):
 
     def __init__(
         self,
-        client,
+        client: Client,
         chat_id: int | str,
         filters: Filter | None = None,
         timeout: int = 10,
     ):
-        self.chat_id = chat_id
-        self._client = client
-        self.filters = filters
-        self.response = None
-        self.responses: list = []
-        self.timeout = timeout
+        self.chat_id: int | str = chat_id
+        self._client: Client = client
+        self.filters: Filter = filters
+        self.response_future: asyncio.Future | None = None
+        self.responses: list[Message] = []
+        self.timeout: int = timeout
         self.set_future()
 
-    async def __aenter__(self) -> "Conversation":
+    async def __aenter__(self) -> Self:
+        """
+        Convert Username to ID if chat_id is username.
+        Check Convo Dict for duplicate Convo with same ID.
+        Initialize Context Manager and return the Object.
+        """
         if isinstance(self.chat_id, str):
             self.chat_id = (await self._client.get_chat(self.chat_id)).id
         if self.chat_id in Conversation.CONVO_DICT.keys():
@@ -37,12 +44,17 @@ class Conversation(Str):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Exit Context Manager and remove Chat ID from Dict."""
         Conversation.CONVO_DICT.pop(self.chat_id, None)
-        if not self.response.done():
-            self.response.cancel()
+        if not self.response_future.done():
+            self.response_future.cancel()
 
     @classmethod
     async def get_resp(cls, client, *args, **kwargs) -> Message | None:
+        """
+        Bound Method to Gracefully handle TimeOut.
+        but only returns first Message.
+        """
         try:
             async with cls(*args, client=client, **kwargs) as convo:
                 response: Message | None = await convo.get_response()
@@ -50,51 +62,63 @@ class Conversation(Str):
         except TimeoutError:
             return
 
+    """Methods"""
+
     def set_future(self, *args, **kwargs):
         future = asyncio.Future()
         future.add_done_callback(self.set_future)
-        self.response = future
+        self.response_future = future
 
-    async def get_response(self, timeout: int | None = None) -> Message | None:
+    async def get_response(self, timeout: int = 0) -> Message | None:
+        """Returns Latest Message for Specified Filters."""
         try:
-            resp_future: asyncio.Future.result = await asyncio.wait_for(
-                fut=self.response, timeout=timeout or self.timeout
+            response: asyncio.Future.result = await asyncio.wait_for(
+                fut=self.response_future, timeout=timeout or self.timeout
             )
-            return resp_future
+            return response
         except asyncio.TimeoutError:
             raise TimeoutError("Conversation Timeout")
 
     async def send_message(
         self,
         text: str,
-        timeout=0,
-        get_response=False,
+        timeout: int = 0,
+        get_response: bool = False,
         **kwargs,
     ) -> Message | tuple[Message, Message]:
+        """
+        Bound Method to Send Texts in Convo Chat.
+        Returns Sent Message and Response if get_response is True.
+        """
         message = await self._client.send_message(
             chat_id=self.chat_id, text=text, **kwargs
         )
         if get_response:
-            response = await self.get_response(timeout=timeout or self.timeout)
+            response = await self.get_response(timeout=timeout)
             return message, response
         return message
 
     async def send_document(
         self,
         document,
-        caption="",
-        timeout=0,
-        get_response=False,
+        caption: str = "",
+        timeout: int = 0,
+        get_response: bool = False,
+        force_document: bool = True,
         **kwargs,
     ) -> Message | tuple[Message, Message]:
+        """
+        Bound Method to Send Documents in Convo Chat.
+        Returns Sent Message and Response if get_response is True.
+        """
         message = await self._client.send_document(
             chat_id=self.chat_id,
             document=document,
             caption=caption,
-            force_document=True,
+            force_document=force_document,
             **kwargs,
         )
         if get_response:
-            response = await self.get_response(timeout=timeout or self.timeout)
+            response = await self.get_response(timeout=timeout)
             return message, response
         return message

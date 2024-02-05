@@ -1,22 +1,27 @@
+import asyncio
 import os
+from typing import Callable, Coroutine
 
 from git import Repo
 
 from app.utils import Str
 
 
+class Cmd(Str):
+    def __init__(self, cmd: str, func: Callable, path: str, sudo: bool):
+        self.cmd: str = cmd
+        self.func: Callable = func
+        self.path: str = path
+        self.dirname: str = os.path.basename(os.path.dirname(path))
+        self.doc: str = func.__doc__ or "Not Documented."
+        self.sudo: bool = sudo
+
+
 class _Config(Str):
-    class CMD(Str):
-        def __init__(self, cmd: str, func, path: str, sudo: bool):
-            self.cmd = cmd
-            self.func = func
-            self.path: str = path
-            self.dirname: str = os.path.basename(os.path.dirname(path))
-            self.doc: str = func.__doc__ or "Not Documented."
-            self.sudo: bool = sudo
+    CMD = Cmd
 
     def __init__(self):
-        self.CMD_DICT: dict[str, _Config.CMD] = {}
+        self.CMD_DICT: dict[str, Cmd] = {}
 
         self.CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
 
@@ -28,7 +33,7 @@ class _Config(Str):
             os.environ.get("FBAN_LOG_CHANNEL", os.environ.get("LOG_CHAT"))
         )
 
-        self.INIT_TASKS: list = []
+        self.INIT_TASKS: list[Coroutine] = []
 
         self.LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
 
@@ -36,15 +41,15 @@ class _Config(Str):
             os.environ.get("MESSAGE_LOGGER_CHAT", self.LOG_CHAT)
         )
 
-        self.MESSAGE_LOGGER_TASK = None
+        self.MESSAGE_LOGGER_TASK: asyncio.Task | None = None
 
-        self.OWNER_ID = int(os.environ.get("OWNER_ID"))
+        self.OWNER_ID: int = int(os.environ.get("OWNER_ID"))
 
         self.PM_GUARD: bool = False
 
         self.PM_LOGGER: bool = False
 
-        self.REPO = Repo(".")
+        self.REPO: Repo = Repo(".")
 
         self.SUDO: bool = False
 

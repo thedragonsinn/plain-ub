@@ -15,11 +15,13 @@ async def get_commits(repo: Repo) -> str | None:
     commits: str = ""
     limit: int = 0
     for commit in repo.iter_commits("HEAD..origin/main"):
-        commits += f"""
-<b>#{commit.count()}</b> <a href='{Config.UPSTREAM_REPO}/commit/{commit}'>{commit.message}</a> By <i>{commit.author}</i>
-"""
+        commits += (
+            f"<b>#{commit.count()}</b> "
+            f"<a href='{Config.UPSTREAM_REPO}/commit/{commit}'>{commit.message}</a> "
+            f"By <i>{commit.author}</i>"
+        )
         limit += 1
-        if limit > 50:
+        if limit >= 15:
             break
     return commits
 
@@ -52,11 +54,11 @@ async def updater(bot: BOT, message: Message) -> None | Message:
         await reply.edit("Timeout... Try again.")
         return
     if not commits:
-        await reply.edit("Already Up To Date.", del_in=5)
+        await reply.edit(text="Already Up To Date.", del_in=5)
         return
     if "-pull" not in message.flags:
         await reply.edit(
-            f"<b>Update Available:</b>\n{commits}", disable_web_page_preview=True
+            text=f"<b>Update Available:</b>\n{commits}", disable_web_page_preview=True
         )
         return
     if not (await pull_commits(repo)):  # NOQA

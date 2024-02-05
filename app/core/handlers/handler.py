@@ -34,5 +34,5 @@ async def convo_handler(bot: BOT, message: Msg):
     if conv_obj.filters and not (await conv_obj.filters(bot, message)):
         message.continue_propagation()
     conv_obj.responses.append(message)
-    conv_obj.response.set_result(message)
+    conv_obj.response_future.set_result(message)
     message.continue_propagation()

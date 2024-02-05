@@ -1,6 +1,6 @@
 import time
 
-from pyrogram.types import Message, User
+from pyrogram.types import Chat, Message, User
 from telegraph.aio import Telegraph
 
 from app import LOGGER, Config
@@ -34,7 +34,7 @@ async def post_to_telegraph(title: str, text: str):
     return telegraph["url"]
 
 
-def get_name(user: User) -> str:
+def get_name(user: User | Chat) -> str:
     first = user.first_name or ""
     last = user.last_name or ""
     return f"{first} {last}".strip()

@@ -1,5 +1,6 @@
 import asyncio
 from functools import cached_property
+from typing import Self
 
 from pyrogram.enums import MessageEntityType
 from pyrogram.errors import MessageDeleteForbidden
@@ -12,10 +13,9 @@ from app.core.conversation import Conversation
 
 
 class Message(Msg):
-    def __init__(self, message: Msg) -> None:
-        args = vars(message).copy()
-        args["client"] = args.pop("_client", message._client)
-        super().__init__(**args)
+    def __init__(self, message: Msg | Self) -> None:
+        kwargs = self.sanitize_message(message)
+        super().__init__(**kwargs)
 
     @cached_property
     def cmd(self) -> str | None:
@@ -154,6 +154,20 @@ class Message(Msg):
             await self.async_deleter(task=task, del_in=del_in, block=block)
         else:
             return Message.parse((await task))  # fmt:skip
+
+    @staticmethod
+    def sanitize_message(message):
+        kwargs = vars(message).copy()
+        kwargs["client"] = kwargs.pop("_client", message._client)
+        [
+            kwargs.pop(arg, 0)
+            for arg in dir(Message)
+            if (
+                isinstance(getattr(Message, arg, 0), (cached_property, property))
+                and not hasattr(Msg, arg)
+            )
+        ]
+        return kwargs
 
     @classmethod
     def parse(cls, message: Msg) -> "Message":

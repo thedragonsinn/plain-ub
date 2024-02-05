@@ -1,5 +1,5 @@
+import asyncio
 import os
-import re
 import shutil
 from functools import cached_property
 
@@ -10,7 +10,8 @@ from pyrogram.types import Message as Msg
 from app.core.types.message import Message
 from app.utils import Str
 from app.utils.helpers import progress
-from app.utils.media_helper import bytes_to_mb, get_filename, get_type
+from app.utils.media_helper import (bytes_to_mb, get_filename_from_headers,
+                                    get_filename_from_url, get_type)
 
 
 class DownloadedFile(Str):
@@ -78,6 +79,31 @@ class Download(Str):
         self.is_done: bool = False
         os.makedirs(name=path, exist_ok=True)
 
+    @classmethod
+    async def setup(
+        cls,
+        url: str,
+        path: str = "downloads",
+        message_to_edit: Message | None = None,
+        custom_file_name: str | None = None,
+    ) -> "Download":
+        session = aiohttp.ClientSession()
+        file_session = await session.get(url=url)
+        headers = file_session.headers
+        cls_object = cls(
+            url=url,
+            path=path,
+            file_session=file_session,
+            session=session,
+            headers=headers,
+            message_to_edit=message_to_edit,
+            custom_file_name=custom_file_name,
+        )
+        await asyncio.gather(
+            cls_object.check_disk_space(), cls_object.check_duplicates()
+        )
+        return cls_object
+
     async def check_disk_space(self):
         if shutil.disk_usage(self.path).free < self.raw_size:
             await self.close()
@@ -99,11 +125,9 @@ class Download(Str):
     def file_name(self):
         if self.custom_file_name:
             return self.custom_file_name
-        content_disposition = self.headers.get("Content-Disposition", "")
-        filename_match = re.search(r"filename=(.+)", content_disposition)
-        if filename_match:
-            return filename_match.group(1)
-        return get_filename(self.url)
+        return get_filename_from_headers(
+            self.headers) or get_filename_from_url(
+            self.url)
 
     @cached_property
     def full_path(self):
@@ -153,27 +177,3 @@ class Download(Str):
                 full_path=self.full_path,
                 size=self.size,
             )
-
-    @classmethod
-    async def setup(
-        cls,
-        url: str,
-        path: str = "downloads",
-        message_to_edit=None,
-        custom_file_name=None,
-    ) -> "Download":
-        session = aiohttp.ClientSession()
-        file_session = await session.get(url=url)
-        headers = file_session.headers
-        obj = cls(
-            url=url,
-            path=path,
-            file_session=file_session,
-            session=session,
-            headers=headers,
-            message_to_edit=message_to_edit,
-            custom_file_name=custom_file_name,
-        )
-        await obj.check_disk_space()
-        await obj.check_duplicates()
-        return obj

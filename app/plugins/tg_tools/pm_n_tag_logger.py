@@ -11,6 +11,8 @@ LOGGER = CustomDB("COMMON_SETTINGS")
 
 MESSAGE_CACHE: dict[int, list[Message]] = defaultdict(list)
 
+FLOOD_LIST: list[int] = []
+
 
 async def init_task():
     tag_check = await LOGGER.find_one({"_id": "tag_logger_switch"})
@@ -114,11 +116,14 @@ async def username_logger(bot: BOT, message: Message):
 
 
 def cache_message(message: Message):
-    m_id = message.chat.id
-    if len(MESSAGE_CACHE[m_id]) > 10:
-        bot.log.error("Flood detected, Message not cached.")
+    chat_id = message.chat.id
+    if len(MESSAGE_CACHE[chat_id]) >= 10 and chat_id not in FLOOD_LIST:
+        bot.log.error("PM or Tag Flood detected, Message not Logged.")
+        FLOOD_LIST.append(chat_id)
         return
-    MESSAGE_CACHE[m_id].append(message)
+    if chat_id in FLOOD_LIST:
+        FLOOD_LIST.remove(chat_id)
+    MESSAGE_CACHE[chat_id].append(message)
 
 
 async def runner():
