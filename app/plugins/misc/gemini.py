@@ -40,7 +40,7 @@ async def question(bot: BOT, message: Message):
     if not (await basic_check(message)):  # fmt:skip
         return
     response = (await MODEL.generate_content_async(message.input)).text
-    await message.reply(response)
+    await message.reply(response, parse_mode=ParseMode.MARKDOWN)
 
 
 @bot.add_cmd(cmd="aichat")
@@ -108,7 +108,7 @@ async def do_convo(chat, message: Message):
                 prompt = prompt.text
             ai_response = (await chat.send_message_async(prompt)).text
             _, prompt = await convo.send_message(
-                text=f"<b>GEMINI AI</b>:\n\n{ai_response}",
+                text=f"**GEMINI AI**:\n\n{ai_response}",
                 reply_to_message_id=reply_to_message_id,
                 parse_mode=ParseMode.MARKDOWN,
                 get_response=True,
