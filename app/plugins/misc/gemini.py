@@ -59,6 +59,7 @@ async def ai_chat(bot: BOT, message: Message):
 async def do_convo(message: Message):
     chat = MODEL.start_chat(history=[])
     prompt = message.input
+    reply_to_message_id = message.id
     async with Convo(
         client=bot,
         chat_id=message.chat.id,
@@ -68,9 +69,12 @@ async def do_convo(message: Message):
         while True:
             if isinstance(prompt, (Message, Msg)):
                 prompt = prompt.text
+                reply_to_message_id = prompt.id
             ai_response = (await chat.send_message_async(prompt)).text
             _, prompt = await convo.send_message(
-                text=f"<b>GEMINI AI</b>:\n\n{ai_response}", get_response=True
+                text=f"<b>GEMINI AI</b>:\n\n{ai_response}",
+                reply_to_message_id=reply_to_message_id,
+                get_response=True,
             )
 
 
