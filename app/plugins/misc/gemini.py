@@ -82,7 +82,7 @@ def generate_filter(message: Message):
             or msg.from_user.id != message.from_user.id
             or not msg.reply_to_message
             or not msg.reply_to_message.from_user
-            or msg.reply_to_message.from_user.id == bot.me.id
+            or msg.reply_to_message.from_user.id != bot.me.id
         ):
             return False
         return True
