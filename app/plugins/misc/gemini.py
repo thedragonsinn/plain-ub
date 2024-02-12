@@ -1,5 +1,9 @@
+import pickle
+from io import BytesIO
+
 import google.generativeai as genai
 from pyrogram import filters
+from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
 
 from app import BOT, Config, Convo, Message, bot
@@ -47,33 +51,66 @@ async def ai_chat(bot: BOT, message: Message):
     USAGE:
         .aichat hello
         keep replying to AI responses
+        After 5mins of Idle bot will export history n stop chat.
+        use .load_history to continue
     """
     if not (await basic_check(message)):  # fmt:skip
         return
     try:
-        await do_convo(message)
+        chat = MODEL.start_chat(history=[])
+        await do_convo(chat=chat, message=message)
     except TimeoutError:
-        await message.reply("AI Chat TimeOut.")
+        await export_history(chat, message)
 
 
-async def do_convo(message: Message):
-    chat = MODEL.start_chat(history=[])
+@bot.add_cmd(cmd="load_history")
+async def ai_chat(bot: BOT, message: Message):
+    """
+    CMD: LOAD_HISTORY
+    INFO: Load a Conversation with Gemini AI from previous session.
+    USAGE:
+        .load_history {question} [reply to history document]
+    """
+    reply = message.replied
+    if (
+        not message.input
+        or not reply
+        or not reply.document
+        or not reply.document.file_name
+        or reply.document.file_name != "AI_Chat_History.txt"
+    ):
+        await message.reply(
+            "Give an input to continue Convo and Reply to a Valid History file."
+        )
+        return
+        resp = await message.reply("<i>Loading History...</i>")
+    try:
+        history = pickle.load((await reply.download(in_memory=True)))
+        await resp.edit("<i>History Loaded... Resuming chat</i>")
+        chat = MODEL.start_chat(history=history)
+        await do_convo(chat=chat, message=message)
+    except TimeoutError:
+        await export_history(chat, message)
+
+
+async def do_convo(chat, message: Message):
     prompt = message.input
     reply_to_message_id = message.id
     async with Convo(
         client=bot,
         chat_id=message.chat.id,
         filters=generate_filter(message),
-        timeout=600,
+        timeout=300,
     ) as convo:
         while True:
             if isinstance(prompt, (Message, Msg)):
-                prompt = prompt.text
                 reply_to_message_id = prompt.id
+                prompt = prompt.text
             ai_response = (await chat.send_message_async(prompt)).text
             _, prompt = await convo.send_message(
                 text=f"<b>GEMINI AI</b>:\n\n{ai_response}",
                 reply_to_message_id=reply_to_message_id,
+                parse_mode=ParseMode.MARKDOWN,
                 get_response=True,
             )
 
@@ -92,3 +129,11 @@ def generate_filter(message: Message):
         return True
 
     return filters.create(_filter)
+
+
+async def export_history(chat, message: Message):
+    doc = BytesIO(pickle.dumps(chat.history))
+    doc.name = "AI_Chat_History.txt"
+    await bot.send_document(
+        chat_id=message.from_user.id, document=doc, caption=message.text
+    )
