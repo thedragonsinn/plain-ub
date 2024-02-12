@@ -20,7 +20,7 @@ async def basic_check(message: Message):
     if not Config.GEMINI_API_KEY:
         await message.reply(
             "Gemini API KEY not found."
-            "\nGet it <a href='https://ai.google.dev/'>HERE</a> "
+            "\nGet it <a href='https://makersuite.google.com/app/u/2/apikey'>HERE</a> "
             "and set GEMINI_API_KEY var."
         )
         return
@@ -71,6 +71,8 @@ async def ai_chat(bot: BOT, message: Message):
     USAGE:
         .load_history {question} [reply to history document]
     """
+    if not (await basic_check(message)):  # fmt:skip
+        return
     reply = message.replied
     if (
         not message.input
@@ -84,10 +86,10 @@ async def ai_chat(bot: BOT, message: Message):
         )
         return
     resp = await message.reply("<i>Loading History...</i>")
+    doc = (await reply.download(in_memory=True)).getbuffer()
+    history = pickle.loads(doc)
+    await resp.edit("<i>History Loaded... Resuming chat</i>")
     try:
-        doc = (await reply.download(in_memory=True)).getbuffer()
-        history = pickle.loads(doc)
-        await resp.edit("<i>History Loaded... Resuming chat</i>")
         chat = MODEL.start_chat(history=history)
         await do_convo(chat=chat, message=message)
     except TimeoutError:
