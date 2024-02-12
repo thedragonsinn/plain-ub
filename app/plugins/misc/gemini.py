@@ -83,7 +83,7 @@ async def ai_chat(bot: BOT, message: Message):
             "Give an input to continue Convo and Reply to a Valid History file."
         )
         return
-        resp = await message.reply("<i>Loading History...</i>")
+    resp = await message.reply("<i>Loading History...</i>")
     try:
         doc = (await reply.download(in_memory=True)).getbuffer()
         history = pickle.loads(doc)
