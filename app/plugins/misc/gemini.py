@@ -132,7 +132,7 @@ def generate_filter(message: Message):
 
 
 async def export_history(chat, message: Message):
-    doc = BytesIO(pickle.dumps(chat.history))
+    doc = BytesIO(pickle.dumps(chat.history), encoding="utf-8")
     doc.name = "AI_Chat_History.txt"
     await bot.send_document(
         chat_id=message.from_user.id, document=doc, caption=message.text
