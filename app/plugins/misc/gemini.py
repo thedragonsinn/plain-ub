@@ -1,7 +1,8 @@
 import google.generativeai as genai
 from pyrogram import filters
+from pyrogram.types import Message as Msg
 
-from app import BOT, Message, bot, Config, Convo
+from app import BOT, Config, Convo, Message, bot
 
 MODEL = genai.GenerativeModel("gemini-pro")
 
@@ -34,7 +35,7 @@ async def question(bot: BOT, message: Message):
     """
     if not (await basic_check(message)):  # fmt:skip
         return
-    response = await MODEL.generate_content_async(message.input)
+    response = (await MODEL.generate_content_async(message.input)).text
     await message.reply(response)
 
 
@@ -65,6 +66,8 @@ async def do_convo(message: Message):
         timeout=600,
     ) as convo:
         while True:
+            if isinstance(prompt, (Message, Msg)):
+                prompt = prompt.text
             ai_response = (await chat.send_message_async(prompt)).text
             _, prompt = await convo.send_message(
                 text=f"<b>GEMINI AI</b>:\n\n{ai_response}", get_response=True
