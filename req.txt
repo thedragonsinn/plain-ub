@@ -13,3 +13,4 @@ telegraph==2.2.0
 uvloop==0.17.0
 yt-dlp
 pillow
+google-generativeai
