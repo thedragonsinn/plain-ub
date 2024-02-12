@@ -20,7 +20,7 @@ async def basic_check(message: Message):
     if not Config.GEMINI_API_KEY:
         await message.reply(
             "Gemini API KEY not found."
-            "\nGet it <a href=https://ai.google.dev/''>HERE</a> "
+            "\nGet it <a href='https://ai.google.dev/'>HERE</a> "
             "and set GEMINI_API_KEY var."
         )
         return
