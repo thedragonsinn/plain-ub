@@ -85,7 +85,8 @@ async def ai_chat(bot: BOT, message: Message):
         return
         resp = await message.reply("<i>Loading History...</i>")
     try:
-        history = pickle.load((await reply.download(in_memory=True)))
+        doc = (await reply.download(in_memory=True)).getbuffer()
+        history = pickle.loads(doc)
         await resp.edit("<i>History Loaded... Resuming chat</i>")
         chat = MODEL.start_chat(history=history)
         await do_convo(chat=chat, message=message)
@@ -132,7 +133,7 @@ def generate_filter(message: Message):
 
 
 async def export_history(chat, message: Message):
-    doc = BytesIO(pickle.dumps(chat.history), encoding="utf-8")
+    doc = BytesIO(pickle.dumps(chat.history))
     doc.name = "AI_Chat_History.txt"
     await bot.send_document(
         chat_id=message.from_user.id, document=doc, caption=message.text
