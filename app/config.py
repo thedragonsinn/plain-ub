@@ -9,12 +9,12 @@ from app.utils import Str
 
 class Cmd(Str):
     def __init__(self, cmd: str, func: Callable, path: str, sudo: bool):
-        cmd: str = cmd
-        func: Callable = func
-        path: str = path
-        dirname: str = os.path.basename(os.path.dirname(path))
-        doc: str = func.__doc__ or "Not Documented."
-        sudo: bool = sudo
+        self.cmd: str = cmd
+        self.func: Callable = func
+        self.path: str = path
+        self.dirname: str = os.path.basename(os.path.dirname(path))
+        self.doc: str = func.__doc__ or "Not Documented."
+        self.sudo: bool = sudo
 
 
 class Config:
