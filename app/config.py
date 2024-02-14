@@ -18,6 +18,8 @@ class Cmd(Str):
 
 
 class Config:
+    BOT_NAME = "PLAIN-UB"
+
     CMD = Cmd
 
     CMD_DICT: dict[str, Cmd] = {}

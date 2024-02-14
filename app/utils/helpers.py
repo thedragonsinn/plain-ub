@@ -16,8 +16,8 @@ async def init_task():
     TELEGRAPH = Telegraph()
     try:
         await TELEGRAPH.create_account(
-            short_name="Plain-UB",
-            author_name="Plain-UB",
+            short_name=Config.BOT_NAME,
+            author_name=Config.BOT_NAME,
             author_url=Config.UPSTREAM_REPO,
         )
     except Exception:
@@ -28,7 +28,7 @@ async def post_to_telegraph(title: str, text: str):
     telegraph = await TELEGRAPH.create_page(
         title=title,
         html_content=f"<p>{text}</p>",
-        author_name="Plain-UB",
+        author_name=Config.BOT_NAME,
         author_url=Config.UPSTREAM_REPO,
     )
     return telegraph["url"]
@@ -37,7 +37,9 @@ async def post_to_telegraph(title: str, text: str):
 def get_name(user: User | Chat) -> str:
     first = user.first_name or ""
     last = user.last_name or ""
-    return f"{first} {last}".strip()
+    name = f"{first} {last}".strip()
+    if not name:
+        return user.title
 
 
 def extract_user_data(user: User) -> dict:

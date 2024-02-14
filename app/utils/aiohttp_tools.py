@@ -3,12 +3,12 @@ import logging
 import os
 from io import BytesIO
 
-from aiohttp import ClientSession, web
+from aiohttp import ClientSession, ContentTypeError, web
 
 from app import Config
 from app.utils.media_helper import get_filename_from_url
 
-LOGGER = logging.getLogger("PLAIN-UB")
+LOGGER = logging.getLogger(Config.BOT_NAME)
 
 
 class Aio:
@@ -60,9 +60,11 @@ class Aio:
                 if json_:
                     return await ses.json()
                 else:
-                    return json.loads(await ses.text())
-        except json.JSONDecodeError:
-            ...
+                    return (json.loads(await ses.text()))  # fmt:skip
+        except (json.JSONDecodeError, ContentTypeError):
+            LOGGER.debug(await ses.text())
+        except TimeoutError:
+            LOGGER.debug("Timeout")
 
     async def in_memory_dl(self, url: str) -> BytesIO:
         async with self.session.get(url) as remote_file:

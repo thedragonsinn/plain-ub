@@ -19,6 +19,8 @@ class Message(Msg):
 
     @cached_property
     def cmd(self) -> str | None:
+        if not self.text_list:
+            return
         raw_cmd = self.text_list[0]
         cmd = raw_cmd.replace(self.trigger, "", 1)
         return cmd if cmd in Config.CMD_DICT.keys() else None

@@ -14,7 +14,7 @@ from app.core.decorators.add_cmd import AddCmd
 from app.core.methods import ChannelLogger, SendMessage
 from app.utils.aiohttp_tools import aio
 
-LOGGER = logging.getLogger("PLAIN-UB")
+LOGGER = logging.getLogger(Config.BOT_NAME)
 
 
 def import_modules():

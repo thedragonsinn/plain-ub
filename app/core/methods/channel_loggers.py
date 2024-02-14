@@ -6,7 +6,7 @@ from pyrogram.enums import ParseMode
 from app import Config
 from app.core.types.message import Message
 
-LOGGER = logging.getLogger("PLAIN-UB")
+LOGGER = logging.getLogger(Config.BOT_NAME)
 
 
 class ChannelLogger(Client):

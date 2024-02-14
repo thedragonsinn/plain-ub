@@ -40,7 +40,9 @@ async def question(bot: BOT, message: Message):
     if not (await basic_check(message)):  # fmt:skip
         return
     response = (await MODEL.generate_content_async(message.input)).text
-    await message.reply(response, parse_mode=ParseMode.MARKDOWN)
+    await message.reply(
+        text="**GEMINI AI**:\n" + response, parse_mode=ParseMode.MARKDOWN
+    )
 
 
 @bot.add_cmd(cmd="aichat")
@@ -56,8 +58,8 @@ async def ai_chat(bot: BOT, message: Message):
     """
     if not (await basic_check(message)):  # fmt:skip
         return
+    chat = MODEL.start_chat(history=[])
     try:
-        chat = MODEL.start_chat(history=[])
         await do_convo(chat=chat, message=message)
     except TimeoutError:
         await export_history(chat, message)
@@ -86,11 +88,11 @@ async def ai_chat(bot: BOT, message: Message):
         )
         return
     resp = await message.reply("<i>Loading History...</i>")
-    doc = (await reply.download(in_memory=True)).getbuffer()
+    doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()
     history = pickle.loads(doc)
     await resp.edit("<i>History Loaded... Resuming chat</i>")
+    chat = MODEL.start_chat(history=history)
     try:
-        chat = MODEL.start_chat(history=history)
         await do_convo(chat=chat, message=message)
     except TimeoutError:
         await export_history(chat, message)
@@ -104,6 +106,7 @@ async def do_convo(chat, message: Message):
         chat_id=message.chat.id,
         filters=generate_filter(message),
         timeout=300,
+        check_for_duplicates=False,
     ) as convo:
         while True:
             if isinstance(prompt, (Message, Msg)):

@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from typing import Self
 
 from pyrogram import Client
@@ -9,7 +10,7 @@ from app.utils import Str
 
 
 class Conversation(Str):
-    CONVO_DICT: dict[int, "Conversation"] = {}
+    CONVO_DICT: dict[int, list["Conversation"]] = defaultdict(list)
 
     class DuplicateConvo(Exception):
         def __init__(self, chat: str | int):
@@ -19,16 +20,24 @@ class Conversation(Str):
         self,
         client: Client,
         chat_id: int | str,
+        check_for_duplicates: bool = True,
         filters: Filter | None = None,
         timeout: int = 10,
     ):
         self.chat_id: int | str = chat_id
         self._client: Client = client
+        self.check_for_duplicates: bool = check_for_duplicates
         self.filters: Filter = filters
         self.response_future: asyncio.Future | None = None
         self.responses: list[Message] = []
         self.timeout: int = timeout
         self.set_future()
+
+    def _check_duplicates(self):
+        if not self.check_for_duplicates:
+            return
+        if self.chat_id in Conversation.CONVO_DICT.keys():
+            raise self.DuplicateConvo(self.chat_id)
 
     async def __aenter__(self) -> Self:
         """
@@ -38,16 +47,17 @@ class Conversation(Str):
         """
         if isinstance(self.chat_id, str):
             self.chat_id = (await self._client.get_chat(self.chat_id)).id
-        if self.chat_id in Conversation.CONVO_DICT.keys():
-            raise self.DuplicateConvo(self.chat_id)
-        Conversation.CONVO_DICT[self.chat_id] = self
+        self._check_duplicates()
+        Conversation.CONVO_DICT[self.chat_id].append(self)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Exit Context Manager and remove Chat ID from Dict."""
-        Conversation.CONVO_DICT.pop(self.chat_id, None)
+        Conversation.CONVO_DICT[self.chat_id].remove(self)
         if not self.response_future.done():
             self.response_future.cancel()
+        if not Conversation.CONVO_DICT[self.chat_id]:
+            Conversation.CONVO_DICT.pop(self.chat_id)
 
     @classmethod
     async def get_resp(cls, client, *args, **kwargs) -> Message | None:

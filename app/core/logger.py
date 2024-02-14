@@ -11,11 +11,11 @@ from logging import (
     handlers,
 )
 
-from app import bot
+from app import Config, bot
 
 os.makedirs(name="logs", exist_ok=True)
 
-LOGGER = getLogger("PLAIN-UB")
+LOGGER = getLogger(Config.BOT_NAME)
 
 
 class TgErrorHandler(Handler):
