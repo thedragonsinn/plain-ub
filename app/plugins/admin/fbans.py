@@ -11,7 +11,7 @@ FED_DB = CustomDB("FED_LIST")
 
 BASIC_FILTER = filters.user([609517172, 2059887769]) & ~filters.service
 
-FBAN_REGEX = filters.regex(
+FBAN_REGEX = BASIC_FILTER & filters.regex(
     r"(New FedBan|"
     r"starting a federation ban|"
     r"Starting a federation ban|"
@@ -22,7 +22,7 @@ FBAN_REGEX = filters.regex(
 )
 
 
-UNFBAN_REGEX = filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)")
+UNFBAN_REGEX = BASIC_FILTER & filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)")
 
 
 @bot.add_cmd(cmd="addf")
@@ -204,9 +204,9 @@ async def perform_fed_task(
             chat_id=chat_id, text=command, disable_web_page_preview=True
         )
         response: Message | None = await cmd.get_response(
-            filters=BASIC_FILTER, timeout=8
+            filters=task_filter, timeout=8
         )
-        if not response or not (await task_filter(bot, response)):  # NOQA
+        if not response:
             failed.append(fed["name"])
         elif "Would you like to update this reason" in response.text:
             await response.click("Update reason")
