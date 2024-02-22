@@ -34,5 +34,5 @@ def get_cmds() -> str:
     help_str = ""
     for key in sorted_keys:
         help_str += f"\n\n\n<b>{key.capitalize()}:</b>\n"
-        help_str += "  ".join([f"<code>{cmd}</code>" for cmd in dir_dict[key]])
+        help_str += f"<pre language=json>{dir_dict[key]}</pre>"
     return help_str

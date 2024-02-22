@@ -29,7 +29,8 @@ async def init_task():
 @bot.on_message(
     (guard_check & filters.private & filters.incoming)
     & (~allowed_filter & ~filters.bot)
-    & ~filters.chat(chats=[bot.me.id]),
+    & ~filters.chat(chats=[bot.me.id])
+    & ~filters.service,
     group=0,
 )
 async def handle_new_pm(bot: BOT, message: Message):
@@ -135,8 +136,8 @@ async def no_pm(bot: BOT, message: Message):
 
 
 def get_userID_name(message: Message) -> tuple:
-    if message.flt_input and message.flt_input.isdigit():
-        user_id = int(message.flt_input)
+    if message.filtered_input and message.filtered_input.isdigit():
+        user_id = int(message.filtered_input)
         return user_id, user_id
     elif message.replied:
         return message.replied.from_user.id, get_name(message.replied.from_user)

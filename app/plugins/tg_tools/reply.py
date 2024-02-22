@@ -13,7 +13,7 @@ async def reply(bot: BOT, message: Message) -> None:
         .reply HI | .reply -r t.me/... HI
     """
     if "-r" in message.flags:
-        input: list[str] = message.flt_input.split(" ", maxsplit=1)
+        input: list[str] = message.filtered_input.split(" ", maxsplit=1)
         if len(input) < 2:
             await message.reply("The '-r' flag requires a message link and text.")
             return

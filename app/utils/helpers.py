@@ -34,12 +34,12 @@ async def post_to_telegraph(title: str, text: str):
     return telegraph["url"]
 
 
-def get_name(user: User | Chat) -> str:
-    first = user.first_name or ""
-    last = user.last_name or ""
+def get_name(user_or_chat: User | Chat) -> str:
+    first = user_or_chat.first_name or ""
+    last = user_or_chat.last_name or ""
     name = f"{first} {last}".strip()
     if not name:
-        return user.title
+        return user_or_chat.title
 
 
 def extract_user_data(user: User) -> dict:

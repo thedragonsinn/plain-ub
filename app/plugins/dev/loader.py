@@ -16,7 +16,7 @@ async def loader(bot: BOT, message: Message) -> Message | None:
         await message.reply("Reply to a Plugin.")
         return
     if "-r" in message.flags:
-        plugin = message.flt_input
+        plugin = message.filtered_input
         cmd_module = Config.CMD_DICT.get(plugin)
         if not cmd_module:
             await message.reply(text="Invalid cmd.")
@@ -41,6 +41,6 @@ if Config.DEV_MODE:
     Config.CMD_DICT["load"] = Config.CMD(
         cmd="load",
         func=loader,
-        path=inspect.stack()[0][1],
+        cmd_path=inspect.stack()[0][1],
         sudo=False,
     )

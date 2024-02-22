@@ -6,6 +6,7 @@ from pyrogram.enums import ChatType, MessageEntityType
 from pyrogram.errors import MessageIdInvalid
 
 from app import BOT, Config, CustomDB, Message, bot
+from app.utils.helpers import get_name
 
 LOGGER = CustomDB("COMMON_SETTINGS")
 
@@ -118,7 +119,7 @@ async def username_logger(bot: BOT, message: Message):
 def cache_message(message: Message):
     chat_id = message.chat.id
     if len(MESSAGE_CACHE[chat_id]) >= 10 and chat_id not in FLOOD_LIST:
-        bot.log.error("PM or Tag Flood detected, Message not Logged.")
+        bot.log.error(f"Message not Logged from chat: {get_name(message.chat)}")
         FLOOD_LIST.append(chat_id)
         return
     if chat_id in FLOOD_LIST:

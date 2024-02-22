@@ -19,7 +19,7 @@ async def executor(bot: BOT, message: Message) -> Message | None:
     USAGE:
         .py [-s] return 1
     """
-    code: str = message.flt_input.strip()
+    code: str = message.filtered_input.strip()
     if not code:
         return await message.reply("exec Jo mama?")
     reply: Message = await message.reply("executing")
@@ -61,6 +61,6 @@ if Config.DEV_MODE:
     Config.CMD_DICT["py"] = Config.CMD(
         cmd="py",
         func=executor,
-        path=inspect.stack()[0][1],
+        cmd_path=inspect.stack()[0][1],
         sudo=False,
     )

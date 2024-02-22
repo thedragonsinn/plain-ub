@@ -38,7 +38,7 @@ async def song_dl(bot: bot, message: Message) -> None | Message:
         if urlparse(link).netloc in domains:
             reply_query = link
             break
-    query = reply_query or message.flt_input
+    query = reply_query or message.filtered_input
     if not query:
         await message.reply("Give a song name or link to download.")
         return

@@ -89,13 +89,13 @@ async def upload(bot: BOT, message: Message):
     USAGE:
         .upload [-d] URL | Path to File | CMD
     """
-    input = message.flt_input
+    input = message.filtered_input
     if not input:
         await message.reply("give a file url | path to upload.")
         return
     response = await message.reply("checking input...")
     if input in Config.CMD_DICT:
-        await message.reply_document(document=Config.CMD_DICT[input].path)
+        await message.reply_document(document=Config.CMD_DICT[input].cmd_path)
         await response.delete()
         return
     elif input.startswith("http") and not file_check(input):

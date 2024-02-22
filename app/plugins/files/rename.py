@@ -20,9 +20,9 @@ async def rename(bot: BOT, message: Message):
     USAGE:
         .rename [ url | reply to message ] file_name.ext
     """
-    input = message.flt_input
+    input = message.filtered_input
     response = await message.reply("Checking input...")
-    if not message.replied or not message.replied.media or not message.flt_input:
+    if not message.replied or not message.replied.media or not message.filtered_input:
         await response.edit(
             "Invalid input...\nReply to a message containing media or give a link and a filename with cmd."
         )

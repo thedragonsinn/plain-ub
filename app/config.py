@@ -1,5 +1,5 @@
 import asyncio
-import os
+from os import environ, path
 from typing import Callable, Coroutine
 
 from git import Repo
@@ -8,12 +8,13 @@ from app.utils import Str
 
 
 class Cmd(Str):
-    def __init__(self, cmd: str, func: Callable, path: str, sudo: bool):
+    def __init__(self, cmd: str, func: Callable, cmd_path: str, sudo: bool):
         self.cmd: str = cmd
-        self.func: Callable = func
-        self.path: str = path
-        self.dirname: str = os.path.basename(os.path.dirname(path))
+        self.cmd_path: str = cmd_path
+        self.dirname: str = path.basename(path.dirname(cmd_path))
         self.doc: str = func.__doc__ or "Not Documented."
+        self.func: Callable = func
+        self.loaded = False
         self.sudo: bool = sudo
 
 
@@ -24,27 +25,31 @@ class Config:
 
     CMD_DICT: dict[str, Cmd] = {}
 
-    CMD_TRIGGER: str = os.environ.get("CMD_TRIGGER", ".")
+    CMD_TRIGGER: str = environ.get("CMD_TRIGGER", ".")
 
-    DEV_MODE: int = int(os.environ.get("DEV_MODE", 0))
+    DEV_MODE: int = int(environ.get("DEV_MODE", 0))
 
     DISABLED_SUPERUSERS: list[int] = []
 
     FBAN_LOG_CHANNEL: int = int(
-        os.environ.get("FBAN_LOG_CHANNEL", os.environ.get("LOG_CHAT"))
+        environ.get("FBAN_LOG_CHANNEL", environ.get("LOG_CHAT"))
     )
 
-    GEMINI_API_KEY: str = os.environ.get("GEMINI_API_KEY")
+    FBAN_SUDO_ID: int = int(environ.get("FBAN_SUDO_ID", 0))
+
+    FBAN_SUDO_TRIGGER: str = environ.get("FBAN_SUDO_TRIGGER")
+
+    GEMINI_API_KEY: str = environ.get("GEMINI_API_KEY")
 
     INIT_TASKS: list[Coroutine] = []
 
-    LOG_CHAT: int = int(os.environ.get("LOG_CHAT"))
+    LOG_CHAT: int = int(environ.get("LOG_CHAT"))
 
-    MESSAGE_LOGGER_CHAT: int = int(os.environ.get("MESSAGE_LOGGER_CHAT", LOG_CHAT))
+    MESSAGE_LOGGER_CHAT: int = int(environ.get("MESSAGE_LOGGER_CHAT", LOG_CHAT))
 
     MESSAGE_LOGGER_TASK: asyncio.Task | None = None
 
-    OWNER_ID: int = int(os.environ.get("OWNER_ID"))
+    OWNER_ID: int = int(environ.get("OWNER_ID"))
 
     PM_GUARD: bool = False
 
@@ -54,9 +59,7 @@ class Config:
 
     SUDO: bool = False
 
-    SUDO_TRIGGER: str = os.environ.get("SUDO_TRIGGER", "!")
-
-    SUDO_CMD_LIST: list[str] = []
+    SUDO_TRIGGER: str = environ.get("SUDO_TRIGGER", "!")
 
     SUDO_USERS: list[int] = []
 
@@ -64,6 +67,6 @@ class Config:
 
     TAG_LOGGER: bool = False
 
-    UPSTREAM_REPO: str = os.environ.get(
+    UPSTREAM_REPO: str = environ.get(
         "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"
     )

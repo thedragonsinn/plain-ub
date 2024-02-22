@@ -54,12 +54,12 @@ if Config.DEV_MODE:
     Config.CMD_DICT["shell"] = Config.CMD(
         cmd="shell",
         func=live_shell,
-        path=inspect.stack()[0][1],
+        cmd_path=inspect.stack()[0][1],
         sudo=False,
     )
     Config.CMD_DICT["sh"] = Config.CMD(
         cmd="sh",
         func=run_cmd,
-        path=inspect.stack()[0][1],
+        cmd_path=inspect.stack()[0][1],
         sudo=False,
     )

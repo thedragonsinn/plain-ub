@@ -30,7 +30,7 @@ class Message(Msg):
         return [i for i in self.text_list if i.startswith("-")]
 
     @cached_property
-    def flt_input(self) -> str:
+    def filtered_input(self) -> str:
         split_lines = self.input.split(sep="\n", maxsplit=1)
         split_lines[0] = " ".join(
             [word for word in split_lines[0].split(" ") if word not in self.flags]
@@ -113,8 +113,8 @@ class Message(Msg):
 
     async def extract_user_n_reason(self) -> tuple[User | str | Exception, str | None]:
         if self.replied:
-            return self.replied.from_user, self.flt_input
-        input_text_list = self.flt_input.split(maxsplit=1)
+            return self.replied.from_user, self.filtered_input
+        input_text_list = self.filtered_input.split(maxsplit=1)
         if not input_text_list:
             return (
                 "Unable to Extract User info.\nReply to a user or input @ | id.",

@@ -33,12 +33,6 @@ class Conversation(Str):
         self.timeout: int = timeout
         self.set_future()
 
-    def _check_duplicates(self):
-        if not self.check_for_duplicates:
-            return
-        if self.chat_id in Conversation.CONVO_DICT.keys():
-            raise self.DuplicateConvo(self.chat_id)
-
     async def __aenter__(self) -> Self:
         """
         Convert Username to ID if chat_id is username.
@@ -47,7 +41,8 @@ class Conversation(Str):
         """
         if isinstance(self.chat_id, str):
             self.chat_id = (await self._client.get_chat(self.chat_id)).id
-        self._check_duplicates()
+        if self.check_for_duplicates and self.chat_id in Conversation.CONVO_DICT.keys():
+            raise self.DuplicateConvo(self.chat_id)
         Conversation.CONVO_DICT[self.chat_id].append(self)
         return self
 
@@ -62,7 +57,7 @@ class Conversation(Str):
     @classmethod
     async def get_resp(cls, client, *args, **kwargs) -> Message | None:
         """
-        Bound Method to Gracefully handle TimeOut.
+        Bound Method to Gracefully handle Timeout.
         but only returns first Message.
         """
         try:
@@ -72,12 +67,12 @@ class Conversation(Str):
         except TimeoutError:
             return
 
-    """Methods"""
-
     def set_future(self, *args, **kwargs):
         future = asyncio.Future()
         future.add_done_callback(self.set_future)
         self.response_future = future
+
+    """Methods"""
 
     async def get_response(self, timeout: int = 0) -> Message | None:
         """Returns Latest Message for Specified Filters."""

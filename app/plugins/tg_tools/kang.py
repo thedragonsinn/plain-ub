@@ -30,6 +30,9 @@ async def kang_sticker(bot: BOT, message: Message):
 
     response = await message.reply("Checking input")
     media_coro = get_sticker_media_coro(message)
+    if not media_coro:
+        await response.edit("Unsupported Media.")
+        return
     kwargs: dict = await media_coro
     pack_title, pack_name, create_new = await get_sticker_set(
         limit=kwargs["limit"], is_video=kwargs["is_video"]
@@ -135,14 +138,14 @@ def get_sticker_media_coro(message: Message):
 
 
 async def photo_kang(message: Message) -> dict:
-    down_dir = os.path.join("downloads", str(time.time()))
-    os.makedirs(down_dir, exist_ok=True)
-    input_file = os.path.join(down_dir, "photo.jpg")
+    download_path = os.path.join("downloads", str(time.time()))
+    os.makedirs(download_path, exist_ok=True)
+    input_file = os.path.join(download_path, "photo.jpg")
     await message.download(input_file)
     file = await asyncio.to_thread(resize_photo, input_file)
-    limit = 120
-    cmd = "/newpack"
-    return dict(cmd=cmd, limit=limit, is_video=False, file=file, path=down_dir)
+    return dict(
+        cmd="/newpack", limit=120, is_video=False, file=file, path=download_path
+    )
 
 
 def resize_photo(input_file: str) -> BytesIO:
@@ -158,46 +161,42 @@ def resize_photo(input_file: str) -> BytesIO:
 
 
 async def video_kang(message: Message, ff=False) -> dict:
-    vid = message.video or message.animation or message.document
-    if vid.file_size > 5242880:
+    video = message.video or message.animation or message.document
+    if video.file_size > 5242880:
         raise MemoryError("File Size exceeds 5MB.")
-    down_dir = os.path.join("downloads", f"{time.time()}")
-    os.makedirs(down_dir, exist_ok=True)
-    input_file = os.path.join(down_dir, "input.mp4")
-    output_file = os.path.join(down_dir, "sticker.webm")
+    download_path = os.path.join("downloads", f"{time.time()}")
+    os.makedirs(download_path, exist_ok=True)
+    input_file = os.path.join(download_path, "input.mp4")
+    output_file = os.path.join(download_path, "sticker.webm")
     await message.download(input_file)
-    if not hasattr(vid, "duration"):
+    if not hasattr(video, "duration"):
         duration = await get_duration(file=input_file)
     else:
-        duration = vid.duration
+        duration = video.duration
     await resize_video(
         input_file=input_file, output_file=output_file, duration=duration, ff=ff
     )
-    cmd = "/newvideo"
-    limit = 50
-    is_video = True
     return dict(
-        cmd=cmd, limit=limit, is_video=is_video, file=output_file, path=down_dir
+        cmd="/newvideo", limit=50, is_video=True, file=output_file, path=download_path
     )
 
 
 async def resize_video(
     input_file: str, output_file: str, duration: int, ff: bool = False
 ):
-    cmd = f"ffmpeg -hide_banner -loglevel error -i {input_file} -vf"
+    cmd = f"ffmpeg -hide_banner -loglevel error -i '{input_file}' -vf "
     if ff:
         cmd += (
-            ' "scale=w=512:h=512:force_original_aspect_ratio=decrease,setpts=0.3*PTS" '
+            '"scale=w=512:h=512:force_original_aspect_ratio=decrease,setpts=0.3*PTS" '
         )
         cmd += "-ss 0 -t 3 -r 30 -loop 0 -an -c:v libvpx-vp9 -b:v 256k -fs 256k "
     elif duration < 3:
-        cmd += ' "scale=w=512:h=512:force_original_aspect_ratio=decrease" '
+        cmd += '"scale=w=512:h=512:force_original_aspect_ratio=decrease" '
         cmd += "-ss 0 -r 30 -an -c:v libvpx-vp9 -b:v 256k -fs 256k "
     else:
-        cmd += ' "scale=w=512:h=512:force_original_aspect_ratio=decrease" '
+        cmd += '"scale=w=512:h=512:force_original_aspect_ratio=decrease" '
         cmd += "-ss 0 -t 3 -r 30 -an -c:v libvpx-vp9 -b:v 256k -fs 256k "
-    cmd += output_file
-    await run_shell_cmd(cmd=cmd)
+    await run_shell_cmd(cmd=f"{cmd}'{output_file}'")
 
 
 async def document_kang(message: Message, ff: bool = False) -> dict:
