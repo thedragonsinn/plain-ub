@@ -86,7 +86,7 @@ async def del_scmd(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="vscmd")
 async def view_sudo_cmd(bot: BOT, message: Message):
-    cmds = [cmd_name for cmd_name, cmd_obj in Config.CMD_DICT if cmd_obj.loaded]
+    cmds = [cmd_name for cmd_name, cmd_obj in Config.CMD_DICT.keys() if cmd_obj.loaded]
     if not cmds:
         await message.reply("No Commands in SUDO!")
         return
