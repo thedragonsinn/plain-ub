@@ -39,8 +39,8 @@ def get_name(user_or_chat: User | Chat) -> str:
     last = user_or_chat.last_name or ""
     name = f"{first} {last}".strip()
     if not name:
-        return user_or_chat.title
-
+        name = user_or_chat.title
+    return name
 
 def extract_user_data(user: User) -> dict:
     return dict(name=get_name(user), username=user.username, mention=user.mention)
