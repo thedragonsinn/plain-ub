@@ -4,9 +4,9 @@ from collections import defaultdict
 from pyrogram import filters
 from pyrogram.enums import ChatType, MessageEntityType
 from pyrogram.errors import MessageIdInvalid
+from ub_core.utils.helpers import get_name
 
-from app import BOT, Config, CustomDB, Message, bot
-from app.utils.helpers import get_name
+from app import BOT, Config, CustomDB, Message, bot, extra_config
 
 LOGGER = CustomDB("COMMON_SETTINGS")
 
@@ -19,10 +19,10 @@ async def init_task():
     tag_check = await LOGGER.find_one({"_id": "tag_logger_switch"})
     pm_check = await LOGGER.find_one({"_id": "pm_logger_switch"})
     if tag_check:
-        Config.TAG_LOGGER = tag_check["value"]
+        extra_config.TAG_LOGGER = tag_check["value"]
     if pm_check:
-        Config.PM_LOGGER = pm_check["value"]
-    Config.MESSAGE_LOGGER_TASK = asyncio.create_task(runner())
+        extra_config.PM_LOGGER = pm_check["value"]
+    Config.BACKGROUND_TASKS.append(asyncio.create_task(runner(), name="pm_tag_logger"))
 
 
 @bot.add_cmd(cmd=["taglogger", "pmlogger"])
@@ -36,12 +36,12 @@ async def logger_switch(bot: BOT, message: Message):
     conf_str = f"{text.upper()}_LOGGER"
     if "-c" in message.flags:
         await message.reply(
-            text=f"{text.capitalize()} Logger is enabled: <b>{getattr(Config, conf_str)}</b>!",
+            text=f"{text.capitalize()} Logger is enabled: <b>{getattr(extra_config, conf_str)}</b>!",
             del_in=8,
         )
         return
-    value: bool = not getattr(Config, conf_str)
-    setattr(Config, conf_str, value)
+    value: bool = not getattr(extra_config, conf_str)
+    setattr(extra_config, conf_str, value)
     await asyncio.gather(
         LOGGER.add_data({"_id": f"{text}_logger_switch", "value": value}),
         message.reply(
@@ -51,8 +51,11 @@ async def logger_switch(bot: BOT, message: Message):
             text=f"#{text.capitalize()}Logger is enabled: <b>{value}</b>!", type="info"
         ),
     )
-    if not Config.MESSAGE_LOGGER_TASK or Config.MESSAGE_LOGGER_TASK.done():
-        Config.MESSAGE_LOGGER_TASK = asyncio.create_task(runner())
+    for task in Config.BACKGROUND_TASKS:
+        if task.get_name() == "pm_tag_logger" and not task.done():
+            Config.BACKGROUND_TASKS.append(
+                asyncio.create_task(runner(), name="pm_tag_logger")
+            )
 
 
 basic_filters = (
@@ -67,14 +70,14 @@ basic_filters = (
 @bot.on_message(
     filters=basic_filters
     & filters.private
-    & filters.create(lambda _, __, ___: Config.PM_LOGGER),
+    & filters.create(lambda _, __, ___: extra_config.PM_LOGGER),
     group=2,
 )
 async def pm_logger(bot: BOT, message: Message):
     cache_message(message)
 
 
-tag_filter = filters.create(lambda _, __, ___: Config.TAG_LOGGER)
+tag_filter = filters.create(lambda _, __, ___: extra_config.TAG_LOGGER)
 
 
 @bot.on_message(
@@ -128,7 +131,7 @@ def cache_message(message: Message):
 
 
 async def runner():
-    if not (Config.TAG_LOGGER or Config.PM_LOGGER):
+    if not (extra_config.TAG_LOGGER or extra_config.PM_LOGGER):
         return
     last_pm_logged_id = 0
     while True:
@@ -158,11 +161,11 @@ async def runner():
 async def log_pm(message: Message, log_info: bool):
     if log_info:
         await bot.send_message(
-            chat_id=Config.MESSAGE_LOGGER_CHAT,
+            chat_id=extra_config.MESSAGE_LOGGER_CHAT,
             text=f"#PM\n{message.from_user.mention} [{message.from_user.id}]",
         )
     try:
-        await message.forward(Config.MESSAGE_LOGGER_CHAT)
+        await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
     except MessageIdInvalid:
         notice = (
             f"{message.from_user.mention} [{message.from_user.id}] deleted this message."
@@ -172,7 +175,7 @@ async def log_pm(message: Message, log_info: bool):
             f"Caption:\n{message.caption or 'No Caption in media.'}"
         )
 
-        await message.copy(Config.MESSAGE_LOGGER_CHAT, caption=notice)
+        await message.copy(extra_config.MESSAGE_LOGGER_CHAT, caption=notice)
 
 
 async def log_chat(message: Message):
@@ -190,15 +193,15 @@ async def log_chat(message: Message):
 
     if message.reply_to_message:
         try:
-            await message.reply_to_message.forward(Config.MESSAGE_LOGGER_CHAT)
+            await message.reply_to_message.forward(extra_config.MESSAGE_LOGGER_CHAT)
         except MessageIdInvalid:
             await message.reply_to_message.copy(
-                Config.MESSAGE_LOGGER_CHAT, caption=notice
+                extra_config.MESSAGE_LOGGER_CHAT, caption=notice
             )
     try:
-        logged = await message.forward(Config.MESSAGE_LOGGER_CHAT)
+        logged = await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
         await logged.reply(
             text=f"#TAG\n{mention} [{u_id}]\nMessage: \n<a href='{message.link}'>{message.chat.title}</a> ({message.chat.id})",
         )
     except MessageIdInvalid:
-        await message.copy(Config.MESSAGE_LOGGER_CHAT, caption=notice)
+        await message.copy(extra_config.MESSAGE_LOGGER_CHAT, caption=notice)

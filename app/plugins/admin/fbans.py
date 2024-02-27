@@ -3,9 +3,9 @@ import asyncio
 from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus, ChatType
 from pyrogram.types import Chat, User
+from ub_core.utils.helpers import get_name
 
-from app import BOT, Config, CustomDB, Message, bot
-from app.utils.helpers import get_name
+from app import BOT, Config, CustomDB, Message, bot, extra_config
 
 FED_DB = CustomDB("FED_LIST")
 
@@ -116,7 +116,7 @@ async def fed_ban(bot: BOT, message: Message):
         if not message.replied:
             await progress.edit("Reply to a proof")
             return
-        proof = await message.replied.forward(Config.FBAN_LOG_CHANNEL)
+        proof = await message.replied.forward(extra_config.FBAN_LOG_CHANNEL)
         proof_str = f"\n{ {proof.link} }"
 
     reason = f"{reason}{proof_str}"
@@ -229,7 +229,9 @@ async def perform_fed_task(
     if not message.is_from_owner:
         resp_str += f"\n\n<b>By</b>: {get_name(message.from_user)}"
     await bot.send_message(
-        chat_id=Config.FBAN_LOG_CHANNEL, text=resp_str, disable_web_page_preview=True
+        chat_id=extra_config.FBAN_LOG_CHANNEL,
+        text=resp_str,
+        disable_web_page_preview=True,
     )
     await progress.edit(
         text=resp_str, del_in=5, block=True, disable_web_page_preview=True
@@ -238,9 +240,9 @@ async def perform_fed_task(
 
 
 async def handle_sudo_fban(command: str):
-    if not (Config.FBAN_SUDO_ID and Config.FBAN_SUDO_TRIGGER):
+    if not (extra_config.FBAN_SUDO_ID and extra_config.FBAN_SUDO_TRIGGER):
         return
-    sudo_cmd = command.replace("/", Config.FBAN_SUDO_TRIGGER, 1)
+    sudo_cmd = command.replace("/", extra_config.FBAN_SUDO_TRIGGER, 1)
     await bot.send_message(
-        chat_id=Config.FBAN_SUDO_ID, text=sudo_cmd, disable_web_page_preview=True
+        chat_id=extra_config.FBAN_SUDO_ID, text=sudo_cmd, disable_web_page_preview=True
     )

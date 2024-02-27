@@ -2,12 +2,12 @@ import asyncio
 import os
 import time
 
-from app import BOT, Config, bot
-from app.core import Message
-from app.utils.downloader import Download, DownloadedFile
-from app.utils.helpers import progress
-from app.utils.media_helper import MediaType, bytes_to_mb
-from app.utils.shell import check_audio, get_duration, take_ss
+from ub_core.utils.downloader import Download, DownloadedFile
+from ub_core.utils.helpers import progress
+from ub_core.utils.media_helper import MediaType, bytes_to_mb
+from ub_core.utils.shell import check_audio, get_duration, take_ss
+
+from app import BOT, Config, Message, bot
 
 
 async def video_upload(

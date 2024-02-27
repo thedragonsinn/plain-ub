@@ -10,11 +10,11 @@ from pyrogram.enums import MessageMediaType
 from pyrogram.errors import StickersetInvalid
 from pyrogram.raw.functions.messages import GetStickerSet
 from pyrogram.raw.types import InputStickerSetShortName
+from ub_core.utils.helpers import get_name
+from ub_core.utils.media_helper import MediaExts
+from ub_core.utils.shell import get_duration, run_shell_cmd
 
 from app import BOT, Message, bot
-from app.utils.helpers import get_name
-from app.utils.media_helper import MediaExts
-from app.utils.shell import get_duration, run_shell_cmd
 
 EMOJIS = ("☕", "🤡", "🙂", "🤔", "🔪", "😂", "💀")
 

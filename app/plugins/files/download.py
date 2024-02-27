@@ -2,11 +2,11 @@ import asyncio
 import os
 import time
 
-from app import BOT, bot
-from app.core import Message
-from app.utils.downloader import Download, DownloadedFile
-from app.utils.helpers import progress
-from app.utils.media_helper import get_tg_media_details
+from ub_core.utils.downloader import Download, DownloadedFile
+from ub_core.utils.helpers import progress
+from ub_core.utils.media_helper import get_tg_media_details
+
+from app import BOT, Message, bot
 
 
 @bot.add_cmd(cmd="download")

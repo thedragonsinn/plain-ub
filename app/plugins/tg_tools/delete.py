@@ -1,5 +1,4 @@
-from app import BOT, bot
-from app.core import Message
+from app import BOT, Message, bot
 from app.plugins.tg_tools.get_message import parse_link
 
 

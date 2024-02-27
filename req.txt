@@ -1,16 +1,7 @@
-aiohttp==3.8.5
-aiofiles==23.2.1
-async-lru==2.0.4
-httpx==0.25.0
-dnspython==2.3.0
-motor==3.2.0
-pymongo==4.4.0
-gitpython>=3.1.32
-pyrogram==2.0.106
-python-dotenv==0.21.0
-tgcrypto
-telegraph==2.2.0
-uvloop==0.17.0
+# BoilerPlate Code for UB
+git+https://github.com/thedragonsinn/ub-core.git
+
 yt-dlp
 pillow
 google-generativeai
+

@@ -6,18 +6,18 @@ from pyrogram import filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message as Msg
 
-from app import BOT, Config, Convo, Message, bot
+from app import BOT, Convo, Message, bot, extra_config
 
 MODEL = genai.GenerativeModel("gemini-pro")
 
 
 async def init_task():
-    if Config.GEMINI_API_KEY:
-        genai.configure(api_key=Config.GEMINI_API_KEY)
+    if extra_config.GEMINI_API_KEY:
+        genai.configure(api_key=extra_config.GEMINI_API_KEY)
 
 
 async def basic_check(message: Message):
-    if not Config.GEMINI_API_KEY:
+    if not extra_config.GEMINI_API_KEY:
         await message.reply(
             "Gemini API KEY not found."
             "\nGet it <a href='https://makersuite.google.com/app/u/2/apikey'>HERE</a> "
@@ -88,7 +88,7 @@ async def ai_chat(bot: BOT, message: Message):
         )
         return
     resp = await message.reply("<i>Loading History...</i>")
-    doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()
+    doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()  # NOQA
     history = pickle.loads(doc)
     await resp.edit("<i>History Loaded... Resuming chat</i>")
     chat = MODEL.start_chat(history=history)

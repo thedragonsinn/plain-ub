@@ -6,9 +6,9 @@ from time import time
 from urllib.parse import urlparse
 
 import yt_dlp
+from ub_core.utils.aiohttp_tools import aio
 
 from app import Message, bot
-from app.utils.aiohttp_tools import aio
 
 domains = [
     "www.youtube.com",

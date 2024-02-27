@@ -1,9 +1,9 @@
 import asyncio
 
 from pyrogram.types import User
+from ub_core.utils.helpers import extract_user_data, get_name
 
 from app import BOT, Config, CustomDB, Message, bot
-from app.utils.helpers import extract_user_data, get_name
 
 SUDO = CustomDB("COMMON_SETTINGS")
 SUDO_USERS = CustomDB("SUDO_USERS")
