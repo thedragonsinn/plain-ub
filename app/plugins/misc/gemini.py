@@ -20,7 +20,7 @@ async def basic_check(message: Message):
     if not extra_config.GEMINI_API_KEY:
         await message.reply(
             "Gemini API KEY not found."
-            "\nGet it <a href='https://makersuite.google.com/app/u/2/apikey'>HERE</a> "
+            "\nGet it <a href='https://makersuite.google.com/app/apikey'>HERE</a> "
             "and set GEMINI_API_KEY var."
         )
         return
