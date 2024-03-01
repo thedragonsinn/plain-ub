@@ -11,9 +11,7 @@ MODEL = genai.GenerativeModel(
     "gemini-pro", safety_settings={"HARASSMENT": "block_none"}
 )
 
-INSTRUCTIONS = (
-    "your response length must not exceed 4000 for this following question:\n"
-)
+INSTRUCTIONS = "Your response length must not exceed 4000 for all of my question(s):\n"
 
 
 async def init_task():
@@ -44,7 +42,8 @@ async def question(bot: BOT, message: Message):
     """
     if not (await basic_check(message)):  # fmt:skip
         return
-    response = await MODEL.generate_content_async(message.input)
+    prompt = INSTRUCTIONS + message.input
+    response = await MODEL.generate_content_async(prompt)
     response_text = get_response_text(response)
     await message.reply(
         text="**GEMINI AI**:\n\n" + response_text, parse_mode=ParseMode.MARKDOWN
@@ -96,7 +95,7 @@ async def ai_chat(bot: BOT, message: Message):
     await resp.edit("<i>History Loaded... Resuming chat</i>")
     chat = MODEL.start_chat(history=history)
     try:
-        await do_convo(chat=chat, message=message)
+        await do_convo(chat=chat, message=message, history=True)
     except TimeoutError:
         await export_history(chat, message)
 
@@ -105,8 +104,11 @@ def get_response_text(response):
     return "\n".join([part.text for part in response.parts])
 
 
-async def do_convo(chat, message: Message):
-    prompt = message.input
+async def do_convo(chat, message: Message, history: bool = False):
+    if not history:
+        prompt = INSTRUCTIONS + message.input
+    else:
+        prompt = message.input
     reply_to_message_id = message.id
     async with Convo(
         client=bot,
