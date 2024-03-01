@@ -4,11 +4,16 @@ from io import BytesIO
 import google.generativeai as genai
 from pyrogram import filters
 from pyrogram.enums import ParseMode
-from pyrogram.types import Message as Msg
 
 from app import BOT, Convo, Message, bot, extra_config
 
-MODEL = genai.GenerativeModel("gemini-pro")
+MODEL = genai.GenerativeModel(
+    "gemini-pro", safety_settings={"HARASSMENT": "block_none"}
+)
+
+INSTRUCTIONS = (
+    "your response length must not exceed 4000 for this following question:\n"
+)
 
 
 async def init_task():
@@ -39,9 +44,10 @@ async def question(bot: BOT, message: Message):
     """
     if not (await basic_check(message)):  # fmt:skip
         return
-    response = (await MODEL.generate_content_async(message.input)).text
+    response = await MODEL.generate_content_async(message.input)
+    response_text = get_response_text(response)
     await message.reply(
-        text="**GEMINI AI**:\n" + response, parse_mode=ParseMode.MARKDOWN
+        text="**GEMINI AI**:\n\n" + response_text, parse_mode=ParseMode.MARKDOWN
     )
 
 
@@ -77,15 +83,12 @@ async def ai_chat(bot: BOT, message: Message):
         return
     reply = message.replied
     if (
-        not message.input
-        or not reply
+        not reply
         or not reply.document
         or not reply.document.file_name
-        or reply.document.file_name != "AI_Chat_History.txt"
+        or reply.document.file_name != "AI_Chat_History.pkl"
     ):
-        await message.reply(
-            "Give an input to continue Convo and Reply to a Valid History file."
-        )
+        await message.reply("Reply to a Valid History file.")
         return
     resp = await message.reply("<i>Loading History...</i>")
     doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()  # NOQA
@@ -96,6 +99,10 @@ async def ai_chat(bot: BOT, message: Message):
         await do_convo(chat=chat, message=message)
     except TimeoutError:
         await export_history(chat, message)
+
+
+def get_response_text(response):
+    return "\n".join([part.text for part in response.parts])
 
 
 async def do_convo(chat, message: Message):
@@ -109,16 +116,16 @@ async def do_convo(chat, message: Message):
         check_for_duplicates=False,
     ) as convo:
         while True:
-            if isinstance(prompt, (Message, Msg)):
-                reply_to_message_id = prompt.id
-                prompt = prompt.text
-            ai_response = (await chat.send_message_async(prompt)).text
-            _, prompt = await convo.send_message(
-                text=f"**GEMINI AI**:\n\n{ai_response}",
+            ai_response = await chat.send_message_async(prompt)
+            ai_response_text = get_response_text(ai_response)
+            text = f"**GEMINI AI**:\n\n{ai_response_text}"
+            _, prompt_message = await convo.send_message(
+                text=text,
                 reply_to_message_id=reply_to_message_id,
                 parse_mode=ParseMode.MARKDOWN,
                 get_response=True,
             )
+            prompt, reply_to_message_id = prompt_message.text, prompt_message.id
 
 
 def generate_filter(message: Message):
@@ -139,7 +146,7 @@ def generate_filter(message: Message):
 
 async def export_history(chat, message: Message):
     doc = BytesIO(pickle.dumps(chat.history))
-    doc.name = "AI_Chat_History.txt"
+    doc.name = "AI_Chat_History.pkl"
     await bot.send_document(
         chat_id=message.from_user.id, document=doc, caption=message.text
     )
