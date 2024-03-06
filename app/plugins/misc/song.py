@@ -77,7 +77,7 @@ async def song_dl(bot: bot, message: Message) -> None | Message:
 async def get_download_info(query: str, path: str, audio_format: str) -> dict | None:
     yt_opts = {
         "logger": FakeLogger(),
-        "outtmpl": os.path.join(path + "%(title)s.%(ext)s"),
+        "outtmpl": os.path.join(path, "%(title)s.%(ext)s"),
         "format": "bestaudio",
         "postprocessors": [
             {"key": "FFmpegExtractAudio", "preferredcodec": audio_format},
