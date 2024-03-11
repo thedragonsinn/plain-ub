@@ -150,9 +150,13 @@ async def runner():
                     log_info = True
                 else:
                     log_info = False
-                await log_pm(message=msg, log_info=log_info)
+                coro = log_pm(message=msg, log_info=log_info)
             else:
-                await log_chat(message=msg)
+                coro = log_chat(message=msg)
+            try:
+                await coro
+            except BaseException:
+                pass
             MESSAGE_CACHE[first_key].remove(msg)
             await asyncio.sleep(5)
         await asyncio.sleep(15)
