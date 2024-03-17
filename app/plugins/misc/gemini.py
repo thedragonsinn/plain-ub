@@ -8,10 +8,20 @@ from pyrogram.enums import ParseMode
 from app import BOT, Convo, Message, bot, extra_config
 
 MODEL = genai.GenerativeModel(
-    "gemini-pro", safety_settings={"HARASSMENT": "block_none"}
+    generation_config={
+        "temperature": 0.69,
+        "top_p": 1,
+        "top_k": 1,
+        "max_output_tokens": 2048,
+    },
+    model_name="gemini-pro",
+    safety_settings=[
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+    ],
 )
-
-INSTRUCTIONS = "Your response length must not exceed 4000 for all of my question(s):\n"
 
 
 async def init_task():
@@ -42,11 +52,14 @@ async def question(bot: BOT, message: Message):
     """
     if not (await basic_check(message)):  # fmt:skip
         return
-    prompt = INSTRUCTIONS + message.input
+    prompt = message.input
     response = await MODEL.generate_content_async(prompt)
     response_text = get_response_text(response)
-    await message.reply(
-        text="**GEMINI AI**:\n\n" + response_text, parse_mode=ParseMode.MARKDOWN
+    await bot.send_message(
+        chat_id=message.chat.id,
+        text=f"```\n{prompt}```**GEMINI AI**:\n{response_text}",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_to_message_id=message.reply_id or message.id,
     )
 
 
@@ -58,7 +71,7 @@ async def ai_chat(bot: BOT, message: Message):
     USAGE:
         .aichat hello
         keep replying to AI responses
-        After 5mins of Idle bot will export history n stop chat.
+        After 5 mins of Idle bot will export history and stop chat.
         use .load_history to continue
     """
     if not (await basic_check(message)):  # fmt:skip
@@ -105,10 +118,7 @@ def get_response_text(response):
 
 
 async def do_convo(chat, message: Message, history: bool = False):
-    if not history:
-        prompt = INSTRUCTIONS + message.input
-    else:
-        prompt = message.input
+    prompt = message.input
     reply_to_message_id = message.id
     async with Convo(
         client=bot,
