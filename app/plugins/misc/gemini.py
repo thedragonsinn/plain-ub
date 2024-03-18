@@ -1,26 +1,34 @@
+import mimetypes
 import pickle
 from io import BytesIO
 
 import google.generativeai as genai
+from google.ai import generativelanguage as glm
 from pyrogram import filters
 from pyrogram.enums import ParseMode
 
 from app import BOT, Convo, Message, bot, extra_config
 
-MODEL = genai.GenerativeModel(
-    generation_config={
-        "temperature": 0.69,
-        "top_p": 1,
-        "top_k": 1,
-        "max_output_tokens": 2048,
-    },
+GENERATION_CONFIG = {"temperature": 0.69, "max_output_tokens": 2048}
+
+SAFETY_SETTINGS = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+]
+
+
+TEXT_MODEL = genai.GenerativeModel(
     model_name="gemini-pro",
-    safety_settings=[
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
-    ],
+    generation_config=GENERATION_CONFIG,
+    safety_settings=SAFETY_SETTINGS,
+)
+
+VISION_MODEL = genai.GenerativeModel(
+    model_name="gemini-pro-vision",
+    generation_config=GENERATION_CONFIG,
+    safety_settings=SAFETY_SETTINGS,
 )
 
 
@@ -50,14 +58,29 @@ async def question(bot: BOT, message: Message):
     INFO: Ask a question to Gemini AI.
     USAGE: .ai what is the meaning of life.
     """
+
     if not (await basic_check(message)):  # fmt:skip
         return
     prompt = message.input
-    response = await MODEL.generate_content_async(prompt)
+
+    reply = message.replied
+    if reply and reply.photo:
+        file = await reply.download(in_memory=True)
+
+        mime_type, _ = mimetypes.guess_type(file.name)
+        if mime_type is None:
+            mime_type = "image/unknown"
+
+        image_blob = glm.Blob(mime_type=mime_type, data=file.getvalue())
+        response = await VISION_MODEL.generate_content_async([prompt, image_blob])
+
+    else:
+        response = await TEXT_MODEL.generate_content_async(prompt)
+
     response_text = get_response_text(response)
     await bot.send_message(
         chat_id=message.chat.id,
-        text=f"```\n{prompt}```**GEMINI AI**:\n{response_text}",
+        text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
         parse_mode=ParseMode.MARKDOWN,
         reply_to_message_id=message.reply_id or message.id,
     )
@@ -76,7 +99,7 @@ async def ai_chat(bot: BOT, message: Message):
     """
     if not (await basic_check(message)):  # fmt:skip
         return
-    chat = MODEL.start_chat(history=[])
+    chat = TEXT_MODEL.start_chat(history=[])
     try:
         await do_convo(chat=chat, message=message)
     except TimeoutError:
@@ -106,7 +129,7 @@ async def ai_chat(bot: BOT, message: Message):
     doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()  # NOQA
     history = pickle.loads(doc)
     await resp.edit("<i>History Loaded... Resuming chat</i>")
-    chat = MODEL.start_chat(history=history)
+    chat = TEXT_MODEL.start_chat(history=history)
     try:
         await do_convo(chat=chat, message=message, history=True)
     except TimeoutError:
