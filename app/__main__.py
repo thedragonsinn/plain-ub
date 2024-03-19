@@ -1,4 +1,11 @@
-from app import LOGGER, bot
+import sys
+
+from app import LOGGER, Config, bot
+
+if Config.CMD_TRIGGER == Config.SUDO_TRIGGER:
+    LOGGER.error("CMD_TRIGGER and SUDO_TRIGGER can't be the same")
+    sys.exit(0)
+
 
 if __name__ == "__main__":
     bot.run(bot.boot())
