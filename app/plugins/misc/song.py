@@ -6,7 +6,7 @@ from time import time
 from urllib.parse import urlparse
 
 import yt_dlp
-from ub_core.utils.aiohttp_tools import aio
+from ub_core.utils import aio
 
 from app import Message, bot
 
