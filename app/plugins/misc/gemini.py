@@ -78,12 +78,18 @@ async def question(bot: BOT, message: Message):
         response = await TEXT_MODEL.generate_content_async(prompt)
 
     response_text = get_response_text(response)
-    await bot.send_message(
-        chat_id=message.chat.id,
-        text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
-        parse_mode=ParseMode.MARKDOWN,
-        reply_to_message_id=message.reply_id or message.id,
-    )
+    if not isinstance(message, Message):
+        await message.edit(
+            text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+    else:
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_to_message_id=message.reply_id or message.id,
+        )
 
 
 @bot.add_cmd(cmd="aichat")
