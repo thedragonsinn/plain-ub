@@ -19,6 +19,7 @@ from app.plugins.ai.models import (
 )
 
 CODE_EXTS = {
+    ".txt",
     ".java",
     ".c",
     ".cpp",
@@ -65,7 +66,7 @@ async def photo_query(bot: BOT, message: Message):
 @bot.add_cmd(cmd="stt")
 async def audio_to_text(bot: BOT, message: Message):
     """
-    CMD: STT
+    CMD: STT (Speech To Text)
     INFO: Convert Audio files to text.
     USAGE: .stt [reply to audio file] summarise/transcribe the audio file.
     """
@@ -148,7 +149,7 @@ async def download_file(file_name: str, message: Message) -> tuple[str, str]:
 
 async def handle_audio(prompt: str, message: Message):
     audio = message.document or message.audio or message.voice
-    file_name = audio.file_name or "audio.aac"
+    file_name = getattr(audio, "file_name", "audio.aac")
 
     file_path, download_dir = await download_file(file_name, message)
     file_response = genai.upload_file(path=file_path)
