@@ -52,12 +52,14 @@ async def photo_query(bot: BOT, message: Message):
     """
     prompt = message.input
     reply = message.replied
+    message_response = await message.reply("processing... this may take a while")
 
     if not (prompt and reply and reply.photo):
-        await message.reply("Reply to an image and give a prompt.")
+        await message_response.edit("Reply to an image and give a prompt.")
         return
-    response_text = await handle_photo(prompt, reply)
-    await message.reply(response_text)
+
+    ai_response_text = await handle_photo(prompt, reply)
+    await message_response.edit(ai_response_text)
 
 
 @bot.add_cmd(cmd="stt")
@@ -69,13 +71,34 @@ async def audio_to_text(bot: BOT, message: Message):
     """
     prompt = message.input
     reply = message.replied
-    audio = message.audio or message.voice
+    audio = reply.audio or reply.voice
 
+    message_response = await message.reply("processing... this may take a while")
     if not (prompt and reply and audio):
-        await message.reply("Reply to an image and give a prompt.")
+        await message_response.edit("Reply to an audio file and give a prompt.")
         return
-    response_text = await handle_audio(prompt, reply)
-    await message.reply(response_text)
+
+    ai_response_text = await handle_audio(prompt, reply)
+    await message_response.edit(ai_response_text)
+
+
+@bot.add_cmd(cmd="ocrv")
+async def video_to_text(bot: BOT, message: Message):
+    """
+    CMD: OCRV
+    INFO: Convert Video info to text.
+    USAGE: .ocrv [reply to video file] summarise the video file.
+    """
+    prompt = message.input
+    reply = message.replied
+    message_response = await message.reply("processing... this may take a while")
+
+    if not (prompt and reply and reply.video):
+        await message_response.edit("Reply to a video and give a prompt.")
+        return
+
+    ai_response_text = await handle_video(prompt, reply)
+    await message_response.edit(ai_response_text)
 
 
 @bot.add_cmd(cmd="aim")
@@ -83,36 +106,37 @@ async def handle_document(bot: BOT, message: Message):
     """
     CMD: AIM
     INFO: Prompt Ai to perform task for documents containing pic, vid, code, audio.
-    USAGE: .aim [reply to audio file] convert this file to python | summarise the video, audio, picture.
+    USAGE: .aim [reply to a file] convert this file to python | summarise the video, audio, picture.
     """
     prompt = message.input
     reply = message.replied
     document = reply.document
+    message_response = await message.reply("processing... this may take a while")
 
     if not (prompt and reply and document):
-        await message.reply("Reply to a document and give a prompt.")
+        await message_response.edit("Reply to a document and give a prompt.")
         return
 
     file_name = document.file_name
     if not file_name:
-        await message.reply("Unsupported file.")
+        await message_response.edit("Unsupported file.")
         return
 
     name, ext = os.path.splitext(file_name)
 
     if ext in PHOTO_EXTS:
-        response_text = await handle_photo(prompt, reply)
+        ai_response_text = await handle_photo(prompt, reply)
     elif ext in AUDIO_EXTS:
-        response_text = await handle_audio(prompt, reply)
+        ai_response_text = await handle_audio(prompt, reply)
     elif ext in CODE_EXTS:
-        response_text = await handle_code(prompt, reply)
+        ai_response_text = await handle_code(prompt, reply)
     elif ext in VIDEO_EXTS:
-        response_text = await handle_video(prompt, reply)
+        ai_response_text = await handle_video(prompt, reply)
     else:
-        await message.reply("Unsupported Media.")
+        await message_response.edit("Unsupported Media.")
         return
 
-    await message.reply(response_text)
+    await message_response.edit(ai_response_text)
 
 
 async def download_file(file_name: str, message: Message) -> tuple[str, str]:
