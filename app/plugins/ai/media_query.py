@@ -206,7 +206,7 @@ async def handle_video(prompt: str, message: Message):
     response_text = get_response_text(response)
 
     for uploaded_frame in uploaded_frames:
-        genai.delete_file(name=uploaded_frame.name)
+        await asyncio.to_thread(genai.delete_file, name=uploaded_frame.name)
 
     shutil.rmtree(download_dir, ignore_errors=True)
     return response_text
