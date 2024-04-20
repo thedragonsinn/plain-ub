@@ -41,6 +41,10 @@ async def handle_new_pm(bot: BOT, message: Message):
             type="info",
         )
     RECENT_USERS[user_id] += 1
+
+    if message.chat.is_support:
+        return
+
     if RECENT_USERS[user_id] >= 5:
         await message.reply("You've been blocked for spamming.")
         await bot.block_user(user_id)

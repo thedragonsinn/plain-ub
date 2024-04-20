@@ -66,8 +66,10 @@ async def down_load(bot: BOT, message: Message):
 
 
 async def telegram_download(
-    message: Message, response: Message, path: str, file_name: str | None = None
-) -> DownloadedFile:
+        message: Message,
+        response: Message,
+        path: str,
+        file_name: str | None = None) -> DownloadedFile:
     """
     :param message: Message Containing Media
     :param response: Response to Edit

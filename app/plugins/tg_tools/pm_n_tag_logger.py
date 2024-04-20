@@ -64,6 +64,7 @@ basic_filters = (
     & ~filters.service
     & ~filters.chat(chats=[bot.me.id])
     & ~filters.me
+    & ~filters.create(lambda _, __, m: m.chat.is_support)
 )
 
 
@@ -134,31 +135,43 @@ async def runner():
     if not (extra_config.TAG_LOGGER or extra_config.PM_LOGGER):
         return
     last_pm_logged_id = 0
+
     while True:
+
         cached_keys = list(MESSAGE_CACHE.keys())
         if not cached_keys:
             await asyncio.sleep(5)
             continue
+
         first_key = cached_keys[0]
         cached_list = MESSAGE_CACHE.copy()[first_key]
+
         if not cached_list:
             MESSAGE_CACHE.pop(first_key)
+
         for idx, msg in enumerate(cached_list):
+
             if msg.chat.type == ChatType.PRIVATE:
+
                 if last_pm_logged_id != first_key:
                     last_pm_logged_id = first_key
+
                     log_info = True
                 else:
                     log_info = False
+
                 coro = log_pm(message=msg, log_info=log_info)
             else:
                 coro = log_chat(message=msg)
+
             try:
                 await coro
             except BaseException:
                 pass
+
             MESSAGE_CACHE[first_key].remove(msg)
             await asyncio.sleep(5)
+
         await asyncio.sleep(15)
 
 
@@ -205,7 +218,7 @@ async def log_chat(message: Message):
     try:
         logged = await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
         await logged.reply(
-            text=f"#TAG\n{mention} [{u_id}]\nMessage: \n<a href='{message.link}'>{message.chat.title}</a> ({message.chat.id})",
+            text=f"#TAG\n{mention} [{u_id}]\nMessage: \n<a href='{message.link}'>{message.chat.title}</a> ({message.chat.id})"
         )
     except MessageIdInvalid:
         await message.copy(extra_config.MESSAGE_LOGGER_CHAT, caption=notice)

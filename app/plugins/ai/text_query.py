@@ -1,54 +1,11 @@
-import mimetypes
 import pickle
 from io import BytesIO
 
-import google.generativeai as genai
-from google.ai import generativelanguage as glm
 from pyrogram import filters
 from pyrogram.enums import ParseMode
 
-from app import BOT, Convo, Message, bot, extra_config
-
-GENERATION_CONFIG = {"temperature": 0.69, "max_output_tokens": 2048}
-
-SAFETY_SETTINGS = [
-    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
-    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
-    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
-]
-
-
-TEXT_MODEL = genai.GenerativeModel(
-    model_name="gemini-pro",
-    generation_config=GENERATION_CONFIG,
-    safety_settings=SAFETY_SETTINGS,
-)
-
-VISION_MODEL = genai.GenerativeModel(
-    model_name="gemini-pro-vision",
-    generation_config=GENERATION_CONFIG,
-    safety_settings=SAFETY_SETTINGS,
-)
-
-
-async def init_task():
-    if extra_config.GEMINI_API_KEY:
-        genai.configure(api_key=extra_config.GEMINI_API_KEY)
-
-
-async def basic_check(message: Message):
-    if not extra_config.GEMINI_API_KEY:
-        await message.reply(
-            "Gemini API KEY not found."
-            "\nGet it <a href='https://makersuite.google.com/app/apikey'>HERE</a> "
-            "and set GEMINI_API_KEY var."
-        )
-        return
-    if not message.input:
-        await message.reply("Ask a Question.")
-        return
-    return 1
+from app import BOT, Convo, Message, bot
+from app.plugins.ai.models import TEXT_MODEL, basic_check, get_response_text
 
 
 @bot.add_cmd(cmd="ai")
@@ -59,25 +16,15 @@ async def question(bot: BOT, message: Message):
     USAGE: .ai what is the meaning of life.
     """
 
-    if not (await basic_check(message)):  # fmt:skip
+    if not await basic_check(message):
         return
+
     prompt = message.input
 
-    reply = message.replied
-    if reply and reply.photo:
-        file = await reply.download(in_memory=True)
-
-        mime_type, _ = mimetypes.guess_type(file.name)
-        if mime_type is None:
-            mime_type = "image/unknown"
-
-        image_blob = glm.Blob(mime_type=mime_type, data=file.getvalue())
-        response = await VISION_MODEL.generate_content_async([prompt, image_blob])
-
-    else:
-        response = await TEXT_MODEL.generate_content_async(prompt)
+    response = await TEXT_MODEL.generate_content_async(prompt)
 
     response_text = get_response_text(response)
+
     if not isinstance(message, Message):
         await message.edit(
             text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
@@ -103,7 +50,7 @@ async def ai_chat(bot: BOT, message: Message):
         After 5 mins of Idle bot will export history and stop chat.
         use .load_history to continue
     """
-    if not (await basic_check(message)):  # fmt:skip
+    if not await basic_check(message):
         return
     chat = TEXT_MODEL.start_chat(history=[])
     try:
@@ -113,14 +60,14 @@ async def ai_chat(bot: BOT, message: Message):
 
 
 @bot.add_cmd(cmd="load_history")
-async def ai_chat(bot: BOT, message: Message):
+async def history_chat(bot: BOT, message: Message):
     """
     CMD: LOAD_HISTORY
     INFO: Load a Conversation with Gemini AI from previous session.
     USAGE:
         .load_history {question} [reply to history document]
     """
-    if not (await basic_check(message)):  # fmt:skip
+    if not await basic_check(message):
         return
     reply = message.replied
     if (
@@ -142,15 +89,11 @@ async def ai_chat(bot: BOT, message: Message):
         await export_history(chat, message)
 
 
-def get_response_text(response):
-    return "\n".join([part.text for part in response.parts])
-
-
 async def do_convo(chat, message: Message, history: bool = False):
     prompt = message.input
     reply_to_message_id = message.id
     async with Convo(
-        client=bot,
+        client=message._client,
         chat_id=message.chat.id,
         filters=generate_filter(message),
         timeout=300,
@@ -177,7 +120,7 @@ def generate_filter(message: Message):
             or msg.from_user.id != message.from_user.id
             or not msg.reply_to_message
             or not msg.reply_to_message.from_user
-            or msg.reply_to_message.from_user.id != bot.me.id
+            or msg.reply_to_message.from_user.id != message._client.me.id
         ):
             return False
         return True
@@ -188,6 +131,7 @@ def generate_filter(message: Message):
 async def export_history(chat, message: Message):
     doc = BytesIO(pickle.dumps(chat.history))
     doc.name = "AI_Chat_History.pkl"
-    await bot.send_document(
-        chat_id=message.from_user.id, document=doc, caption=message.text
+    caption = get_response_text(
+        await chat.send_message_async("Summarize our Conversation into one line.")
     )
+    await bot.send_document(chat_id=message.from_user.id, document=doc, caption=caption)

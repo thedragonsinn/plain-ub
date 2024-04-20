@@ -8,7 +8,7 @@ from ub_core.utils.helpers import progress
 
 from app import BOT, Message, bot
 from app.plugins.files.download import telegram_download
-from app.plugins.files.upload import FILE_TYPE_MAP
+from app.plugins.files.upload import FILE_TYPE_MAP, MediaType
 
 
 @bot.add_cmd(cmd="rename")
@@ -31,10 +31,7 @@ async def rename(bot: BOT, message: Message):
     await response.edit("Input verified....Starting Download...")
     if message.replied:
         download_coro = telegram_download(
-            message=message.replied,
-            path=dl_path,
-            file_name=input,
-            response=response,
+            message=message.replied, path=dl_path, file_name=input, response=response
         )
     else:
         url, file_name = input.split(maxsplit=1)
@@ -44,9 +41,16 @@ async def rename(bot: BOT, message: Message):
         download_coro = dl_obj.download()
     try:
         downloaded_file: DownloadedFile = await download_coro
-        media: dict = await FILE_TYPE_MAP[downloaded_file.type](
-            downloaded_file, has_spoiler="-s" in message.flags
-        )
+
+        if "-d" in message.flags:
+            media: dict = await FILE_TYPE_MAP[MediaType.DOCUMENT](
+                downloaded_file, has_spoiler="-s" in message.flags
+            )
+        else:
+            media: dict = await FILE_TYPE_MAP[downloaded_file.type](
+                downloaded_file, has_spoiler="-s" in message.flags
+            )
+
         progress_args = (
             response,
             "Uploading...",
