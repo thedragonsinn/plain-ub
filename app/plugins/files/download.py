@@ -2,9 +2,8 @@ import asyncio
 import os
 import time
 
-from ub_core.utils.downloader import Download, DownloadedFile
-from ub_core.utils.helpers import progress
-from ub_core.utils.media_helper import get_tg_media_details
+from ub_core.utils import (Download, DownloadedFile, get_tg_media_details,
+                           progress)
 
 from app import BOT, Message, bot
 
@@ -20,32 +19,43 @@ async def down_load(bot: BOT, message: Message):
         .download -f file.ext URL | Reply to Media
     """
     response = await message.reply("Checking Input...")
+
     if (not message.replied or not message.replied.media) and not message.input:
         await response.edit(
             "Invalid input...\nReply to a message containing media or give a link with cmd."
         )
         return
+
     dl_path = os.path.join("downloads", str(time.time()))
+
     await response.edit("Input verified....Starting Download...")
+
     file_name = None
+
     if message.replied and message.replied.media:
+
         if "-f" in message.flags:
             file_name = message.filtered_input
+
         download_coro = telegram_download(
             message=message.replied,
             response=response,
             path=dl_path,
             file_name=file_name,
         )
+
     else:
+
         if "-f" in message.flags:
             file_name, url = message.filtered_input.split(maxsplit=1)
         else:
             url = message.filtered_input
+
         dl_obj: Download = await Download.setup(
             url=url, path=dl_path, message_to_edit=response, custom_file_name=file_name
         )
         download_coro = dl_obj.download()
+
     try:
         downloaded_file: DownloadedFile = await download_coro
         await response.edit(
@@ -59,8 +69,10 @@ async def down_load(bot: BOT, message: Message):
 
     except asyncio.exceptions.CancelledError:
         await response.edit("Cancelled....")
+
     except TimeoutError:
         await response.edit("Download Timeout...")
+
     except Exception as e:
         await response.edit(str(e))
 
@@ -78,18 +90,22 @@ async def telegram_download(
     :return: DownloadedFile
     """
     tg_media = get_tg_media_details(message)
+
     tg_media.file_name = file_name or tg_media.file_name
+
     media_obj: DownloadedFile = DownloadedFile(
         name=tg_media.file_name,
         path=path,
         size=round(tg_media.file_size / 1048576, 1),
         full_path=os.path.join(path, tg_media.file_name),
     )
+
     progress_args = (
         response,
         "Downloading...",
         media_obj.name,
         media_obj.full_path)
+
     await message.download(
         file_name=media_obj.full_path,
         progress=progress,

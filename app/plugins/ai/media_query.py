@@ -94,7 +94,7 @@ async def video_to_text(bot: BOT, message: Message):
     reply = message.replied
     message_response = await message.reply("processing... this may take a while")
 
-    if not (prompt and reply and reply.video):
+    if not (prompt and reply and (reply.video or reply.animation)):
         await message_response.edit("Reply to a video and give a prompt.")
         return
 
