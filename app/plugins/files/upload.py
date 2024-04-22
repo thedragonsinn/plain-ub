@@ -91,10 +91,12 @@ async def upload(bot: BOT, message: Message):
         -d: to upload as doc.
         -s: spoiler.
         -bulk: for folder upload.
+        -r: file name regex [ to be used with -bulk only ]
     USAGE:
         .upload [-d] URL | Path to File | CMD
         .upload -bulk downloads/videos
         .upload -bulk -d -s downloads/videos
+        .upload -bulk -r -s downloads/videos/*.mp4 (only uploads mp4)
     """
     input = message.filtered_input
 
@@ -143,7 +145,7 @@ async def upload(bot: BOT, message: Message):
             return
 
     elif "-bulk" in message.flags:
-        await bulk_upload(path=input, message=message)
+        await bulk_upload(message=message, response=response)
         return
 
     else:
@@ -154,14 +156,20 @@ async def upload(bot: BOT, message: Message):
     await upload_to_tg(file=file, message=message, response=response)
 
 
-async def bulk_upload(path: str, message: Message):
-    file_list = glob.glob(os.path.join(path, "*"))
+async def bulk_upload(message: Message, response: Message):
+
+    if "-r" in message.flags:
+        path_regex = message.filtered_input
+    else:
+        path_regex = os.path.join(message.filtered_input, "*")
+
+    file_list = [f for f in glob.glob(path_regex) if file_check(f)]
 
     if not file_list:
-        await message.reply("Invalid Folder path or Folder Empty")
+        await response.edit("Invalid Folder path/regex or Folder Empty")
         return
 
-    response = await message.reply(f"Preparing to upload {len(file_list)} files.")
+    await response.edit(f"Preparing to upload {len(file_list)} files.")
 
     for file in file_list:
 
@@ -181,6 +189,9 @@ async def bulk_upload(path: str, message: Message):
         temp_resp = await response.reply(f"starting to upload `{file_info.name}`")
 
         await upload_to_tg(file=file_info, message=message, response=temp_resp)
+        await asyncio.sleep(3)
+
+    await response.delete()
 
 
 async def upload_to_tg(file: DownloadedFile, message: Message, response: Message):
