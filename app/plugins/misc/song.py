@@ -6,7 +6,7 @@ import shutil
 from time import time
 from urllib.parse import urlparse
 
-from ub_core.utils import aio, run_shell_cmd
+from ub_core.utils import MediaExts, aio, run_shell_cmd
 
 from app import BOT, Message, bot
 
@@ -59,7 +59,7 @@ async def song_dl(bot: BOT, message: Message) -> None | Message:
     await response.edit("Uploading....")
 
     for audio_file in down_path:
-        if audio_file.endswith((".opus", ".mp3")):
+        if audio_file.endswith(tuple(MediaExts.AUDIO)):
             await message.reply_audio(
                 audio=audio_file,
                 duration=int(duration),
