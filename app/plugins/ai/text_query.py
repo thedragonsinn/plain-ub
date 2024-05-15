@@ -7,6 +7,8 @@ from pyrogram.enums import ParseMode
 from app import BOT, Convo, Message, bot
 from app.plugins.ai.models import TEXT_MODEL, basic_check, get_response_text
 
+CONVO_CACHE: dict[str, Convo] = {}
+
 
 @bot.add_cmd(cmd="ai")
 async def question(bot: BOT, message: Message):
@@ -53,10 +55,7 @@ async def ai_chat(bot: BOT, message: Message):
     if not await basic_check(message):
         return
     chat = TEXT_MODEL.start_chat(history=[])
-    try:
-        await do_convo(chat=chat, message=message)
-    except TimeoutError:
-        await export_history(chat, message)
+    await do_convo(chat=chat, message=message)
 
 
 @bot.add_cmd(cmd="load_history")
@@ -70,6 +69,7 @@ async def history_chat(bot: BOT, message: Message):
     if not await basic_check(message):
         return
     reply = message.replied
+
     if (
         not reply
         or not reply.document
@@ -78,38 +78,51 @@ async def history_chat(bot: BOT, message: Message):
     ):
         await message.reply("Reply to a Valid History file.")
         return
+
     resp = await message.reply("<i>Loading History...</i>")
     doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()  # NOQA
     history = pickle.loads(doc)
     await resp.edit("<i>History Loaded... Resuming chat</i>")
     chat = TEXT_MODEL.start_chat(history=history)
-    try:
-        await do_convo(chat=chat, message=message, history=True)
-    except TimeoutError:
-        await export_history(chat, message)
+    await do_convo(chat=chat, message=message)
 
 
-async def do_convo(chat, message: Message, history: bool = False):
+async def do_convo(chat, message: Message):
     prompt = message.input
     reply_to_message_id = message.id
-    async with Convo(
+
+    old_convo = CONVO_CACHE.get(message.unique_chat_user_id)
+
+    if old_convo:
+        Convo.CONVO_DICT[message.chat.id].remove(old_convo)
+
+    convo_obj = Convo(
         client=message._client,
         chat_id=message.chat.id,
         filters=generate_filter(message),
         timeout=300,
         check_for_duplicates=False,
-    ) as convo:
-        while True:
-            ai_response = await chat.send_message_async(prompt)
-            ai_response_text = get_response_text(ai_response)
-            text = f"**GEMINI AI**:\n\n{ai_response_text}"
-            _, prompt_message = await convo.send_message(
-                text=text,
-                reply_to_message_id=reply_to_message_id,
-                parse_mode=ParseMode.MARKDOWN,
-                get_response=True,
-            )
-            prompt, reply_to_message_id = prompt_message.text, prompt_message.id
+    )
+
+    CONVO_CACHE[message.unique_chat_user_id] = convo_obj
+
+    try:
+        async with convo_obj:
+            while True:
+                ai_response = await chat.send_message_async(prompt)
+                ai_response_text = get_response_text(ai_response)
+                text = f"**GEMINI AI**:\n\n{ai_response_text}"
+                _, prompt_message = await convo_obj.send_message(
+                    text=text,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.MARKDOWN,
+                    get_response=True,
+                )
+                prompt, reply_to_message_id = prompt_message.text, prompt_message.id
+    except TimeoutError:
+        await export_history(chat, message)
+
+    CONVO_CACHE.pop(message.unique_chat_user_id, 0)
 
 
 def generate_filter(message: Message):
