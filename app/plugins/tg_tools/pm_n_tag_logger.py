@@ -73,6 +73,7 @@ basic_filters = (
     & filters.private
     & filters.create(lambda _, __, ___: extra_config.PM_LOGGER),
     group=2,
+    is_command=False,
 )
 async def pm_logger(bot: BOT, message: Message):
     cache_message(message)
@@ -82,7 +83,9 @@ tag_filter = filters.create(lambda _, __, ___: extra_config.TAG_LOGGER)
 
 
 @bot.on_message(
-    filters=(basic_filters & filters.reply & tag_filter) & ~filters.private, group=2
+    filters=(basic_filters & filters.reply & tag_filter) & ~filters.private,
+    group=2,
+    is_command=False,
 )
 async def reply_logger(bot: BOT, message: Message):
     if (
@@ -95,7 +98,9 @@ async def reply_logger(bot: BOT, message: Message):
 
 
 @bot.on_message(
-    filters=(basic_filters & filters.mentioned & tag_filter) & ~filters.private, group=2
+    filters=(basic_filters & filters.mentioned & tag_filter) & ~filters.private,
+    group=2,
+    is_command=False,
 )
 async def mention_logger(bot: BOT, message: Message):
     for entity in message.entities or []:
@@ -112,6 +117,7 @@ async def mention_logger(bot: BOT, message: Message):
     filters=(basic_filters & (filters.text | filters.media) & tag_filter)
     & ~filters.private,
     group=2,
+    is_command=False,
 )
 async def username_logger(bot: BOT, message: Message):
     text = message.text or message.caption or ""
