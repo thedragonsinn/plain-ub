@@ -21,7 +21,7 @@ PY_VERSION = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
 @bot.add_cmd(cmd="alive")
 async def alive(bot: BOT, message: Message):
     # Inline Alive if Dual Mode
-    if bot.is_user and bot.has_bot:
+    if bot.is_user and getattr(bot, "has_bot", None):
         inline_result: BotResults = await bot.get_inline_bot_results(
             bot=bot.bot.me.username, query="inline_alive"
         )
@@ -47,7 +47,7 @@ async def alive(bot: BOT, message: Message):
         )
 
 
-if bot.is_bot or bot.has_bot:
+if bot.is_bot or getattr(bot, "has_bot", None):
 
     @bot.bot.on_inline_query(filters=filters.regex("^inline_alive$"), group=2)
     async def return_inline_alive_results(bot: BOT, inline_query: InlineQuery):
