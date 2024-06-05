@@ -1,7 +1,13 @@
 ## PLAIN UB
+
+![Header Image](assets/dark.png#gh-dark-mode-only)
+![Header Image](assets/light.png#gh-light-mode-only)
+
+A simple Telegram User-Bot.
+
 > Made for my personal use
 
-### Example Plugins:
+## Example Plugins:
 
 <details>
 
