@@ -78,7 +78,7 @@ def file_check(file: str) -> bool:
 
 
 def check_size(size: int | float) -> bool:
-    limit = 4096 if bot.me.is_premium else 2048
+    limit = 3999 if bot.me.is_premium else 1999
     return size < limit
 
 
