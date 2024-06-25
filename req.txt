@@ -1,7 +1,8 @@
 # BoilerPlate Code for UB
-git+https://github.com/thedragonsinn/ub-core.git
+# git+https://github.com/thedragonsinn/ub-core.git
+# moved to scripts/install_ub_core.sh
 
-yt-dlp>=2024.4.9
+yt-dlp>=2024.5.27
 pillow
 google-generativeai
 

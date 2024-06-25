@@ -15,4 +15,4 @@ RUN sed -i.bak 's/us-west-2\.ec2\.//' /etc/apt/sources.list && \
 
 EXPOSE 8080 
  
-CMD bash -c "$(curl -fsSL https://raw.githubusercontent.com/thedragonsinn/plain-ub/main/docker_start_cmd)"
+CMD bash -c "$(curl -fsSL https://raw.githubusercontent.com/thedragonsinn/plain-ub/main/docker_start.sh)"
