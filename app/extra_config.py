@@ -4,7 +4,7 @@ ALIVE_MEDIA: str = environ.get(
     "ALIVE_MEDIA", "https://telegra.ph/file/a1d35a86c7f54a96188a9.png"
 )
 
-BOT_NAME = "PLAIN-UB"
+BOT_NAME = environ.get("BOT_NAME", "PLAIN-UB")
 
 DISABLED_SUPERUSERS: list[int] = []
 

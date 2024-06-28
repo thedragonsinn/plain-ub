@@ -5,6 +5,6 @@ fi
 
 git clone "${EXTRA_MODULES_REPO}" "app/modules"
 
-pip install -r app/modules/req*txt
+pip -q install --no-cache-dir -r req*.txt
 
 
