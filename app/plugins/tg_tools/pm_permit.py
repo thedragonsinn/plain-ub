@@ -56,9 +56,7 @@ async def handle_new_pm(bot: BOT, message: Message):
         )
         return
     if RECENT_USERS[user_id] % 2:
-        await message.reply(
-            "You are not authorised to PM.\nWait until you get authorised."
-        )
+        await message.reply("You are not authorised to PM.")
 
 
 @bot.on_message(
@@ -73,7 +71,7 @@ async def auto_approve(bot: BOT, message: Message):
     ALLOWED_USERS.append(message.chat.id)
     await asyncio.gather(
         PM_USERS.insert_one({"_id": message.chat.id}),
-        message.reply("Auto-Approved to PM.", del_in=5),
+        message.reply(text="Auto-Approved to PM.", del_in=5),
     )
 
 

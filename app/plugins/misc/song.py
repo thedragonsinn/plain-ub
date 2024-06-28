@@ -89,13 +89,10 @@ async def get_download_info(query: str, path: str):
         f"'{query}'"
     )
     try:
+        song_info = (await run_shell_cmd(download_cmd)).strip()
 
-        async with asyncio.timeout(30):
-
-            song_info = (await run_shell_cmd(download_cmd)).strip()
-
-            serialised_json = json.loads(song_info)
-            return serialised_json
+        serialised_json = json.loads(song_info)
+        return serialised_json
 
     except asyncio.TimeoutError:
         shutil.rmtree(path=path, ignore_errors=True)

@@ -52,7 +52,7 @@ async def logger_switch(bot: BOT, message: Message):
         ),
     )
     for task in Config.BACKGROUND_TASKS:
-        if task.get_name() == "pm_tag_logger" and not task.done():
+        if task.get_name() == "pm_tag_logger" and task.done():
             Config.BACKGROUND_TASKS.append(
                 asyncio.create_task(runner(), name="pm_tag_logger")
             )
@@ -187,18 +187,14 @@ async def log_pm(message: Message, log_info: bool):
             chat_id=extra_config.MESSAGE_LOGGER_CHAT,
             text=f"#PM\n{message.from_user.mention} [{message.from_user.id}]",
         )
-    try:
-        await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
-    except MessageIdInvalid:
-        notice = (
-            f"{message.from_user.mention} [{message.from_user.id}] deleted this message."
-            f"\n\n---\n\n"
-            f"Message: \n<a href='{message.link}'>{message.chat.title or message.chat.first_name}</a> ({message.chat.id})"
-            f"\n\n---\n\n"
-            f"Caption:\n{message.caption or 'No Caption in media.'}"
-        )
-
-        await message.copy(extra_config.MESSAGE_LOGGER_CHAT, caption=notice)
+    notice = (
+        f"{message.from_user.mention} [{message.from_user.id}] deleted this message."
+        f"\n\n---\n\n"
+        f"Message: \n<a href='{message.link}'>{message.chat.title or message.chat.first_name}</a> ({message.chat.id})"
+        f"\n\n---\n\n"
+        f"Caption:\n{message.caption or 'No Caption in media.'}"
+    )
+    await log_message(message=message, notice=notice)
 
 
 async def log_chat(message: Message):
@@ -215,16 +211,23 @@ async def log_chat(message: Message):
     )
 
     if message.reply_to_message:
-        try:
-            await message.reply_to_message.forward(extra_config.MESSAGE_LOGGER_CHAT)
-        except MessageIdInvalid:
-            await message.reply_to_message.copy(
-                extra_config.MESSAGE_LOGGER_CHAT, caption=notice
-            )
+        await log_message(message.reply_to_message)
+
+    await log_message(
+        message=message,
+        notice=notice,
+        extra_info=f"#TAG\n{mention} [{u_id}]\nMessage: \n<a href='{message.link}'>{message.chat.title}</a> ({message.chat.id})",
+    )
+
+
+async def log_message(
+    message: Message, notice: str | None = None, extra_info: str | None = None
+):
     try:
-        logged = await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
-        await logged.reply(
-            text=f"#TAG\n{mention} [{u_id}]\nMessage: \n<a href='{message.link}'>{message.chat.title}</a> ({message.chat.id})"
-        )
+        logged_message = await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
+        if extra_info:
+            await logged_message.reply(extra_info)
     except MessageIdInvalid:
-        await message.copy(extra_config.MESSAGE_LOGGER_CHAT, caption=notice)
+        logged_message = await message.copy(extra_config.MESSAGE_LOGGER_CHAT)
+        if notice:
+            await logged_message.reply(notice)
