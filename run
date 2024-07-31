@@ -1,7 +1,11 @@
 #!/bin/sh
 
 if ! [ -d ".git" ] ; then
-    git init 
+    git init
 fi
 
-python3 -m app
+while true; do
+    python -m app
+    exit_code=$?
+    [ $exit_code -ne 69 ] && break
+done
