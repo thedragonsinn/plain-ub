@@ -1,10 +1,11 @@
 import pickle
 from io import BytesIO
 
-from app import BOT, Convo, Message, bot
-from app.plugins.ai.models import get_response_text, run_basic_check
 from pyrogram import filters
 from pyrogram.enums import ParseMode
+
+from app import BOT, Convo, Message, bot
+from app.plugins.ai.models import get_response_text, run_basic_check
 
 CONVO_CACHE: dict[str, Convo] = {}
 

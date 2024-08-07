@@ -7,10 +7,11 @@ import time
 from io import BytesIO
 
 import google.generativeai as genai
-from app import BOT, Message, bot
-from app.plugins.ai.models import get_response_text, run_basic_check
 from google.ai import generativelanguage as glm
 from ub_core.utils import run_shell_cmd
+
+from app import BOT, Message, bot
+from app.plugins.ai.models import get_response_text, run_basic_check
 
 CODE_EXTS = {
     ".txt",

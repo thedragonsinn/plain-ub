@@ -1,6 +1,7 @@
 from functools import wraps
 
 import google.generativeai as genai
+
 from app import BOT, Message, extra_config
 
 
@@ -26,7 +27,7 @@ MODEL = genai.GenerativeModel(
 )
 
 
-async def run_basic_check(func):
+def run_basic_check(func):
 
     @wraps(func)
     async def wrapper(bot: BOT, message: Message):
