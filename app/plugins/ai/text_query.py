@@ -5,7 +5,7 @@ from pyrogram import filters
 from pyrogram.enums import ParseMode
 
 from app import BOT, Convo, Message, bot
-from app.plugins.ai.models import get_response_text, run_basic_check
+from app.plugins.ai.models import MODEL, get_response_text, run_basic_check
 
 CONVO_CACHE: dict[str, Convo] = {}
 
@@ -21,7 +21,7 @@ async def question(bot: BOT, message: Message):
 
     prompt = message.input
 
-    response = await TEXT_MODEL.generate_content_async(prompt)
+    response = await MODEL.generate_content_async(prompt)
 
     response_text = get_response_text(response)
 
@@ -51,7 +51,7 @@ async def ai_chat(bot: BOT, message: Message):
         After 5 mins of Idle bot will export history and stop chat.
         use .load_history to continue
     """
-    chat = TEXT_MODEL.start_chat(history=[])
+    chat = MODEL.start_chat(history=[])
     await do_convo(chat=chat, message=message)
 
 
@@ -79,7 +79,7 @@ async def history_chat(bot: BOT, message: Message):
     doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()  # NOQA
     history = pickle.loads(doc)
     await resp.edit("<i>History Loaded... Resuming chat</i>")
-    chat = TEXT_MODEL.start_chat(history=history)
+    chat = MODEL.start_chat(history=history)
     await do_convo(chat=chat, message=message)
 
 

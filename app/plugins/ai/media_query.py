@@ -11,7 +11,7 @@ from google.ai import generativelanguage as glm
 from ub_core.utils import run_shell_cmd
 
 from app import BOT, Message, bot
-from app.plugins.ai.models import get_response_text, run_basic_check
+from app.plugins.ai.models import MODEL, get_response_text, run_basic_check
 
 CODE_EXTS = {
     ".txt",
@@ -153,7 +153,7 @@ async def handle_audio(prompt: str, message: Message):
     file_path, download_dir = await download_file(file_name, message)
     file_response = genai.upload_file(path=file_path)
 
-    response = await MEDIA_MODEL.generate_content_async([prompt, file_response])
+    response = await MODEL.generate_content_async([prompt, file_response])
     response_text = get_response_text(response)
 
     genai.delete_file(name=file_response.name)
@@ -166,7 +166,7 @@ async def handle_code(prompt: str, message: Message):
     file: BytesIO = await message.download(in_memory=True)
     text = file.getvalue().decode("utf-8")
     final_prompt = f"{text}\n\n{prompt}"
-    response = await TEXT_MODEL.generate_content_async(final_prompt)
+    response = await MODEL.generate_content_async(final_prompt)
     return get_response_text(response)
 
 
@@ -178,7 +178,7 @@ async def handle_photo(prompt: str, message: Message):
         mime_type = "image/unknown"
 
     image_blob = glm.Blob(mime_type=mime_type, data=file.getvalue())
-    response = await IMAGE_MODEL.generate_content_async([prompt, image_blob])
+    response = await MODEL.generate_content_async([prompt, image_blob])
     return get_response_text(response)
 
 
@@ -201,7 +201,7 @@ async def handle_video(prompt: str, message: Message):
         uploaded_frame = await asyncio.to_thread(genai.upload_file, frame)
         uploaded_frames.append(uploaded_frame)
 
-    response = await MEDIA_MODEL.generate_content_async([prompt, *uploaded_frames])
+    response = await MODEL.generate_content_async([prompt, *uploaded_frames])
     response_text = get_response_text(response)
 
     for uploaded_frame in uploaded_frames:
