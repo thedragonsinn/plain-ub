@@ -7,16 +7,10 @@ import time
 from io import BytesIO
 
 import google.generativeai as genai
+from app import BOT, Message, bot
+from app.plugins.ai.models import get_response_text, run_basic_check
 from google.ai import generativelanguage as glm
 from ub_core.utils import run_shell_cmd
-
-from app import BOT, Message, bot
-from app.plugins.ai.models import (
-    IMAGE_MODEL,
-    MEDIA_MODEL,
-    TEXT_MODEL,
-    get_response_text,
-)
 
 CODE_EXTS = {
     ".txt",
@@ -45,6 +39,7 @@ AUDIO_EXTS = {".aac", ".mp3", ".opus", ".m4a", ".ogg"}
 
 
 @bot.add_cmd(cmd="ocr")
+@run_basic_check
 async def photo_query(bot: BOT, message: Message):
     """
     CMD: OCR
@@ -64,6 +59,7 @@ async def photo_query(bot: BOT, message: Message):
 
 
 @bot.add_cmd(cmd="stt")
+@run_basic_check
 async def audio_to_text(bot: BOT, message: Message):
     """
     CMD: STT (Speech To Text)
@@ -84,6 +80,7 @@ async def audio_to_text(bot: BOT, message: Message):
 
 
 @bot.add_cmd(cmd="ocrv")
+@run_basic_check
 async def video_to_text(bot: BOT, message: Message):
     """
     CMD: OCRV
@@ -103,6 +100,7 @@ async def video_to_text(bot: BOT, message: Message):
 
 
 @bot.add_cmd(cmd="aim")
+@run_basic_check
 async def handle_document(bot: BOT, message: Message):
     """
     CMD: AIM

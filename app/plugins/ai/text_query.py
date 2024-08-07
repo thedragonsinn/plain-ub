@@ -1,25 +1,22 @@
 import pickle
 from io import BytesIO
 
+from app import BOT, Convo, Message, bot
+from app.plugins.ai.models import get_response_text, run_basic_check
 from pyrogram import filters
 from pyrogram.enums import ParseMode
-
-from app import BOT, Convo, Message, bot
-from app.plugins.ai.models import TEXT_MODEL, basic_check, get_response_text
 
 CONVO_CACHE: dict[str, Convo] = {}
 
 
 @bot.add_cmd(cmd="ai")
+@run_basic_check
 async def question(bot: BOT, message: Message):
     """
     CMD: AI
     INFO: Ask a question to Gemini AI.
     USAGE: .ai what is the meaning of life.
     """
-
-    if not await basic_check(message):
-        return
 
     prompt = message.input
 
@@ -42,6 +39,7 @@ async def question(bot: BOT, message: Message):
 
 
 @bot.add_cmd(cmd="aichat")
+@run_basic_check
 async def ai_chat(bot: BOT, message: Message):
     """
     CMD: AICHAT
@@ -52,13 +50,12 @@ async def ai_chat(bot: BOT, message: Message):
         After 5 mins of Idle bot will export history and stop chat.
         use .load_history to continue
     """
-    if not await basic_check(message):
-        return
     chat = TEXT_MODEL.start_chat(history=[])
     await do_convo(chat=chat, message=message)
 
 
 @bot.add_cmd(cmd="load_history")
+@run_basic_check
 async def history_chat(bot: BOT, message: Message):
     """
     CMD: LOAD_HISTORY
@@ -66,8 +63,6 @@ async def history_chat(bot: BOT, message: Message):
     USAGE:
         .load_history {question} [reply to history document]
     """
-    if not await basic_check(message):
-        return
     reply = message.replied
 
     if (
