@@ -76,7 +76,7 @@ async def promote_or_demote(bot: BOT, message: Message) -> None:
 
             if title:
                 response_text += f"\nTitle: {title}"
-            if without_rights:
+            if "-wr" in message.flags:
                 response_text += "\nWithout Rights: True"
 
         await response.edit(text=response_text)
