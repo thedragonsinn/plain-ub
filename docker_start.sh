@@ -1,4 +1,4 @@
-#!bin/sh
+#!/usr/bin/env bash
 
 export PIP_ROOT_USER_ACTION=ignore
 

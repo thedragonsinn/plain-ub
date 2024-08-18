@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 dual_mode_arg=""
 
 if [ ! -z "${USE_DUAL_BRANCH}" ]; then

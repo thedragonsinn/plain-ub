@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 if ! echo "${PATH}" | grep -qi "com.termux"; then
   echo "Not a termux Env, Skipping..."
   exit
