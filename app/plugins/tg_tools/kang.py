@@ -28,15 +28,24 @@ async def kang_sticker(bot: BOT, message: Message):
     USAGE: .kang | .kang -f
     """
 
-    response = await message.reply("Checking input")
+    response: Message = await message.reply("Checking input...")
+
     media_coro = get_sticker_media_coro(message)
+
     if not media_coro:
         await response.edit("Unsupported Media.")
         return
-    kwargs: dict = await media_coro
+
+    try:
+        kwargs: dict = await media_coro
+    except TypeError as e:
+        await response.edit(e)
+        return
+
     pack_title, pack_name, create_new = await get_sticker_set(
         limit=kwargs["limit"], is_video=kwargs["is_video"]
     )
+
     if create_new:
         await create_n_kang(
             kwargs=kwargs, pack_title=pack_title, pack_name=pack_name, message=message
@@ -45,48 +54,48 @@ async def kang_sticker(bot: BOT, message: Message):
             text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>"
         )
         return
-    async with bot.Convo(client=bot, chat_id="stickers", timeout=60) as convo:
-        await convo.send_message(text="/addsticker", get_response=True, timeout=5)
-        await convo.send_message(text=pack_name, get_response=True, timeout=5)
+
+    async with bot.Convo(client=bot, chat_id="stickers", timeout=5) as convo:
+        await convo.send_message(text="/addsticker", get_response=True)
+        await convo.send_message(text=pack_name, get_response=True)
+
         if kwargs.get("sticker"):
             await message.reply_to_message.copy(chat_id="stickers", caption="")
             await convo.get_response()
         else:
-            await convo.send_document(
-                document=kwargs["file"], get_response=True, timeout=5
-            )
+            await convo.send_document(document=kwargs["file"], get_response=True)
+
         await convo.send_message(
-            text=kwargs.get("emoji") or random.choice(EMOJIS),
-            get_response=True,
-            timeout=5,
+            text=kwargs.get("emoji") or random.choice(EMOJIS), get_response=True
         )
-        await convo.send_message(text="/done", get_response=True, timeout=5)
+        await convo.send_message(text="/done", get_response=True)
+
     if kwargs.get("path"):
         shutil.rmtree(kwargs["path"], ignore_errors=True)
+
     await response.edit(text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>")
 
 
 async def create_n_kang(
     kwargs: dict, pack_title: str, pack_name: str, message: Message
 ):
-    async with bot.Convo(client=bot, chat_id="stickers", timeout=60) as convo:
-        await convo.send_message(text=kwargs["cmd"], get_response=True, timeout=5)
-        await convo.send_message(text=pack_title, get_response=True, timeout=5)
+    async with bot.Convo(client=bot, chat_id="stickers", timeout=5) as convo:
+        await convo.send_message(text=kwargs["cmd"], get_response=True)
+        await convo.send_message(text=pack_title, get_response=True)
+
         if kwargs.get("sticker"):
             await message.reply_to_message.copy(chat_id="stickers", caption="")
-            await convo.get_response(timeout=5)
+            await convo.get_response()
         else:
-            await convo.send_document(
-                document=kwargs["file"], get_response=True, timeout=5
-            )
+            await convo.send_document(document=kwargs["file"], get_response=True)
+
         await convo.send_message(
-            text=kwargs.get("emoji") or random.choice(EMOJIS),
-            get_response=True,
-            timeout=5,
+            text=kwargs.get("emoji") or random.choice(EMOJIS), get_response=True
         )
-        await convo.send_message(text="/publish", get_response=True, timeout=5)
+        await convo.send_message(text="/publish", get_response=True)
         await convo.send_message("/skip")
-        await convo.send_message(pack_name, get_response=True, timeout=5)
+        await convo.send_message(pack_name, get_response=True)
+
     if kwargs.get("path"):
         shutil.rmtree(kwargs["path"], ignore_errors=True)
 
@@ -140,9 +149,12 @@ def get_sticker_media_coro(message: Message):
 async def photo_kang(message: Message) -> dict:
     download_path = os.path.join("downloads", str(time.time()))
     os.makedirs(download_path, exist_ok=True)
+
     input_file = os.path.join(download_path, "photo.jpg")
     await message.download(input_file)
+
     file = await asyncio.to_thread(resize_photo, input_file)
+
     return dict(
         cmd="/newpack", limit=120, is_video=False, file=file, path=download_path
     )
@@ -164,11 +176,15 @@ async def video_kang(message: Message, ff=False) -> dict:
     video = message.video or message.animation or message.document
     if video.file_size > 5242880:
         raise MemoryError("File Size exceeds 5MB.")
+
     download_path = os.path.join("downloads", f"{time.time()}")
     os.makedirs(download_path, exist_ok=True)
+
     input_file = os.path.join(download_path, "input.mp4")
     output_file = os.path.join(download_path, "sticker.webm")
+
     await message.download(input_file)
+
     if not hasattr(video, "duration"):
         duration = await get_duration(file=input_file)
     else:
@@ -210,13 +226,15 @@ async def document_kang(message: Message, ff: bool = False) -> dict:
 async def sticker_kang(message: Message) -> dict:
     emoji = message.sticker.emoji
     sticker = message.sticker
-    if sticker.file_name.lower().endswith(".webp"):
-        return dict(
-            cmd="/newpack", emoji=emoji, is_video=False, sticker=sticker, limit=120
-        )
-    elif sticker.file_name.lower().endswith(".webm"):
+
+    if sticker.is_animated:
+        raise TypeError("Animated Stickers Not Supported.")
+
+    if sticker.is_video:
         input_file: BytesIO = await message.download(in_memory=True)
         input_file.seek(0)
         return dict(
-            emoji=emoji, file=input_file, cmd="/newvideo", is_video=True, limit=50
+            cmd="/newvideo", emoji=emoji, is_video=True, file=input_file, limit=50
         )
+
+    return dict(cmd="/newpack", emoji=emoji, is_video=False, sticker=sticker, limit=120)
