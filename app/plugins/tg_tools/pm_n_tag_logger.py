@@ -11,7 +11,6 @@ from app import BOT, Config, CustomDB, Message, bot, extra_config
 LOGGER = CustomDB("COMMON_SETTINGS")
 
 MESSAGE_CACHE: dict[int, list[Message]] = defaultdict(list)
-
 FLOOD_LIST: list[int] = []
 
 
@@ -58,7 +57,7 @@ async def logger_switch(bot: BOT, message: Message):
             )
 
 
-basic_filters = (
+BASIC_FILTERS = (
     ~filters.channel
     & ~filters.bot
     & ~filters.service
@@ -69,7 +68,7 @@ basic_filters = (
 
 
 @bot.on_message(
-    filters=basic_filters
+    filters=BASIC_FILTERS
     & filters.private
     & filters.create(lambda _, __, ___: extra_config.PM_LOGGER),
     group=2,
@@ -79,11 +78,11 @@ async def pm_logger(bot: BOT, message: Message):
     cache_message(message)
 
 
-tag_filter = filters.create(lambda _, __, ___: extra_config.TAG_LOGGER)
+TAG_FILTER = filters.create(lambda _, __, ___: extra_config.TAG_LOGGER)
 
 
 @bot.on_message(
-    filters=(basic_filters & filters.reply & tag_filter) & ~filters.private,
+    filters=(BASIC_FILTERS & filters.reply & TAG_FILTER) & ~filters.private,
     group=2,
     is_command=False,
 )
@@ -98,7 +97,7 @@ async def reply_logger(bot: BOT, message: Message):
 
 
 @bot.on_message(
-    filters=(basic_filters & filters.mentioned & tag_filter) & ~filters.private,
+    filters=(BASIC_FILTERS & filters.mentioned & TAG_FILTER) & ~filters.private,
     group=2,
     is_command=False,
 )
@@ -114,7 +113,7 @@ async def mention_logger(bot: BOT, message: Message):
 
 
 @bot.on_message(
-    filters=(basic_filters & (filters.text | filters.media) & tag_filter)
+    filters=(BASIC_FILTERS & (filters.text | filters.media) & TAG_FILTER)
     & ~filters.private,
     group=2,
     is_command=False,
@@ -143,7 +142,6 @@ async def runner():
     last_pm_logged_id = 0
 
     while True:
-
         cached_keys = list(MESSAGE_CACHE.keys())
         if not cached_keys:
             await asyncio.sleep(5)
@@ -151,22 +149,20 @@ async def runner():
 
         first_key = cached_keys[0]
         cached_list = MESSAGE_CACHE.copy()[first_key]
-
         if not cached_list:
             MESSAGE_CACHE.pop(first_key)
 
         for idx, msg in enumerate(cached_list):
-
             if msg.chat.type == ChatType.PRIVATE:
 
                 if last_pm_logged_id != first_key:
                     last_pm_logged_id = first_key
-
                     log_info = True
                 else:
                     log_info = False
 
                 coro = log_pm(message=msg, log_info=log_info)
+
             else:
                 coro = log_chat(message=msg)
 

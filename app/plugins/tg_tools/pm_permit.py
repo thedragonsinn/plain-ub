@@ -8,15 +8,9 @@ from ub_core.utils.helpers import get_name
 from app import BOT, CustomDB, Message, bot, extra_config
 
 PM_USERS = CustomDB("PM_USERS")
-
 PM_GUARD = CustomDB("COMMON_SETTINGS")
 
 ALLOWED_USERS: list[int] = []
-
-allowed_filter = filters.create(lambda _, __, m: m.chat.id in ALLOWED_USERS)
-
-guard_check = filters.create(lambda _, __, ___: extra_config.PM_GUARD)
-
 RECENT_USERS: dict = defaultdict(int)
 
 
@@ -26,14 +20,32 @@ async def init_task():
     [ALLOWED_USERS.append(user_id["_id"]) async for user_id in PM_USERS.find()]
 
 
-@bot.on_message(
-    (guard_check & filters.private & filters.incoming)
-    & (~allowed_filter & ~filters.bot)
-    & ~filters.chat(chats=[bot.me.id])
-    & ~filters.service,
-    group=0,
-    is_command=False,
-)
+async def pm_permit_filter(_, __, message: Message):
+    # Return False if:
+    if (
+        # PM_GUARD is False
+        not extra_config.PM_GUARD
+        # Chat is not Private
+        or message.chat.type != ChatType.PRIVATE
+        # Chat is already approved
+        or message.chat.id in ALLOWED_USERS
+        # Saved Messages
+        or message.chat.id == bot.me.id
+        # PM is BOT
+        or message.from_user.is_bot
+        # Telegram Service Messages like OTPs.
+        or message.from_user.is_support
+        # Chat Service Messages like pinned a pic etc
+        or message.service
+    ):
+        return False
+    return True
+
+
+PERMIT_FILTER = filters.create(pm_permit_filter)
+
+
+@bot.on_message(PERMIT_FILTER & filters.incoming, group=0)
 async def handle_new_pm(bot: BOT, message: Message):
     user_id = message.from_user.id
     if RECENT_USERS[user_id] == 0:
@@ -59,13 +71,7 @@ async def handle_new_pm(bot: BOT, message: Message):
         await message.reply("You are not authorised to PM.")
 
 
-@bot.on_message(
-    (guard_check & filters.private & filters.outgoing)
-    & (~allowed_filter & ~filters.bot)
-    & ~filters.chat(chats=[bot.me.id]),
-    group=2,
-    is_command=False,
-)
+@bot.on_message(PERMIT_FILTER & filters.outgoing, group=2)
 async def auto_approve(bot: BOT, message: Message):
     message = Message.parse(message=message)
     ALLOWED_USERS.append(message.chat.id)
@@ -76,7 +82,7 @@ async def auto_approve(bot: BOT, message: Message):
 
 
 @bot.add_cmd(cmd="pmguard")
-async def pmguard(bot: BOT, message: Message):
+async def pm_guard(bot: BOT, message: Message):
     """
     CMD: PMGUARD
     INFO: Enable/Disable PM GUARD.
