@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import asyncio
 
 from pyrogram.types import User
 
@@ -31,11 +31,9 @@ async def kick_user(bot: BOT, message: Message):
         return
 
     try:
-        await bot.ban_chat_member(
-            chat_id=message.chat.id,
-            user_id=user.id,
-            until_date=datetime.utcnow() + timedelta(seconds=8),
-        )
+        await bot.ban_chat_member(chat_id=message.chat.id, user_id=user.id)
+        await asyncio.sleep(2)
+        await bot.unban_chat_member(chat_id=message.chat.id, user_id=user.id)
         await message.reply(
             text=f"{message.cmd.capitalize()}ed: {user.mention}\nReason: {reason}"
         )
