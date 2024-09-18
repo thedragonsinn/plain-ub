@@ -188,39 +188,50 @@ async def perform_fed_task(
     message: Message,
 ):
     await progress.edit("❯❯")
+
     total: int = 0
     failed: list[str] = []
+
     async for fed in FED_DB.find():
         chat_id = int(fed["_id"])
         total += 1
+
         cmd: Message = await bot.send_message(
             chat_id=chat_id, text=command, disable_web_page_preview=True
         )
+
         response: Message | None = await cmd.get_response(
             filters=task_filter, timeout=8
         )
+
         if not response:
             failed.append(fed["name"])
         elif "Would you like to update this reason" in response.text:
             await response.click("Update reason")
+
         await asyncio.sleep(1)
+
     if not total:
         await progress.edit("You Don't have any feds connected!")
         return
+
     resp_str = (
         f"❯❯❯ <b>{task_type}ned</b> {user_mention}"
         f"\n<b>ID</b>: {user_id}"
         f"\n<b>Reason</b>: {reason}"
         f"\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
     )
+
     if failed:
         resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(
             failed
         )
     else:
         resp_str += f"\n<b>Status</b>: {task_type}ned in <b>{total}</b> feds."
+
     if not message.is_from_owner:
         resp_str += f"\n\n<b>By</b>: {get_name(message.from_user)}"
+
     await bot.send_message(
         chat_id=extra_config.FBAN_LOG_CHANNEL,
         text=resp_str,

@@ -9,6 +9,7 @@ async def mute_or_unmute(bot: BOT, message: Message):
     if not isinstance(user, User):
         await message.reply(user, del_in=10)
         return
+
     perms = message.chat.permissions
     if message.cmd == "mute":
         perms = ChatPermissions(
@@ -21,6 +22,7 @@ async def mute_or_unmute(bot: BOT, message: Message):
             can_send_other_messages=False,
             can_add_web_page_previews=False,
         )
+
     try:
         await bot.restrict_chat_member(
             chat_id=message.chat.id, user_id=user.id, permissions=perms
