@@ -1,5 +1,4 @@
-import asyncio
-from typing import Awaitable
+from datetime import datetime, timedelta
 
 from pyrogram.types import User
 
@@ -12,16 +11,11 @@ async def ban_or_unban(bot: BOT, message: Message) -> None:
     if not isinstance(user, User):
         await message.reply(user, del_in=10)
         return
-    if message.cmd == "ban":
-        action: Awaitable = bot.ban_chat_member(
-            chat_id=message.chat.id, user_id=user.id
-        )
-    else:
-        action: Awaitable = bot.unban_chat_member(
-            chat_id=message.chat.id, user_id=user.id
-        )
+
+    action = bot.ban_chat_member if message.cmd == "ban" else bot.unban_chat_member
+
     try:
-        await action
+        await action(chat_id=message.chat.id, user_id=user.id)  # NOQA
         await message.reply(
             text=f"{message.cmd.capitalize()}ned: {user.mention}\nReason: {reason}"
         )
@@ -35,10 +29,13 @@ async def kick_user(bot: BOT, message: Message):
     if not isinstance(user, User):
         await message.reply(user, del_in=10)
         return
+
     try:
-        await bot.ban_chat_member(chat_id=message.chat.id, user_id=user.id)
-        await asyncio.sleep(1)
-        await bot.unban_chat_member(chat_id=message.chat.id, user_id=user.id)
+        await bot.ban_chat_member(
+            chat_id=message.chat.id,
+            user_id=user.id,
+            until_date=datetime.utcnow() + timedelta(seconds=8),
+        )
         await message.reply(
             text=f"{message.cmd.capitalize()}ed: {user.mention}\nReason: {reason}"
         )
