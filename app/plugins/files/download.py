@@ -62,7 +62,7 @@ async def down_load(bot: BOT, message: Message):
             f"<b>Download Completed</b>"
             f"\n<pre language=bash>"
             f"\nfile={downloaded_file.name}"
-            f"\npath={downloaded_file.full_path}"
+            f"\npath={downloaded_file.file_path}"
             f"\nsize={downloaded_file.size}mb</pre>"
         )
         return downloaded_file
@@ -78,10 +78,8 @@ async def down_load(bot: BOT, message: Message):
 
 
 async def telegram_download(
-        message: Message,
-        response: Message,
-        path: str,
-        file_name: str | None = None) -> DownloadedFile:
+    message: Message, response: Message, path: str, file_name: str | None = None
+) -> DownloadedFile:
     """
     :param message: Message Containing Media
     :param response: Response to Edit
@@ -97,17 +95,13 @@ async def telegram_download(
         name=tg_media.file_name,
         path=path,
         size=round(tg_media.file_size / 1048576, 1),
-        full_path=os.path.join(path, tg_media.file_name),
+        file_path=os.path.join(path, tg_media.file_name),
     )
 
-    progress_args = (
-        response,
-        "Downloading...",
-        media_obj.name,
-        media_obj.full_path)
+    progress_args = (response, "Downloading...", media_obj.name, media_obj.file_path)
 
     await message.download(
-        file_name=media_obj.full_path,
+        file_name=media_obj.file_path,
         progress=progress,
         progress_args=progress_args,
     )
