@@ -21,40 +21,44 @@ from app import BOT, Config, Message, bot
 UPLOAD_TYPES = Union[BOT.send_audio, BOT.send_document, BOT.send_photo, BOT.send_video]
 
 
-async def video_upload(file: DownloadedFile, has_spoiler: bool) -> UPLOAD_TYPES:
-    thumb = await take_ss(file.file_path, path=file.path)
-    if not await check_audio(file.file_path):
+async def video_upload(
+    bot: BOT, file: DownloadedFile, has_spoiler: bool
+) -> UPLOAD_TYPES:
+    thumb = await take_ss(file.path, path=file.path)
+    if not await check_audio(file.path):
         return partial(
             bot.send_animation,
             thumb=thumb,
             unsave=True,
-            animation=file.file_path,
-            duration=await get_duration(file.file_path),
+            animation=file.path,
+            duration=await get_duration(file.path),
             has_spoiler=has_spoiler,
         )
     return partial(
         bot.send_video,
         thumb=thumb,
-        video=file.file_path,
-        duration=await get_duration(file.file_path),
+        video=file.path,
+        duration=await get_duration(file.path),
         has_spoiler=has_spoiler,
     )
 
 
-async def photo_upload(file: DownloadedFile, has_spoiler: bool) -> UPLOAD_TYPES:
-    return partial(bot.send_photo, photo=file.file_path, has_spoiler=has_spoiler)
+async def photo_upload(
+    bot: BOT, file: DownloadedFile, has_spoiler: bool
+) -> UPLOAD_TYPES:
+    return partial(bot.send_photo, photo=file.path, has_spoiler=has_spoiler)
 
 
-async def audio_upload(file: DownloadedFile, *_, **__) -> UPLOAD_TYPES:
+async def audio_upload(bot: BOT, file: DownloadedFile, *_, **__) -> UPLOAD_TYPES:
     return partial(
         bot.send_audio,
-        audio=file.file_path,
-        duration=await get_duration(file=file.file_path),
+        audio=file.path,
+        duration=await get_duration(file=file.path),
     )
 
 
-async def doc_upload(file: DownloadedFile, *_, **__) -> UPLOAD_TYPES:
-    return partial(bot.send_document, document=file.file_path, force_document=True)
+async def doc_upload(bot: BOT, file: DownloadedFile, *_, **__) -> UPLOAD_TYPES:
+    return partial(bot.send_document, document=file.path, force_document=True)
 
 
 FILE_TYPE_MAP = {
@@ -105,10 +109,9 @@ async def upload(bot: BOT, message: Message):
         return
 
     elif input.startswith("http") and not file_check(input):
-
         dl_obj: Download = await Download.setup(
             url=input,
-            path=os.path.join("downloads", str(time.time())),
+            dir=os.path.join("downloads", str(time.time())),
             message_to_edit=response,
         )
 
@@ -117,6 +120,7 @@ async def upload(bot: BOT, message: Message):
             return
 
         try:
+            await response.edit("URL detected in input, Starting Download....")
             file: DownloadedFile = await dl_obj.download()
         except asyncio.exceptions.CancelledError:
             await response.edit("Cancelled...")
@@ -124,12 +128,14 @@ async def upload(bot: BOT, message: Message):
         except TimeoutError:
             await response.edit("Download Timeout...")
             return
+        except Exception as e:
+            await response.edit(str(e))
+            return
 
     elif file_check(input):
         file = DownloadedFile(
             name=input,
-            path=os.path.dirname(input),
-            file_path=input,
+            dir=os.path.dirname(input),
             size=bytes_to_mb(os.path.getsize(input)),
         )
 
@@ -145,7 +151,7 @@ async def upload(bot: BOT, message: Message):
         await response.edit("invalid `cmd` | `url` | `file path`!!!")
         return
 
-    await response.edit("uploading....")
+    await response.edit("Uploading....")
     await upload_to_tg(file=file, message=message, response=response)
 
 
@@ -168,8 +174,7 @@ async def bulk_upload(message: Message, response: Message):
 
         file_info = DownloadedFile(
             name=os.path.basename(file),
-            path=os.path.dirname(file),
-            file_path=file,
+            dir=os.path.dirname(file),
             size=bytes_to_mb(os.path.getsize(file)),
         )
 
@@ -189,15 +194,15 @@ async def bulk_upload(message: Message, response: Message):
 
 async def upload_to_tg(file: DownloadedFile, message: Message, response: Message):
 
-    progress_args = (response, "Uploading...", file.name, file.file_path)
+    progress_args = (response, "Uploading...", file.path)
 
     if "-d" in message.flags:
         upload_method = partial(
-            bot.send_document, document=file.file_path, force_document=True
+            message._client.send_document, document=file.path, force_document=True
         )
     else:
         upload_method: UPLOAD_TYPES = await FILE_TYPE_MAP[file.type](
-            file, has_spoiler="-s" in message.flags
+            bot=message._client, file=file, has_spoiler="-s" in message.flags
         )
 
     try:

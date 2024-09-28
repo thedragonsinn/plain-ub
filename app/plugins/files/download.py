@@ -2,8 +2,8 @@ import asyncio
 import os
 import time
 
-from ub_core.utils import (Download, DownloadedFile, get_tg_media_details,
-                           progress)
+from ub_core.utils import (Download, DownloadedFile, bytes_to_mb,
+                           get_tg_media_details, progress)
 
 from app import BOT, Message, bot
 
@@ -26,7 +26,7 @@ async def down_load(bot: BOT, message: Message):
         )
         return
 
-    dl_path = os.path.join("downloads", str(time.time()))
+    dl_dir_name = os.path.join("downloads", str(time.time()))
 
     await response.edit("Input verified....Starting Download...")
 
@@ -40,7 +40,7 @@ async def down_load(bot: BOT, message: Message):
         download_coro = telegram_download(
             message=message.replied,
             response=response,
-            path=dl_path,
+            dir_name=dl_dir_name,
             file_name=file_name,
         )
 
@@ -52,18 +52,19 @@ async def down_load(bot: BOT, message: Message):
             url = message.filtered_input
 
         dl_obj: Download = await Download.setup(
-            url=url, path=dl_path, message_to_edit=response, custom_file_name=file_name
+            url=url,
+            dir=dl_dir_name,
+            message_to_edit=response,
+            custom_file_name=file_name,
         )
         download_coro = dl_obj.download()
 
     try:
         downloaded_file: DownloadedFile = await download_coro
         await response.edit(
-            f"<b>Download Completed</b>"
-            f"\n<pre language=bash>"
-            f"\nfile={downloaded_file.name}"
-            f"\npath={downloaded_file.file_path}"
-            f"\nsize={downloaded_file.size}mb</pre>"
+            f"<code>{downloaded_file.path}</code>"
+            f"\n\n<code>{downloaded_file.size}</code> mb"
+            "\n\n<b>Downloaded.</b>"
         )
         return downloaded_file
 
@@ -78,12 +79,12 @@ async def down_load(bot: BOT, message: Message):
 
 
 async def telegram_download(
-    message: Message, response: Message, path: str, file_name: str | None = None
+    message: Message, response: Message, dir_name: str, file_name: str | None = None
 ) -> DownloadedFile:
     """
     :param message: Message Containing Media
     :param response: Response to Edit
-    :param path: Download path
+    :param dir_name: Download path
     :param file_name: Custom File Name
     :return: DownloadedFile
     """
@@ -93,15 +94,14 @@ async def telegram_download(
 
     media_obj: DownloadedFile = DownloadedFile(
         name=tg_media.file_name,
-        path=path,
-        size=round(tg_media.file_size / 1048576, 1),
-        file_path=os.path.join(path, tg_media.file_name),
+        dir=dir_name,
+        size=bytes_to_mb(tg_media.file_size),
     )
 
-    progress_args = (response, "Downloading...", media_obj.name, media_obj.file_path)
+    progress_args = (response, "Downloading...", media_obj.path)
 
     await message.download(
-        file_name=media_obj.file_path,
+        file_name=media_obj.path,
         progress=progress,
         progress_args=progress_args,
     )
