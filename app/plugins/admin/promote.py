@@ -3,7 +3,7 @@ import asyncio
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.types import ChatPrivileges, User
 
-from app import BOT, Message, bot
+from app import BOT, Message
 
 DEMOTE_PRIVILEGES = ChatPrivileges(can_manage_chat=False)
 
@@ -20,7 +20,7 @@ NO_PRIVILEGES = ChatPrivileges(
 )
 
 
-@bot.add_cmd(cmd=["promote", "demote"])
+@BOT.add_cmd(cmd=["promote", "demote"])
 async def promote_or_demote(bot: BOT, message: Message) -> None:
     """
     CMD: PROMOTE | DEMOTE

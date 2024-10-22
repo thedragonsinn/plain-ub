@@ -4,10 +4,10 @@ import os
 from pyrogram.errors import BadRequest
 from ub_core.utils import get_name
 
-from app import BOT, Message, bot
+from app import BOT, Message
 
 
-@bot.add_cmd(cmd="ids")
+@BOT.add_cmd(cmd="ids")
 async def get_ids(bot: BOT, message: Message) -> None:
     reply: Message = message.replied
     if reply:
@@ -33,7 +33,7 @@ async def get_ids(bot: BOT, message: Message) -> None:
     await message.reply(resp_str)
 
 
-@bot.add_cmd(cmd="join")
+@BOT.add_cmd(cmd="join")
 async def join_chat(bot: BOT, message: Message) -> None:
     chat: str = message.input
     try:
@@ -47,7 +47,7 @@ async def join_chat(bot: BOT, message: Message) -> None:
     await message.reply("Joined")
 
 
-@bot.add_cmd(cmd="leave")
+@BOT.add_cmd(cmd="leave")
 async def leave_chat(bot: BOT, message: Message) -> None:
     if message.input:
         chat = message.input
@@ -58,7 +58,7 @@ async def leave_chat(bot: BOT, message: Message) -> None:
             del_in=5,
             block=True,
         )
-        await asyncio.sleep(2)
+        await asyncio.sleep(5)
     try:
         await bot.leave_chat(chat)
     except Exception as e:

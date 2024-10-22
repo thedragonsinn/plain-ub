@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 
-from app import BOT, Message, bot
+from app import BOT, Message
 
 
 def parse_link(link: str) -> tuple[int | str, int]:
@@ -11,7 +11,7 @@ def parse_link(link: str) -> tuple[int | str, int]:
     return chat, int(id)
 
 
-@bot.add_cmd(cmd="gm")
+@BOT.add_cmd(cmd="gm")
 async def get_message(bot: BOT, message: Message):
     """
     CMD: Get Message

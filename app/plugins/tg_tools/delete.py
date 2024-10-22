@@ -1,8 +1,8 @@
-from app import BOT, Message, bot
+from app import BOT, Message
 from app.plugins.tg_tools.get_message import parse_link
 
 
-@bot.add_cmd(cmd="del")
+@BOT.add_cmd(cmd="del")
 async def delete_message(bot: BOT, message: Message) -> None:
     """
     CMD: DEL
@@ -18,7 +18,7 @@ async def delete_message(bot: BOT, message: Message) -> None:
     await message.delete(reply=True)
 
 
-@bot.add_cmd(cmd="purge")
+@BOT.add_cmd(cmd="purge")
 async def purge_(bot: BOT, message: Message) -> None | Message:
     start_message: int = message.reply_id
     if not start_message:

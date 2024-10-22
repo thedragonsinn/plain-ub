@@ -1,7 +1,7 @@
-from app import BOT, Message, bot
+from app import BOT, Message
 
 
-@bot.add_cmd(cmd="click")
+@BOT.add_cmd(cmd="click")
 async def click(bot: BOT, message: Message):
     if not message.input or not message.replied:
         await message.reply(

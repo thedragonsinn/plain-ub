@@ -1,9 +1,9 @@
 import re
 
-from app import BOT, Message, bot
+from app import BOT, Message
 
 
-@bot.add_cmd(cmd="resp")
+@BOT.add_cmd(cmd="resp")
 async def respond(bot: BOT, message: Message):
     """
     CMD: RESP

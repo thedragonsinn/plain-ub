@@ -1,8 +1,8 @@
-from app import BOT, Message, bot
+from app import BOT, Message
 from app.plugins.tg_tools.get_message import parse_link
 
 
-@bot.add_cmd(cmd="reply")
+@BOT.add_cmd(cmd="reply")
 async def reply(bot: BOT, message: Message) -> None:
     """
     CMD: REPLY

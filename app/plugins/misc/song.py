@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from ub_core.utils import MediaExts, aio, run_shell_cmd
 
-from app import BOT, Message, bot
+from app import BOT, Message
 
 domains = [
     "www.youtube.com",
@@ -20,7 +20,7 @@ domains = [
 ]
 
 
-@bot.add_cmd(cmd="song")
+@BOT.add_cmd(cmd="song")
 async def song_dl(bot: BOT, message: Message) -> None | Message:
     reply_query = None
 

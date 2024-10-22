@@ -1,9 +1,9 @@
 from pyrogram.types import ChatPermissions, User
 
-from app import BOT, Message, bot
+from app import BOT, Message
 
 
-@bot.add_cmd(cmd=["mute", "unmute"])
+@BOT.add_cmd(cmd=["mute", "unmute"])
 async def mute_or_unmute(bot: BOT, message: Message):
     user, reason = await message.extract_user_n_reason()
     if not isinstance(user, User):

@@ -2,10 +2,10 @@ import asyncio
 
 from pyrogram.types import User
 
-from app import BOT, Message, bot
+from app import BOT, Message
 
 
-@bot.add_cmd(cmd=["ban", "unban"])
+@BOT.add_cmd(cmd=["ban", "unban"])
 async def ban_or_unban(bot: BOT, message: Message) -> None:
     user, reason = await message.extract_user_n_reason()
     if not isinstance(user, User):
@@ -23,7 +23,7 @@ async def ban_or_unban(bot: BOT, message: Message) -> None:
         await message.reply(text=e, del_in=10)
 
 
-@bot.add_cmd(cmd="kick")
+@BOT.add_cmd(cmd="kick")
 async def kick_user(bot: BOT, message: Message):
     user, reason = await message.extract_user_n_reason()
     if not isinstance(user, User):
