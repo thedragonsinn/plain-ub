@@ -2,8 +2,13 @@ import asyncio
 import os
 import time
 
-from ub_core.utils import (Download, DownloadedFile, bytes_to_mb,
-                           get_tg_media_details, progress)
+from ub_core.utils import (
+    Download,
+    DownloadedFile,
+    bytes_to_mb,
+    get_tg_media_details,
+    progress,
+)
 
 from app import BOT, Message, bot
 
@@ -31,6 +36,7 @@ async def down_load(bot: BOT, message: Message):
     await response.edit("Input verified....Starting Download...")
 
     file_name = None
+    dl_obj: None = None
 
     if message.replied and message.replied.media:
 
@@ -76,6 +82,9 @@ async def down_load(bot: BOT, message: Message):
 
     except Exception as e:
         await response.edit(str(e))
+    finally:
+        if dl_obj:
+            await dl_obj.close()
 
 
 async def telegram_download(
@@ -90,13 +99,9 @@ async def telegram_download(
     """
     tg_media = get_tg_media_details(message)
 
-    tg_media.file_name = file_name or tg_media.file_name
+    file_name = file_name or tg_media.file_name
 
-    media_obj: DownloadedFile = DownloadedFile(
-        name=tg_media.file_name,
-        dir=dir_name,
-        size=bytes_to_mb(tg_media.file_size),
-    )
+    media_obj: DownloadedFile = DownloadedFile(file=os.path.join(dir_name, file_name), size=tg_media.file_size)
 
     progress_args = (response, "Downloading...", media_obj.path)
 

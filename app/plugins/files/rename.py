@@ -34,7 +34,7 @@ async def rename(bot: BOT, message: Message):
     await response.edit("Input verified....Starting Download...")
 
     if message.replied:
-
+        dl_obj: None = None
         download_coro = telegram_download(
             message=message.replied,
             dir_name=dl_path,
@@ -62,3 +62,7 @@ async def rename(bot: BOT, message: Message):
 
     except Exception as e:
         await response.edit(str(e))
+
+    finally:
+        if dl_obj:
+            await dl_obj.close()
