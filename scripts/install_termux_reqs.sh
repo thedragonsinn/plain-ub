@@ -7,4 +7,4 @@ fi
 
 ./scripts/install_ub_core.sh
 
-grep -Ev "google-generativeai|pillow" req.txt | xargs -n 1 pip install
+grep -Ev "^#|google-generativeai|pillow" req.txt | xargs -n 1 pip install
