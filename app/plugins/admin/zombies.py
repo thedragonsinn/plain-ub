@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait
@@ -34,7 +34,7 @@ async def clean_zombies(bot: BOT, message: Message):
                 await bot.ban_chat_member(
                     chat_id=message.chat.id,
                     user_id=member.user.id,
-                    until_date=datetime.utcnow() + timedelta(seconds=60),
+                    until_date=datetime.now(UTC) + timedelta(seconds=60),
                 )
                 await asyncio.sleep(1)
 

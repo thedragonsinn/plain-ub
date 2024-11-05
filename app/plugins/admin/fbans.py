@@ -96,6 +96,7 @@ async def fed_ban(bot: BOT, message: Message):
     progress: Message = await message.reply("❯")
     extracted_info = await get_user_reason(message=message, progress=progress)
     if not extracted_info:
+        await progress.edit("Unable to extract user info.")
         return
 
     user_id, user_mention, reason = extracted_info
@@ -144,6 +145,7 @@ async def un_fban(bot: BOT, message: Message):
     extracted_info = await get_user_reason(message=message, progress=progress)
 
     if not extracted_info:
+        await progress.edit("Unable to extract user info.")
         return
 
     user_id, user_mention, reason = extracted_info
