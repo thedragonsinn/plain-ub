@@ -1,4 +1,3 @@
-
 from pyrogram.types import User
 from ub_core.utils.helpers import extract_user_data, get_name
 
@@ -104,9 +103,18 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
     FLAGS:
         -temp: to temporarily remove until bot restarts.
         -su: to Remove SuperUser Access.
+        -f: force rm an id
     USAGE:
         .delsudo [-temp] [ UID | @ | Reply to Message ]
     """
+
+    if "-f" in message.flags:
+        await SUDO_USERS.delete_data(id=int(message.filtered_input))
+        await message.reply(
+            f"Forcefully deleted {message.filtered_input} from sudo users."
+        )
+        return
+
     response = await message.reply("Extracting User info...")
     user, _ = await message.extract_user_n_reason()
 
