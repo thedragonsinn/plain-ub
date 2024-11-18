@@ -2,7 +2,7 @@ import asyncio
 from collections import defaultdict
 
 from pyrogram import filters
-from pyrogram.enums import ChatType, MessageEntityType
+from pyrogram.enums import ChatType, MessageEntityType, ParseMode
 from pyrogram.errors import MessageIdInvalid
 from ub_core.utils.helpers import get_name
 
@@ -220,10 +220,12 @@ async def log_message(
     message: Message, notice: str | None = None, extra_info: str | None = None
 ):
     try:
-        logged_message = await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
+        logged_message: Message = await message.forward(
+            extra_config.MESSAGE_LOGGER_CHAT
+        )
         if extra_info:
-            await logged_message.reply(extra_info)
+            await logged_message.reply(extra_info, parse_mode=ParseMode.HTML)
     except MessageIdInvalid:
         logged_message = await message.copy(extra_config.MESSAGE_LOGGER_CHAT)
         if notice:
-            await logged_message.reply(notice)
+            await logged_message.reply(notice, parse_mode=ParseMode.HTML)

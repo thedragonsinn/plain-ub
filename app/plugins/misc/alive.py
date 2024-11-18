@@ -47,9 +47,10 @@ async def alive(bot: BOT, message: Message):
         )
 
 
-if bot.is_bot or getattr(bot, "has_bot", None):
+if bot.is_bot:
+    _bot = getattr(bot, "bot", bot)
 
-    @bot.bot.on_inline_query(filters=filters.regex("^inline_alive$"), group=2)
+    @_bot.on_inline_query(filters=filters.regex("^inline_alive$"), group=2)
     async def return_inline_alive_results(bot: BOT, inline_query: InlineQuery):
         kwargs = dict(
             title=f"Send Alive Media.",
@@ -72,7 +73,8 @@ if bot.is_bot or getattr(bot, "has_bot", None):
 async def get_alive_text() -> str:
     user_info = await bot.get_users(user_ids=Config.OWNER_ID)
     return (
-        f"<b><a href='{Config.UPSTREAM_REPO}'>Plain-UB</a></b>, A simple Telegram User-Bot by Meliodas.\n"
+        f"<b><a href='{Config.UPSTREAM_REPO}'>Plain-UB</a></b>, "
+        f"A simple Telegram User-Bot by Meliodas.\n"
         f"\n › User            :   <code>{user_info.first_name}</code>"
         f"\n › Python        :   <code>v{PY_VERSION}</code>"
         f"\n › Pyrogram   :   <code>v{pyro_version}</code>"
