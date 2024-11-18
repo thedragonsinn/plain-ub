@@ -2,6 +2,7 @@ import asyncio
 
 from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus, ChatType
+from pyrogram.errors import UserNotParticipant
 from pyrogram.types import Chat, User
 from ub_core.utils.helpers import get_name
 
@@ -116,14 +117,17 @@ async def fed_ban(bot: BOT, message: Message):
     reason = f"{reason}{proof_str}"
 
     if message.replied and message.chat.type != ChatType.PRIVATE:
-        me = await bot.get_chat_member(chat_id=message.chat.id, user_id="me")
-        if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
-            await message.replied.reply(
-                text=f"!dban {reason}",
-                disable_web_page_preview=True,
-                del_in=3,
-                block=False,
-            )
+        try:
+            me = await bot.get_chat_member(chat_id=message.chat.id, user_id="me")
+            if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
+                await message.replied.reply(
+                    text=f"!dban {reason}",
+                    disable_web_page_preview=True,
+                    del_in=3,
+                    block=False,
+                )
+        except UserNotParticipant:
+            pass
 
     fban_cmd: str = f"/fban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"
 
@@ -198,18 +202,26 @@ async def perform_fed_task(
         chat_id = int(fed["_id"])
         total += 1
 
-        cmd: Message = await bot.send_message(
-            chat_id=chat_id, text=command, disable_web_page_preview=True
-        )
+        try:
+            cmd: Message = await bot.send_message(
+                chat_id=chat_id, text=command, disable_web_page_preview=True
+            )
+            response: Message | None = await cmd.get_response(
+                filters=task_filter, timeout=8
+            )
+            if not response:
+                failed.append(fed["name"])
+            elif "Would you like to update this reason" in response.text:
+                await response.click("Update reason")
 
-        response: Message | None = await cmd.get_response(
-            filters=task_filter, timeout=8
-        )
-
-        if not response:
+        except Exception as e:
+            await bot.log_text(
+                text=f"An Error occured while banning in fed: {fed['name']} [{chat_id}]"
+                f"\nError: {e}",
+                type=task_type.upper(),
+            )
             failed.append(fed["name"])
-        elif "Would you like to update this reason" in response.text:
-            await response.click("Update reason")
+            continue
 
         await asyncio.sleep(1)
 
@@ -239,9 +251,11 @@ async def perform_fed_task(
         text=resp_str,
         disable_web_page_preview=True,
     )
+
     await progress.edit(
         text=resp_str, del_in=5, block=True, disable_web_page_preview=True
     )
+
     await handle_sudo_fban(command=command)
 
 
