@@ -86,15 +86,16 @@ async def history_chat(bot: BOT, message: Message):
 async def do_convo(chat, message: Message):
     prompt = message.input
     reply_to_message_id = message.id
+    chat_id = message.chat.id
 
     old_convo = CONVO_CACHE.get(message.unique_chat_user_id)
 
-    if old_convo:
-        Convo.CONVO_DICT[message.chat.id].remove(old_convo)
+    if old_convo in Convo.CONVO_DICT[chat_id]:
+        Convo.CONVO_DICT[chat_id].remove(old_convo)
 
     convo_obj = Convo(
         client=message._client,
-        chat_id=message.chat.id,
+        chat_id=chat_id,
         filters=generate_filter(message),
         timeout=300,
         check_for_duplicates=False,
@@ -106,8 +107,11 @@ async def do_convo(chat, message: Message):
         async with convo_obj:
             while True:
                 ai_response = await chat.send_message_async(prompt)
+
                 ai_response_text = get_response_text(ai_response)
+
                 text = f"**GEMINI AI**:\n\n{ai_response_text}"
+
                 _, prompt_message = await convo_obj.send_message(
                     text=text,
                     reply_to_message_id=reply_to_message_id,
