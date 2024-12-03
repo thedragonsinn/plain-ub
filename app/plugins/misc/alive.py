@@ -22,7 +22,7 @@ PY_VERSION = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
 @bot.add_cmd(cmd="alive")
 async def alive(bot: BOT, message: Message):
     # Inline Alive if Dual Mode
-    if bot.is_user and getattr(bot, "has_bot", None):
+    if bot.is_user and getattr(bot, "has_bot", False):
         inline_result: BotResults = await bot.get_inline_bot_results(
             bot=bot.bot.me.username, query="inline_alive"
         )
@@ -36,7 +36,7 @@ async def alive(bot: BOT, message: Message):
     kwargs = dict(
         chat_id=message.chat.id,
         caption=await get_alive_text(),
-        reply_markup=get_alive_buttons(bot=bot),
+        reply_markup=get_alive_buttons(client=bot),
         reply_parameters=ReplyParameters(message_id=message.reply_id or message.id),
     )
 
@@ -48,15 +48,15 @@ async def alive(bot: BOT, message: Message):
         )
 
 
-if bot.is_bot:
-    _bot = getattr(bot, "bot", bot)
+_bot = getattr(bot, "bot", bot)
+if _bot.is_bot:
 
     @_bot.on_inline_query(filters=filters.regex("^inline_alive$"), group=2)
-    async def return_inline_alive_results(bot: BOT, inline_query: InlineQuery):
+    async def return_inline_alive_results(client: BOT, inline_query: InlineQuery):
         kwargs = dict(
             title=f"Send Alive Media.",
             caption=await get_alive_text(),
-            reply_markup=get_alive_buttons(bot.bot),
+            reply_markup=get_alive_buttons(client),
         )
 
         if get_type(url=extra_config.ALIVE_MEDIA) == MediaType.PHOTO:
@@ -83,8 +83,8 @@ async def get_alive_text() -> str:
     )
 
 
-def get_alive_buttons(bot: BOT):
-    if not bot.is_bot:
+def get_alive_buttons(client: BOT):
+    if not client.is_bot:
         return
     return InlineKeyboardMarkup(
         [
