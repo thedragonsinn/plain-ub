@@ -1,3 +1,7 @@
+import asyncio
+
+from ub_core.utils.helpers import create_chunks
+
 from app import BOT, Message
 from app.plugins.tg_tools.get_message import parse_link
 
@@ -19,15 +23,22 @@ async def delete_message(bot: BOT, message: Message) -> None:
 
 
 @BOT.add_cmd(cmd="purge")
-async def purge_(bot: BOT, message: Message) -> None | Message:
+async def purge_(bot: BOT, message: Message) -> None:
     start_message: int = message.reply_id
+
     if not start_message:
-        return await message.reply("reply to a message")
+        await message.reply("reply to a message")
+        return
+
     end_message: int = message.id
-    messages: list[int] = [
+
+    message_ids: list[int] = [
         end_message,
         *[i for i in range(int(start_message), int(end_message))],
     ]
-    await bot.delete_messages(
-        chat_id=message.chat.id, message_ids=messages, revoke=True
-    )
+
+    for chunk in create_chunks(message_ids, chunk_size=25):
+        await bot.delete_messages(
+            chat_id=message.chat.id, message_ids=chunk, revoke=True
+        )
+        await asyncio.sleep(5)
