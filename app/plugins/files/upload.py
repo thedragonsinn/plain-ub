@@ -5,6 +5,7 @@ import time
 from functools import partial
 from typing import Union
 
+from pyrogram.types import ReplyParameters
 from ub_core.utils import (
     Download,
     DownloadedFile,
@@ -57,7 +58,9 @@ async def audio_upload(bot: BOT, file: DownloadedFile, *_, **__) -> UPLOAD_TYPES
 
 
 async def doc_upload(bot: BOT, file: DownloadedFile, *_, **__) -> UPLOAD_TYPES:
-    return partial(bot.send_document, document=file.path, force_document=True)
+    return partial(
+        bot.send_document, document=file.path, disable_content_type_detection=True
+    )
 
 
 FILE_TYPE_MAP = {
@@ -194,7 +197,9 @@ async def upload_to_tg(file: DownloadedFile, message: Message, response: Message
 
     if "-d" in message.flags:
         upload_method = partial(
-            message._client.send_document, document=file.path, force_document=True
+            message._client.send_document,
+            document=file.path,
+            disable_content_type_detection=True,
         )
     else:
         upload_method: UPLOAD_TYPES = await FILE_TYPE_MAP[file.type](
@@ -204,7 +209,7 @@ async def upload_to_tg(file: DownloadedFile, message: Message, response: Message
     try:
         await upload_method(
             chat_id=message.chat.id,
-            reply_to_message_id=message.reply_id,
+            reply_parameters=ReplyParameters(message_id=message.reply_id),
             progress=progress,
             progress_args=progress_args,
             caption=file.name,

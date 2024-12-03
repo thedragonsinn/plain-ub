@@ -9,6 +9,7 @@ from pyrogram.types import (
     InlineQuery,
     InlineQueryResultAnimation,
     InlineQueryResultPhoto,
+    ReplyParameters,
 )
 from ub_core.utils import MediaType, get_type
 from ub_core.version import __version__ as core_version
@@ -36,7 +37,7 @@ async def alive(bot: BOT, message: Message):
         chat_id=message.chat.id,
         caption=await get_alive_text(),
         reply_markup=get_alive_buttons(bot=bot),
-        reply_to_message_id=message.reply_id or message.id,
+        reply_parameters=ReplyParameters(message_id=message.reply_id or message.id),
     )
 
     if get_type(url=extra_config.ALIVE_MEDIA) == MediaType.PHOTO:

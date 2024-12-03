@@ -73,7 +73,7 @@ async def handle_new_pm(bot: BOT, message: Message):
 
 @bot.on_message(PERMIT_FILTER & filters.outgoing, group=2)
 async def auto_approve(bot: BOT, message: Message):
-    message = Message.parse(message=message)
+    message = Message(message=message)
     ALLOWED_USERS.append(message.chat.id)
     await asyncio.gather(
         PM_USERS.insert_one({"_id": message.chat.id}),

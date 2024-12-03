@@ -54,14 +54,18 @@ async def remove_fed(bot: BOT, message: Message):
         await FED_DB.drop()
         await message.reply("FED LIST cleared.")
         return
+
     chat: int | str | Chat = message.input or message.chat
     name = ""
+
     if isinstance(chat, Chat):
         name = f"Chat: {chat.title}\n"
         chat = chat.id
     elif chat.lstrip("-").isdigit():
         chat = int(chat)
+
     deleted: int = await FED_DB.delete_data(id=chat)
+
     if deleted:
         text = f"#FBANS\n<b>{name}</b><code>{chat}</code> removed from FED LIST."
         await message.reply(text=text, del_in=8)
@@ -80,14 +84,19 @@ async def fed_list(bot: BOT, message: Message):
     """
     output: str = ""
     total = 0
+
     async for fed in FED_DB.find():
         output += f'<b>• {fed["name"]}</b>\n'
+
         if "-id" in message.flags:
             output += f'  <code>{fed["_id"]}</code>\n'
+
         total += 1
+
     if not total:
         await message.reply("You don't have any Feds Connected.")
         return
+
     output: str = f"List of <b>{total}</b> Connected Feds:\n\n{output}"
     await message.reply(output, del_in=30, block=True)
 
@@ -122,7 +131,7 @@ async def fed_ban(bot: BOT, message: Message):
             if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
                 await message.replied.reply(
                     text=f"!dban {reason}",
-                    disable_web_page_preview=True,
+                    disable_preview=True,
                     del_in=3,
                     block=False,
                 )
@@ -204,7 +213,7 @@ async def perform_fed_task(
 
         try:
             cmd: Message = await bot.send_message(
-                chat_id=chat_id, text=command, disable_web_page_preview=True
+                chat_id=chat_id, text=command, disable_preview=True
             )
             response: Message | None = await cmd.get_response(
                 filters=task_filter, timeout=8
@@ -249,12 +258,10 @@ async def perform_fed_task(
     await bot.send_message(
         chat_id=extra_config.FBAN_LOG_CHANNEL,
         text=resp_str,
-        disable_web_page_preview=True,
+        disable_preview=True,
     )
 
-    await progress.edit(
-        text=resp_str, del_in=5, block=True, disable_web_page_preview=True
-    )
+    await progress.edit(text=resp_str, del_in=5, block=True, disable_preview=True)
 
     await handle_sudo_fban(command=command)
 
@@ -262,7 +269,9 @@ async def perform_fed_task(
 async def handle_sudo_fban(command: str):
     if not (extra_config.FBAN_SUDO_ID and extra_config.FBAN_SUDO_TRIGGER):
         return
+
     sudo_cmd = command.replace("/", extra_config.FBAN_SUDO_TRIGGER, 1)
+
     await bot.send_message(
-        chat_id=extra_config.FBAN_SUDO_ID, text=sudo_cmd, disable_web_page_preview=True
+        chat_id=extra_config.FBAN_SUDO_ID, text=sudo_cmd, disable_preview=True
     )

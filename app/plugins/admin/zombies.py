@@ -21,7 +21,7 @@ async def clean_zombies(bot: BOT, message: Message):
 
     response = await message.reply("Cleaning Zombies....\nthis may take a while")
 
-    async for member in bot.get_chat_members(message.chat.id):
+    async for member in bot.get_chat_members(chat_id=message.chat.id):
         try:
             if member.user.is_deleted:
 

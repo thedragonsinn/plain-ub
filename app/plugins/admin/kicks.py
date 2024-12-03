@@ -61,7 +61,8 @@ async def kick_inactive_members(bot: BOT, message: Message):
 
             try:
                 prompt = await convo.send_message(
-                    text=f"Kick {user.mention} with total of {message_count} messages in chat?\nreply with y to continue"
+                    text=f"Kick {user.mention} with total of {message_count} messages in chat?"
+                    f"\nreply with y to continue"
                 )
 
                 async def user_filter(_, __, m: Message):
