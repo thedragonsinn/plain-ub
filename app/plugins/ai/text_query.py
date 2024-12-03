@@ -35,7 +35,7 @@ async def question(bot: BOT, message: Message):
             chat_id=message.chat.id,
             text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
             parse_mode=ParseMode.MARKDOWN,
-            reply_to_message_id=message.reply_id or message.id,
+            reply_to_id=message.reply_id or message.id,
         )
 
 
@@ -66,18 +66,18 @@ async def history_chat(bot: BOT, message: Message):
     """
     reply = message.replied
 
-    if (
-        not reply
-        or not reply.document
-        or not reply.document.file_name
-        or reply.document.file_name != "AI_Chat_History.pkl"
-    ):
+    try:
+        assert reply.document.file_name == "AI_Chat_History.pkl"
+    except (AssertionError, AttributeError):
         await message.reply("Reply to a Valid History file.")
         return
 
     resp = await message.reply("<i>Loading History...</i>")
-    doc: BytesIO = (await reply.download(in_memory=True)).getbuffer()  # NOQA
-    history = pickle.loads(doc)
+
+    doc = await reply.download(in_memory=True)
+    doc.seek(0)
+
+    history = pickle.load(doc)
     await resp.edit("<i>History Loaded... Resuming chat</i>")
     chat = MODEL.start_chat(history=history)
     await do_convo(chat=chat, message=message)
@@ -85,7 +85,7 @@ async def history_chat(bot: BOT, message: Message):
 
 async def do_convo(chat, message: Message):
     prompt = message.input
-    reply_to_message_id = message.id
+    reply_to_id = message.id
     chat_id = message.chat.id
 
     old_convo = CONVO_CACHE.get(message.unique_chat_user_id)
@@ -114,11 +114,11 @@ async def do_convo(chat, message: Message):
 
                 _, prompt_message = await convo_obj.send_message(
                     text=text,
-                    reply_to_message_id=reply_to_message_id,
+                    reply_to_id=reply_to_id,
                     parse_mode=ParseMode.MARKDOWN,
                     get_response=True,
                 )
-                prompt, reply_to_message_id = prompt_message.text, prompt_message.id
+                prompt, reply_to_id = prompt_message.text, prompt_message.id
     except TimeoutError:
         await export_history(chat, message)
 
@@ -127,16 +127,15 @@ async def do_convo(chat, message: Message):
 
 def generate_filter(message: Message):
     async def _filter(_, __, msg: Message):
-        if (
-            not msg.text
-            or not msg.from_user
-            or msg.from_user.id != message.from_user.id
-            or not msg.reply_to_message
-            or not msg.reply_to_message.from_user
-            or msg.reply_to_message.from_user.id != message._client.me.id
-        ):
+        try:
+            assert (
+                msg.text
+                and msg.from_user.id == message.from_user.id
+                and msg.reply_to_message.from_user.id == message._client.me.id
+            )
+            return True
+        except (AssertionError, AttributeError):
             return False
-        return True
 
     return filters.create(_filter)
 
