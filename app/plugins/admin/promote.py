@@ -1,6 +1,6 @@
 import asyncio
 
-from pyrogram.enums import ChatMemberStatus
+from pyrogram.enums import ChatMembersFilter, ChatMemberStatus
 from pyrogram.errors import FloodWait
 from pyrogram.types import ChatPrivileges, User
 
@@ -95,10 +95,9 @@ async def demote_all(bot: BOT, message: Message):
     resp = await message.reply("Hang on demoting all Admins...")
     count = 0
 
-    async for member in bot.get_chat_members(message.chat.id):
-        if member.status != ChatMemberStatus.ADMINISTRATOR:
-            continue
-
+    async for member in bot.get_chat_members(
+        chat_id=message.chat.id, filter=ChatMembersFilter.ADMINISTRATORS
+    ):
         try:
             await bot.promote_chat_member(
                 chat_id=message.chat.id,
