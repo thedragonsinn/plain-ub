@@ -52,13 +52,21 @@ async def down_load(bot: BOT, message: Message):
         else:
             url = message.filtered_input
 
-        dl_obj: Download = await Download.setup(
-            url=url,
-            dir=dl_dir_name,
-            message_to_edit=response,
-            custom_file_name=file_name,
-        )
-        download_coro = dl_obj.download()
+        if url.startswith("https://t.me/"):
+             download_coro = telegram_download(
+                message=await bot.get_messages(link=url),
+                response=response,
+                dir_name=dl_dir_name,
+                file_name=file_name,
+            )
+        else:
+            dl_obj: Download = await Download.setup(
+              url=url,
+              dir=dl_dir_name,
+              message_to_edit=response,
+              custom_file_name=file_name,
+            )
+            download_coro = dl_obj.download()
 
     try:
         downloaded_file: DownloadedFile = await download_coro
