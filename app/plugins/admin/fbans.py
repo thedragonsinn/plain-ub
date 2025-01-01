@@ -8,6 +8,8 @@ from ub_core.utils.helpers import get_name
 
 from app import BOT, Config, CustomDB, Message, bot, extra_config
 
+FBAN_TASK_LOCK = asyncio.Lock()
+
 FED_DB = CustomDB("FED_LIST")
 
 BASIC_FILTER = filters.user([609517172, 2059887769]) & ~filters.service
@@ -192,7 +194,12 @@ async def get_user_reason(
     return user_id, user_mention, reason
 
 
-async def perform_fed_task(
+async def perform_fed_task(*args, **kwargs):
+    async with FBAN_TASK_LOCK:
+        await _perform_fed_task(*args, **kwargs)
+
+
+async def _perform_fed_task(
     user_id: int,
     user_mention: str,
     command: str,

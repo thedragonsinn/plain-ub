@@ -3,12 +3,20 @@ from urllib.parse import urlparse
 from app import BOT, Message
 
 
-def parse_link(link: str) -> tuple[int | str, int]:
+def parse_link(link: str) -> tuple[int | str, int, int]:
     parsed_url: str = urlparse(link).path.strip("/")
-    chat, id = parsed_url.lstrip("c/").split("/")
+    link_chunks = parsed_url.lstrip("c/").split("/")
+
+    thread = 0
+    if len(link_chunks) == 3:
+        chat, thread, message = link_chunks
+    else:
+        chat, message = link_chunks
+
     if chat.isdigit():
         chat = int(f"-100{chat}")
-    return chat, int(id)
+
+    return chat, int(thread), int(message)
 
 
 @BOT.add_cmd(cmd="gm")
@@ -30,7 +38,7 @@ async def get_message(bot: BOT, message: Message):
     else:
         link = message.input.strip()
 
-    remote_message = await bot.get_messages(*parse_link(link))
+    remote_message = await bot.get_messages(link=link)
 
     if not attr:
         await message.reply(f"```{remote_message}```")

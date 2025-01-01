@@ -16,7 +16,7 @@ async def delete_message(bot: BOT, message: Message) -> None:
         .del | .del -r t.me/......
     """
     if "-r" in message.flags:
-        chat_id, message_id = parse_link(message.filtered_input)
+        chat_id, _, message_id = parse_link(message.filtered_input)
         await bot.delete_messages(chat_id=chat_id, message_ids=message_id, revoke=True)
         return
     await message.delete(reply=True)
@@ -32,10 +32,7 @@ async def purge_(bot: BOT, message: Message) -> None:
 
     end_message: int = message.id
 
-    message_ids: list[int] = [
-        end_message,
-        *[i for i in range(int(start_message), int(end_message))],
-    ]
+    message_ids: list[int] = [i for i in range(int(start_message), int(end_message))]
 
     for chunk in create_chunks(message_ids, chunk_size=25):
         await bot.delete_messages(
