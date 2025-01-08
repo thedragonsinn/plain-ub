@@ -45,7 +45,7 @@ async def list_ai_models(bot: BOT, message: Message):
     USAGE: .lmodels
     """
     model_list = [
-        model
+        model.name
         for model in genai.list_models()
         if "generateContent" in model.supported_generation_methods
     ]
