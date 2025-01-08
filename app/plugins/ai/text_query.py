@@ -18,11 +18,11 @@ async def question(bot: BOT, message: Message):
     INFO: Ask a question to Gemini AI.
     USAGE: .ai what is the meaning of life.
     """
-
-    prompt = message.input
+    reply = message.replied
+    reply_text = reply.text if reply else ""
+    prompt = f"{reply_text}\n\n\n{message.input}".strip()
 
     response = await MODEL.generate_content_async(prompt)
-
     response_text = get_response_text(response)
 
     if not isinstance(message, Message):
@@ -39,14 +39,14 @@ async def question(bot: BOT, message: Message):
         )
 
 
-@bot.add_cmd(cmd="aichat")
+@bot.add_cmd(cmd="aic")
 @run_basic_check
 async def ai_chat(bot: BOT, message: Message):
     """
     CMD: AICHAT
     INFO: Have a Conversation with Gemini AI.
     USAGE:
-        .aichat hello
+        .aic hello
         keep replying to AI responses
         After 5 mins of Idle bot will export history and stop chat.
         use .load_history to continue
@@ -55,14 +55,14 @@ async def ai_chat(bot: BOT, message: Message):
     await do_convo(chat=chat, message=message)
 
 
-@bot.add_cmd(cmd="load_history")
+@bot.add_cmd(cmd="lh")
 @run_basic_check
 async def history_chat(bot: BOT, message: Message):
     """
     CMD: LOAD_HISTORY
     INFO: Load a Conversation with Gemini AI from previous session.
     USAGE:
-        .load_history {question} [reply to history document]
+        .lh {question} [reply to history document]
     """
     reply = message.replied
 
@@ -73,7 +73,6 @@ async def history_chat(bot: BOT, message: Message):
         return
 
     resp = await message.reply("<i>Loading History...</i>")
-
     doc = await reply.download(in_memory=True)
     doc.seek(0)
 
@@ -87,7 +86,6 @@ async def do_convo(chat, message: Message):
     prompt = message.input
     reply_to_id = message.id
     chat_id = message.chat.id
-
     old_convo = CONVO_CACHE.get(message.unique_chat_user_id)
 
     if old_convo in Convo.CONVO_DICT[chat_id]:
@@ -107,11 +105,8 @@ async def do_convo(chat, message: Message):
         async with convo_obj:
             while True:
                 ai_response = await chat.send_message_async(prompt)
-
                 ai_response_text = get_response_text(ai_response)
-
                 text = f"**GEMINI AI**:\n\n{ai_response_text}"
-
                 _, prompt_message = await convo_obj.send_message(
                     text=text,
                     reply_to_id=reply_to_id,
@@ -119,6 +114,7 @@ async def do_convo(chat, message: Message):
                     get_response=True,
                 )
                 prompt, reply_to_id = prompt_message.text, prompt_message.id
+
     except TimeoutError:
         await export_history(chat, message)
 

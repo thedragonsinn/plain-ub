@@ -59,7 +59,7 @@ async def photo_query(bot: BOT, message: Message):
     await message_response.edit(ai_response_text)
 
 
-@bot.add_cmd(cmd="stt")
+@bot.add_cmd(cmd="ts")
 @run_basic_check
 async def audio_to_text(bot: BOT, message: Message):
     """
@@ -67,12 +67,17 @@ async def audio_to_text(bot: BOT, message: Message):
     INFO: Convert Audio files to text.
     USAGE: .stt [reply to audio file] summarise/transcribe the audio file.
     """
-    prompt = message.input
+    default_prompt = (
+        "Transcribe the audio file to english alphabets AS IS."
+        "\nTranslate it only if the audio is not in hindi/english."
+        "\nDo not summarise."
+    )
+    prompt = message.input or default_prompt
     reply = message.replied
     audio = reply.audio or reply.voice
 
     message_response = await message.reply("processing... this may take a while")
-    if not (prompt and reply and audio):
+    if not (reply and audio):
         await message_response.edit("Reply to an audio file and give a prompt.")
         return
 
@@ -88,16 +93,20 @@ async def video_to_text(bot: BOT, message: Message):
     INFO: Convert Video info to text.
     USAGE: .ocrv [reply to video file] summarise the video file.
     """
-    prompt = message.input
+    default_prompt = "Summarize the file"
+    prompt = message.input or default_prompt
     reply = message.replied
     message_response = await message.reply("processing... this may take a while")
 
-    if not (prompt and reply and (reply.video or reply.animation)):
+    if not (reply and (reply.video or reply.animation)):
         await message_response.edit("Reply to a video and give a prompt.")
         return
 
-    ai_response_text = await handle_video(prompt, reply)
+    ai_response_text, uploaded_files = await handle_video(prompt, reply)
     await message_response.edit(ai_response_text)
+
+    for uploaded_frame in uploaded_files:
+        await asyncio.to_thread(genai.delete_file, name=uploaded_frame.name)
 
 
 @bot.add_cmd(cmd="aim")
@@ -146,14 +155,14 @@ async def download_file(file_name: str, message: Message) -> tuple[str, str]:
     return file_path, download_dir
 
 
-async def handle_audio(prompt: str, message: Message):
+async def handle_audio(prompt: str, message: Message, model=MODEL):
     audio = message.document or message.audio or message.voice
     file_name = getattr(audio, "file_name", "audio.aac")
 
     file_path, download_dir = await download_file(file_name, message)
     file_response = genai.upload_file(path=file_path)
 
-    response = await MODEL.generate_content_async([prompt, file_response])
+    response = await model.generate_content_async([prompt, file_response])
     response_text = get_response_text(response)
 
     genai.delete_file(name=file_response.name)
@@ -162,15 +171,15 @@ async def handle_audio(prompt: str, message: Message):
     return response_text
 
 
-async def handle_code(prompt: str, message: Message):
+async def handle_code(prompt: str, message: Message, model=MODEL):
     file: BytesIO = await message.download(in_memory=True)
     text = file.getvalue().decode("utf-8")
     final_prompt = f"{text}\n\n{prompt}"
-    response = await MODEL.generate_content_async(final_prompt)
+    response = await model.generate_content_async(final_prompt)
     return get_response_text(response)
 
 
-async def handle_photo(prompt: str, message: Message):
+async def handle_photo(prompt: str, message: Message, model=MODEL):
     file = await message.download(in_memory=True)
 
     mime_type, _ = mimetypes.guess_type(file.name)
@@ -178,34 +187,34 @@ async def handle_photo(prompt: str, message: Message):
         mime_type = "image/unknown"
 
     image_blob = glm.Blob(mime_type=mime_type, data=file.getvalue())
-    response = await MODEL.generate_content_async([prompt, image_blob])
+    response = await model.generate_content_async([prompt, image_blob])
     return get_response_text(response)
 
 
-async def handle_video(prompt: str, message: Message):
+async def handle_video(prompt: str, message: Message, model=MODEL) -> tuple[str, list]:
     file_name = "v.mp4"
     file_path, download_dir = await download_file(file_name, message)
 
     output_path = os.path.join(download_dir, "output_frame_%04d.png")
-    ffmpeg_output_error = await run_shell_cmd(
-        f'ffmpeg -hide_banner -loglevel error -i {file_path} -vf "fps=1" {output_path}'
+    audio_path = os.path.join(download_dir, "audio.")
+
+    await run_shell_cmd(
+        f'ffmpeg -hide_banner -loglevel error -i "{file_path}" -vf "fps=1" "{output_path}"'
+        f"&&"
+        f'ffmpeg -hide_banner -loglevel error -i "{file_path}" -map 0:a:1 -vn -acodec copy "{audio_path}%(ext)s"'
     )
 
-    if ffmpeg_output_error:
-        return ffmpeg_output_error
+    prompt_n_uploaded_files = [prompt]
 
-    extracted_frames = glob.glob(f"{download_dir}/*png")
-
-    uploaded_frames = []
-    for frame in extracted_frames:
+    for frame in glob.glob(f"{download_dir}/*png"):
         uploaded_frame = await asyncio.to_thread(genai.upload_file, frame)
-        uploaded_frames.append(uploaded_frame)
+        prompt_n_uploaded_files.append(uploaded_frame)
 
-    response = await MODEL.generate_content_async([prompt, *uploaded_frames])
+    for file in glob.glob(f"{audio_path}*"):
+        uploaded_file = await asyncio.to_thread(genai.upload_file, file)
+        prompt_n_uploaded_files.append(uploaded_file)
+
+    response = await model.generate_content_async(prompt_n_uploaded_files)
     response_text = get_response_text(response)
-
-    for uploaded_frame in uploaded_frames:
-        await asyncio.to_thread(genai.delete_file, name=uploaded_frame.name)
-
     shutil.rmtree(download_dir, ignore_errors=True)
-    return response_text
+    return response_text, prompt_n_uploaded_files
