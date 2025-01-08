@@ -1,6 +1,7 @@
 from functools import wraps
 
 import google.generativeai as genai
+from pyrogram import filters
 
 from app import BOT, CustomDB, Message, extra_config
 
@@ -50,28 +51,37 @@ async def list_ai_models(bot: BOT, message: Message):
         if "generateContent" in model.supported_generation_methods
     ]
 
-    mono_names = "".join([f"`{model}`" for model in model_list])
+    mono_names = "\n".join([f"`{model}`" for model in model_list])
     update_str = (
         f"\n\nCurrent Model: {MODEL._model_name}"
         "\n\nTo change to a different model,"
         "Reply to this message with the model name."
     )
 
-    model_reply = await message.reply(mono_names + update_str, del_in=30, block=False)
-    response = await model_reply.get_response(timeout=10)
+    model_reply = await message.reply(
+        f"<blockquote expandable=True>{mono_names}</blockquote>{update_str}"
+    )
+
+    async def resp_filters(_, c, m):
+        return m.reply_id == model_reply.id
+
+    response = await model_reply.get_response(
+        filters=filters.create(resp_filters), timeout=60
+    )
 
     if not response:
+        await model_reply.delete()
         return
 
     if response.text not in model_list:
-        await response.edit(
+        await model_reply.edit(
             f"Invalid Model... run <code>{message.trigger}lams</code> again"
         )
         return
 
     await SETTINGS.add_data({"_id": "gemini_model_info", "model_name": response.text})
-    await response.edit(f"{response.text} saved as model.")
-    await response.log()
+    await model_reply.edit(f"{response.text} saved as model.")
+    await model_reply.log()
     MODEL._model_name = response.text
 
 
