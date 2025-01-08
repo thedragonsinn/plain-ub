@@ -51,7 +51,7 @@ async def list_ai_models(bot: BOT, message: Message):
         if "generateContent" in model.supported_generation_methods
     ]
 
-    mono_names = "\n".join([f"`{model}`" for model in model_list])
+    model_str = "\n".join(model_list)
     update_str = (
         f"\n\nCurrent Model: {MODEL._model_name}"
         "\n\nTo change to a different model,"
@@ -59,7 +59,7 @@ async def list_ai_models(bot: BOT, message: Message):
     )
 
     model_reply = await message.reply(
-        f"<blockquote expandable=True>{mono_names}</blockquote>{update_str}"
+        f"<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>{update_str}"
     )
 
     async def resp_filters(_, c, m):
@@ -75,7 +75,7 @@ async def list_ai_models(bot: BOT, message: Message):
 
     if response.text not in model_list:
         await model_reply.edit(
-            f"Invalid Model... run <code>{message.trigger}lams</code> again"
+            f"Invalid Model... run <code>{message.trigger}lmodels</code> again"
         )
         return
 
