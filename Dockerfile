@@ -1,12 +1,19 @@
 FROM python:3.12.7-slim-bookworm
 
+PIP_NO_CACHE_DIR=1 \
+    LANG=C.UTF-8 \
+    DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app/
 
-RUN sed -i.bak 's/us-west-2\.ec2\.//' /etc/apt/sources.list && \
-    apt -qq update && apt -qq upgrade -y && \
+RUN apt -qq update && apt -qq upgrade -y && \
     apt -qq install -y --no-install-recommends \
     apt-utils \
+    build-essential coreutils \
     curl \
+    ffmpeg \
+    mediainfo \
+    neofetch \
     git \
     wget && \
     pip install -U pip setuptools wheel && \
