@@ -33,7 +33,7 @@ async def handle_media(prompt: str, media_message: Message, model=MODEL) -> str:
         type(media), "Analyse the file and explain."
     )
 
-    download_dir = os.path.join("downloads", str(time.time()))
+    download_dir = os.path.join("downloads", str(time.time())) + "/"
     downloaded_file = await media_message.download(download_dir)
 
     uploaded_file = await asyncio.to_thread(genai.upload_file, downloaded_file)
