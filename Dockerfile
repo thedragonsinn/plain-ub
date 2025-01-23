@@ -1,6 +1,6 @@
 FROM python:3.12.7-slim-bookworm
 
-PIP_NO_CACHE_DIR=1 \
+ENV PIP_NO_CACHE_DIR=1 \
     LANG=C.UTF-8 \
     DEBIAN_FRONTEND=noninteractive
 
