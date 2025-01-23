@@ -54,7 +54,7 @@ async def purge_(bot: BOT, message: Message) -> None:
         ):
             message_ids.append(_message.id)
             if (
-                _message.reply_to_message_id == message.reply_id
+                _message.id == message.reply_id
                 or len(message_ids) > 100
             ):
                 break
