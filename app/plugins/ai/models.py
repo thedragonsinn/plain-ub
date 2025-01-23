@@ -10,15 +10,15 @@ SETTINGS = CustomDB("COMMON_SETTINGS")
 GENERATION_CONFIG = {"temperature": 0.69, "max_output_tokens": 2048}
 
 SAFETY_SETTINGS = [
-    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH"},
-    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
-    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
 ]
 
 SYSTEM_INSTRUCTION = (
     "Answer precisely and in short unless specifically instructed otherwise."
-    "\nWhen asked related to code, do not comment the code and do not explain unless instructed."
+    "\nWhen asked related to code, do not comment the code and do not explain the code unless instructed."
 )
 
 MODEL = genai.GenerativeModel(
@@ -38,12 +38,12 @@ async def init_task():
         MODEL._model_name = model_name
 
 
-@BOT.add_cmd(cmd="lmodels")
+@BOT.add_cmd(cmd="llms")
 async def list_ai_models(bot: BOT, message: Message):
     """
     CMD: LIST MODELS
     INFO: List and change Gemini Models.
-    USAGE: .lmodels
+    USAGE: .llms
     """
     model_list = [
         model.name
@@ -51,7 +51,8 @@ async def list_ai_models(bot: BOT, message: Message):
         if "generateContent" in model.supported_generation_methods
     ]
 
-    model_str = "\n".join(model_list)
+    model_str = "\n\n".join(model_list)
+
     update_str = (
         f"\n\nCurrent Model: {MODEL._model_name}"
         "\n\nTo change to a different model,"
@@ -75,7 +76,7 @@ async def list_ai_models(bot: BOT, message: Message):
 
     if response.text not in model_list:
         await model_reply.edit(
-            f"Invalid Model... run <code>{message.trigger}lmodels</code> again"
+            f"Invalid Model... run <code>{message.trigger}{message.cmd}</code> again"
         )
         return
 

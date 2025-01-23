@@ -5,6 +5,7 @@ from pyrogram import filters
 from pyrogram.enums import ParseMode
 
 from app import BOT, Convo, Message, bot
+from app.plugins.ai.media_query import handle_media
 from app.plugins.ai.models import MODEL, get_response_text, run_basic_check
 
 CONVO_CACHE: dict[str, Convo] = {}
@@ -15,28 +16,38 @@ CONVO_CACHE: dict[str, Convo] = {}
 async def question(bot: BOT, message: Message):
     """
     CMD: AI
-    INFO: Ask a question to Gemini AI.
-    USAGE: .ai what is the meaning of life.
+    INFO: Ask a question to Gemini AI or get info about replied message / media.
+    USAGE:
+        .ai what is the meaning of life.
+        .ai [reply to a message] (sends replied text as query)
+        .ai [reply to message] [extra prompt relating to replied text]
+
+        .ai [reply to image | video | gif]
+        .ai [reply to image | video | gif] [custom prompt]
     """
     reply = message.replied
     reply_text = reply.text if reply else ""
-    prompt = f"{reply_text}\n\n\n{message.input}".strip()
 
-    response = await MODEL.generate_content_async(prompt)
-    response_text = get_response_text(response)
-
-    if not isinstance(message, Message):
-        await message.edit(
-            text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
-            parse_mode=ParseMode.MARKDOWN,
+    if reply and reply.media:
+        message_response = await message.reply(
+            "<code>Processing... this may take a while.</code>"
+        )
+        prompt = message.input
+        response_text = await handle_media(
+            prompt=prompt, media_message=reply, model=MODEL
         )
     else:
-        await bot.send_message(
-            chat_id=message.chat.id,
-            text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
-            parse_mode=ParseMode.MARKDOWN,
-            reply_to_id=message.reply_id or message.id,
+        message_response = await message.reply(
+            "<code>Input received... generating response.</code>"
         )
+        prompt = f"{reply_text}\n\n\n{message.input}".strip()
+        response = await MODEL.generate_content_async(prompt)
+        response_text = get_response_text(response)
+
+    await message_response.edit(
+        text=f"```\n{prompt}```**GEMINI AI**:\n{response_text.strip()}",
+        parse_mode=ParseMode.MARKDOWN,
+    )
 
 
 @bot.add_cmd(cmd="aic")
