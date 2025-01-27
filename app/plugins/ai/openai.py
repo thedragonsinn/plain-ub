@@ -59,5 +59,5 @@ async def chat_gpt(bot: BOT, message: Message):
 
     response = chat_completion.choices[0].message.content
     await message.reply(
-        text=f"```{prompt}```**GPT**:\n{response}", parse_mode=ParseMode.MARKDOWN
+        text=f"```\n{prompt}```**GPT**:\n{response}", parse_mode=ParseMode.MARKDOWN
     )
