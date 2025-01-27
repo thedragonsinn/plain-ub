@@ -53,10 +53,7 @@ async def purge_(bot: BOT, message: Message) -> None:
             chat_id=message.chat.id, message_id=message.message_thread_id, limit=100
         ):
             message_ids.append(_message.id)
-            if (
-                _message.id == message.reply_id
-                or len(message_ids) > 100
-            ):
+            if _message.id == message.reply_id or len(message_ids) > 100:
                 break
     else:
         # Generate Message Ids
