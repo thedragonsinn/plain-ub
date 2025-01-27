@@ -3,7 +3,7 @@ from pyrogram.enums import ParseMode
 
 from app import BOT, LOGGER, Message
 from app.extra_config import OPENAI_CLIENT, OPENAI_MODEL
-from app.plugins.ai.models import SYSTEM_INSTRUCTIONS
+from app.plugins.ai.models import SYSTEM_INSTRUCTION
 
 try:
     CLIENT = getattr(openai, f"Async{OPENAI_CLIENT}OpenAI")()
@@ -51,7 +51,7 @@ async def chat_gpt(bot: BOT, message: Message):
 
     chat_completion = await CLIENT.chat.completions.create(
         messages=[
-            {"role": "system", "content": SYSTEM_INSTRUCTIONS},
+            {"role": "system", "content": SYSTEM_INSTRUCTION},
             {"role": "user", "content": prompt},
         ],
         model=OPENAI_MODEL,
