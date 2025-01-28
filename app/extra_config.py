@@ -22,10 +22,6 @@ MESSAGE_LOGGER_CHAT: int = int(
     environ.get("MESSAGE_LOGGER_CHAT", environ.get("LOG_CHAT"))
 )
 
-OPENAI_CLIENT = environ.get("OPENAI_CLIENT", "")
-
-OPENAI_MODEL = environ.get("OPENAI_MODEL", "gpt-4o")
-
 PM_GUARD: bool = False
 
 PM_LOGGER: bool = False
