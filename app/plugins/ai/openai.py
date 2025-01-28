@@ -28,7 +28,7 @@ if AI_CLIENT == openai.AsyncAzureOpenAI:
         azure_deployment=environ.get("DALL_E_DEPLOYMENT"),
     )
 else:
-    text_init_kwagrs = dict(
+    text_init_kwargs = dict(
         api_key=environ.get("OPENAI_API_KEY"), base_url=environ.get("OPENAI_BASE_URL")
     )
     image_init_kwargs = dict(
