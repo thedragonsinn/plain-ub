@@ -43,7 +43,7 @@ except Exception as e:
 
 try:
     DALL_E_CLIENT = AI_CLIENT(**image_init_kwargs)
-except:
+except Exception as e:
     LOGGER.error(e)
     DALL_E_CLIENT = None
 
