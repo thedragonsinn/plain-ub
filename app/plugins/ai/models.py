@@ -1,41 +1,70 @@
 from functools import wraps
 
-import google.generativeai as genai
+from google.genai.client import AsyncClient, Client
+from google.genai.types import (
+    DynamicRetrievalConfig,
+    GenerateContentConfig,
+    GoogleSearchRetrieval,
+    SafetySetting,
+    Tool,
+)
 from pyrogram import filters
 
 from app import BOT, CustomDB, Message, extra_config
 
-SETTINGS = CustomDB("COMMON_SETTINGS")
+DB_SETTINGS = CustomDB("COMMON_SETTINGS")
 
-GENERATION_CONFIG = {"temperature": 0.69, "max_output_tokens": 2048}
+try:
+    client: Client = Client(api_key=extra_config.GEMINI_API_KEY)
+    async_client: AsyncClient = client.aio
+except:
+    client = async_client = None
 
-SAFETY_SETTINGS = [
-    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-]
 
-SYSTEM_INSTRUCTION = (
-    "Answer precisely and in short unless specifically instructed otherwise."
-    "\nWhen asked related to code, do not comment the code and do not explain the code unless instructed."
-)
+class Settings:
+    MODEL = "gemini-2.0-flash"
 
-MODEL = genai.GenerativeModel(
-    generation_config=GENERATION_CONFIG,
-    safety_settings=SAFETY_SETTINGS,
-    system_instruction=SYSTEM_INSTRUCTION,
-)
+    # fmt:off
+    CONFIG = GenerateContentConfig(
+
+        system_instruction=(
+            "Answer precisely and in short unless specifically instructed otherwise."
+            "\nWhen asked related to code, do not comment the code and do not explain the code unless instructed."
+        ),
+
+        temperature=0.69,
+
+        max_output_tokens=4000,
+
+        safety_settings=[
+            SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+            SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+            SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+            SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+        ],
+        # fmt:on
+
+        tools=[
+            Tool(
+                google_search=GoogleSearchRetrieval(
+                    dynamic_retrieval_config=DynamicRetrievalConfig(
+                        dynamic_threshold=0.3
+                    )
+                )
+            )
+        ],
+    )
+
+    @staticmethod
+    def get_kwargs() -> dict:
+        return {"model": Settings.MODEL, "config": Settings.CONFIG}
 
 
 async def init_task():
-    if extra_config.GEMINI_API_KEY:
-        genai.configure(api_key=extra_config.GEMINI_API_KEY)
-
-    model_info = await SETTINGS.find_one({"_id": "gemini_model_info"}) or {}
+    model_info = await DB_SETTINGS.find_one({"_id": "gemini_model_info"}) or {}
     model_name = model_info.get("model_name")
     if model_name:
-        MODEL._model_name = model_name
+        Settings.MODEL = model_name
 
 
 @BOT.add_cmd(cmd="llms")
@@ -46,15 +75,15 @@ async def list_ai_models(bot: BOT, message: Message):
     USAGE: .llms
     """
     model_list = [
-        model.name
-        for model in genai.list_models()
-        if "generateContent" in model.supported_generation_methods
+        model.name.lstrip("models/")
+        async for model in await async_client.models.list(config={"query_base": True})
+        if "generateContent" in model.supported_actions
     ]
 
     model_str = "\n\n".join(model_list)
 
     update_str = (
-        f"\n\nCurrent Model: {MODEL._model_name}"
+        f"\n\nCurrent Model: {Settings.MODEL}"
         "\n\nTo change to a different model,"
         "Reply to this message with the model name."
     )
@@ -63,7 +92,7 @@ async def list_ai_models(bot: BOT, message: Message):
         f"<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>{update_str}"
     )
 
-    async def resp_filters(_, c, m):
+    async def resp_filters(_, __, m):
         return m.reply_id == model_reply.id
 
     response = await model_reply.get_response(
@@ -80,10 +109,12 @@ async def list_ai_models(bot: BOT, message: Message):
         )
         return
 
-    await SETTINGS.add_data({"_id": "gemini_model_info", "model_name": response.text})
+    await DB_SETTINGS.add_data(
+        {"_id": "gemini_model_info", "model_name": response.text}
+    )
     await model_reply.edit(f"{response.text} saved as model.")
     await model_reply.log()
-    MODEL._model_name = response.text
+    Settings.MODEL = response.text
 
 
 def run_basic_check(function):
@@ -115,5 +146,16 @@ def run_basic_check(function):
     return wrapper
 
 
-def get_response_text(response):
-    return "\n".join([part.text for part in response.parts])
+def get_response_text(response, quoted: bool = False):
+    candidate = response.candidates[0]
+    sources = ""
+
+    if grounding_chunks := candidate.grounding_metadata.grounding_chunks:
+        hrefs = [f"[{chunk.web.title}]({chunk.web.uri})" for chunk in grounding_chunks]
+        sources = "\n\nSources: " + " | ".join(hrefs)
+
+    text = "\n".join([part.text for part in candidate.content.parts])
+
+    final_text = (text.strip() + sources).strip()
+
+    return f"**>\n{final_text}<**" if quoted else final_text

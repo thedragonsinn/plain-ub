@@ -4,6 +4,6 @@
 
 yt-dlp>=2024.5.27
 pillow
-google-generativeai
+google-genai
 openai
 

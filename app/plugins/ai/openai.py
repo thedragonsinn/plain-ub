@@ -6,7 +6,7 @@ import openai
 from pyrogram.enums import ParseMode
 from pyrogram.types import InputMediaPhoto
 
-from app import BOT, LOGGER, Message
+from app import BOT, Message
 from app.plugins.ai.models import SYSTEM_INSTRUCTION
 
 OPENAI_CLIENT = environ.get("OPENAI_CLIENT", "")
@@ -37,14 +37,12 @@ else:
 
 try:
     TEXT_CLIENT = AI_CLIENT(**text_init_kwargs)
-except Exception as e:
-    LOGGER.error(e)
+except:
     TEXT_CLIENT = None
 
 try:
     DALL_E_CLIENT = AI_CLIENT(**image_init_kwargs)
-except Exception as e:
-    LOGGER.error(e)
+except:
     DALL_E_CLIENT = None
 
 
@@ -68,7 +66,7 @@ async def chat_gpt(bot: BOT, message: Message):
                 OPENAI_MODEL = your azure model
                 AZURE_OPENAI_API_KEY = your api key
                 AZURE_OPENAI_ENDPOINT = your azure endpoint
-                AZURE_DEPLOYMENT = your azure deployment 
+                AZURE_DEPLOYMENT = your azure deployment
 
     USAGE:
         .gpt hi
@@ -96,7 +94,8 @@ async def chat_gpt(bot: BOT, message: Message):
 
     response = chat_completion.choices[0].message.content
     await message.reply(
-        text=f"```\n{prompt}```**GPT**:\n{response}", parse_mode=ParseMode.MARKDOWN
+        text=f"**>\n{prompt}\n<**\n**GPT**:**>\n{response}\n<**",
+        parse_mode=ParseMode.MARKDOWN,
     )
 
 
@@ -118,7 +117,7 @@ async def chat_gpt(bot: BOT, message: Message):
                 DALL_E_API_KEY = your api key
                 DALL_E_API_VERSION = your version
                 DALL_E_ENDPOINT = your azure endpoint
-                DALL_E_DEPLOYMENT = your azure deployment 
+                DALL_E_DEPLOYMENT = your azure deployment
 
     FLAGS:
         -v: for vivid style images (default)
@@ -160,7 +159,7 @@ async def chat_gpt(bot: BOT, message: Message):
     await response.edit_media(
         InputMediaPhoto(
             media=image_io,
-            caption=prompt,
+            caption=f"**>\n{prompt}\n<**",
             has_spoiler="-s" in message.flags,
         )
     )
