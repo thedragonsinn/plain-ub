@@ -56,7 +56,7 @@ async def question(bot: BOT, message: Message):
         response_text = get_response_text(response, quoted=True)
 
     await message_response.edit(
-        text=f"**>\n{prompt}<**\n**GEMINI AI**:{response_text}",
+        text=f"**>\n{prompt}**\n**GEMINI AI**:\n{response_text}",
         parse_mode=ParseMode.MARKDOWN,
         disable_preview=True,
     )
