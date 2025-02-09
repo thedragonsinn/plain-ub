@@ -39,7 +39,7 @@ async def handle_media(prompt: str, media_message: Message, **kwargs) -> str:
     uploaded_file = await async_client.files.upload(
         file=downloaded_file,
         config={
-            "mime_type": getttr(media, "mime_type", guess_type(downloaded_file)[0])
+            "mime_type": getattr(media, "mime_type", guess_type(downloaded_file)[0])
         },
     )
 
