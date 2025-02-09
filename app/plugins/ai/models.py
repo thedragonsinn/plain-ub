@@ -37,7 +37,7 @@ class Settings:
         max_output_tokens=4000,
 
         safety_settings=[
-            SafetySetting(category="HARM_CATEGORY_UNSPECIFIED", threshold="BLOCK_NONE"),
+            #SafetySetting(category="HARM_CATEGORY_UNSPECIFIED", threshold="BLOCK_NONE"),
             SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
             SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
             SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
