@@ -158,4 +158,4 @@ def get_response_text(response, quoted: bool = False):
 
     final_text = (text.strip() + sources).strip()
 
-    return f"**>\n{final_text}<**" if quoted else final_text
+    return f"**>\n{final_text}<**" if quoted and "```" not in final_text else final_text
