@@ -46,7 +46,7 @@ async def question(bot: BOT, message: Message):
             "<code>Input received... generating response.</code>"
         )
         if reply and reply.text:
-            prompts = [reply.text, message.input]
+            prompts = [str(reply.text), message.input or "answer"]
         else:
             prompts = [message.input]
 

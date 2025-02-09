@@ -2,6 +2,7 @@ import asyncio
 import os
 import shutil
 import time
+from mimetypes import guess_type
 
 from pyrogram.types.messages_and_media import Audio, Photo, Video, Voice
 from ub_core.utils import get_tg_media_details
@@ -36,7 +37,10 @@ async def handle_media(prompt: str, media_message: Message, **kwargs) -> str:
     downloaded_file: str = await media_message.download(download_dir)
 
     uploaded_file = await async_client.files.upload(
-        file=downloaded_file, config={"mime_type": media.mime_type}
+        file=downloaded_file,
+        config={
+            "mime_type": getttr(media, "mime_type", guess_type(downloaded_file)[0])
+        },
     )
 
     while uploaded_file.state.name == "PROCESSING":
