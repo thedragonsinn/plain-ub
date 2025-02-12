@@ -6,7 +6,6 @@ import shutil
 from time import time
 from urllib.parse import urlparse
 
-from pyrogram.types import InputMediaAudio
 from ub_core.utils import MediaExts, aio, run_shell_cmd
 
 from app import BOT, Message
@@ -61,13 +60,11 @@ async def song_dl(bot: BOT, message: Message) -> None | Message:
 
     for audio_file in down_path:
         if audio_file.endswith(tuple(MediaExts.AUDIO)):
-            await message.edit_media(
-                InputMediaAudio(
-                    media=audio_file,
-                    duration=int(duration),
-                    performer=str(artist),
-                    thumb=thumb,
-                )
+            await message.reply_audio(
+                audio=audio_file,
+                duration=int(duration),
+                performer=str(artist),
+                thumb=thumb,
             )
 
     await response.delete()
@@ -92,7 +89,7 @@ async def get_download_info(query: str, path: str):
         f"'{query}'"
     )
     try:
-        song_info = (await run_shell_cmd(download_cmd, timeout=60, ret_val="")).strip()
+        song_info = (await run_shell_cmd(download_cmd)).strip()
 
         serialised_json = json.loads(song_info)
         return serialised_json
