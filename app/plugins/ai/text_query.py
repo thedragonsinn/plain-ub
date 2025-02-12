@@ -1,4 +1,4 @@
-import pickle
+﻿import pickle
 from io import BytesIO
 
 from google.genai.chats import AsyncChat
@@ -23,6 +23,8 @@ async def question(bot: BOT, message: Message):
     """
     CMD: AI
     INFO: Ask a question to Gemini AI or get info about replied message / media.
+    FLAGS:
+        -ns: Not use Search
     USAGE:
         .ai what is the meaning of life.
         .ai [reply to a message] (sends replied text as query)
@@ -32,14 +34,16 @@ async def question(bot: BOT, message: Message):
         .ai [reply to image | video | gif] [custom prompt]
     """
     reply = message.replied
-    prompt = message.input
+    prompt = message.filtered_input
 
     if reply and reply.media:
         message_response = await message.reply(
             "<code>Processing... this may take a while.</code>"
         )
         response_text = await handle_media(
-            prompt=prompt, media_message=reply, **Settings.get_kwargs()
+            prompt=prompt,
+            media_message=reply,
+            **Settings.get_kwargs(use_search="-ns" not in message.flags),
         )
     else:
         message_response = await message.reply(
@@ -51,12 +55,13 @@ async def question(bot: BOT, message: Message):
             prompts = [message.input]
 
         response = await async_client.models.generate_content(
-            contents=prompts, **Settings.get_kwargs()
+            contents=prompts,
+            **Settings.get_kwargs(use_search="-ns" not in message.flags),
         )
         response_text = get_response_text(response, quoted=True)
 
     await message_response.edit(
-        text=f"**>\n{prompt}<**\n**GEMINI AI**:\n{response_text}",
+        text=f"**>\n•> {prompt}<**\n{response_text}",
         parse_mode=ParseMode.MARKDOWN,
         disable_preview=True,
     )

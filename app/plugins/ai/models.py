@@ -27,6 +27,8 @@ class Settings:
     # fmt:off
     CONFIG = GenerateContentConfig(
 
+        candidate_count=1,
+
         system_instruction=(
             "Answer precisely and in short unless specifically instructed otherwise."
             "\nWhen asked related to code, do not comment the code and do not explain the code unless instructed."
@@ -34,10 +36,10 @@ class Settings:
 
         temperature=0.69,
 
-        max_output_tokens=4000,
+        max_output_tokens=1024,
 
         safety_settings=[
-            #SafetySetting(category="HARM_CATEGORY_UNSPECIFIED", threshold="BLOCK_NONE"),
+            # SafetySetting(category="HARM_CATEGORY_UNSPECIFIED", threshold="BLOCK_NONE"),
             SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
             SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
             SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
@@ -46,19 +48,27 @@ class Settings:
         ],
         # fmt:on
 
-        tools=[
-            Tool(
+        tools=[],
+    )
+
+    SEARCH_TOOL = Tool(
                 google_search=GoogleSearchRetrieval(
                     dynamic_retrieval_config=DynamicRetrievalConfig(
                         dynamic_threshold=0.3
                     )
                 )
             )
-        ],
-    )
 
     @staticmethod
-    def get_kwargs() -> dict:
+    def get_kwargs(use_search:bool=True) -> dict:
+        tools = Settings.CONFIG.tools
+
+        if not use_search and Settings.SEARCH_TOOL in tools:
+            tools.remove(Settings.SEARCH_TOOL)
+
+        if use_search and Settings.SEARCH_TOOL not in tools:
+            tools.append(Settings.SEARCH_TOOL)
+
         return {"model": Settings.MODEL, "config": Settings.CONFIG}
 
 
@@ -152,9 +162,14 @@ def get_response_text(response, quoted: bool = False):
     candidate = response.candidates[0]
     sources = ""
 
-    if grounding_chunks := candidate.grounding_metadata.grounding_chunks:
-        hrefs = [f"[{chunk.web.title}]({chunk.web.uri})" for chunk in grounding_chunks]
+    try:
+        hrefs = [
+            f"[{chunk.web.title}]({chunk.web.uri})"
+            for chunk in candidate.grounding_metadata.grounding_chunks
+        ]
         sources = "\n\nSources: " + " | ".join(hrefs)
+    except (AttributeError, TypeError):
+        pass
 
     text = "\n".join([part.text for part in candidate.content.parts])
 

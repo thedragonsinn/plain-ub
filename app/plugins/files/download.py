@@ -1,6 +1,7 @@
 import asyncio
 import os
 import time
+from pathlib import Path
 
 from ub_core.utils import (Download, DownloadedFile, get_tg_media_details,
                            progress)
@@ -26,7 +27,7 @@ async def down_load(bot: BOT, message: Message):
         )
         return
 
-    dl_dir_name = os.path.join("downloads", str(time.time()))
+    dl_dir_name = Path("downloads") / str(time.time())
 
     await response.edit("Input verified....Starting Download...")
 
@@ -41,7 +42,7 @@ async def down_load(bot: BOT, message: Message):
         download_coro = telegram_download(
             message=message.replied,
             response=response,
-            dir_name=dl_dir_name,
+            dir_name=str(dl_dir_name),
             file_name=file_name,
         )
 
@@ -53,18 +54,18 @@ async def down_load(bot: BOT, message: Message):
             url = message.filtered_input
 
         if url.startswith("https://t.me/"):
-             download_coro = telegram_download(
+            download_coro = telegram_download(
                 message=await bot.get_messages(link=url),
                 response=response,
-                dir_name=dl_dir_name,
+                dir_name=str(dl_dir_name),
                 file_name=file_name,
             )
         else:
             dl_obj: Download = await Download.setup(
-              url=url,
-              dir=dl_dir_name,
-              message_to_edit=response,
-              custom_file_name=file_name,
+                url=url,
+                dir=dl_dir_name,
+                message_to_edit=response,
+                custom_file_name=file_name,
             )
             download_coro = dl_obj.download()
 
@@ -104,7 +105,9 @@ async def telegram_download(
 
     file_name = file_name or tg_media.file_name
 
-    media_obj: DownloadedFile = DownloadedFile(file=os.path.join(dir_name, file_name), size=tg_media.file_size)
+    media_obj: DownloadedFile = DownloadedFile(
+        file=os.path.join(dir_name, file_name), size=tg_media.file_size
+    )
 
     progress_args = (response, "Downloading...", media_obj.path)
 
