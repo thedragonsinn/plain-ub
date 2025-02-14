@@ -1,4 +1,4 @@
-from base64 import b64decode
+﻿from base64 import b64decode
 from io import BytesIO
 from os import environ
 
@@ -94,7 +94,7 @@ async def chat_gpt(bot: BOT, message: Message):
 
     response = chat_completion.choices[0].message.content
     await message.reply(
-        text=f"**>\n{prompt}\n<**\n**GPT**:**>\n{response}\n<**",
+        text=f"**>\n••>{prompt}<**\n**>{response}\n<**",
         parse_mode=ParseMode.MARKDOWN,
     )
 
