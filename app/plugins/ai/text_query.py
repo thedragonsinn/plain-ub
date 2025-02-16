@@ -6,7 +6,7 @@ from pyrogram import filters
 from pyrogram.enums import ParseMode
 
 from app import BOT, Convo, Message, bot
-from app.plugins.ai.media_query import handle_media
+from app.plugins.ai.media_query import handle_ai_query
 from app.plugins.ai.models import (
     Settings,
     async_client,
@@ -36,31 +36,18 @@ async def question(bot: BOT, message: Message):
     reply = message.replied
     prompt = message.filtered_input
 
-    if reply and reply.media:
-        message_response = await message.reply(
-            "<code>Processing... this may take a while.</code>"
-        )
-        response_text = await handle_media(
-            prompt=prompt,
-            media_message=reply,
-            **Settings.get_kwargs(use_search="-ns" not in message.flags),
-        )
-    else:
-        message_response = await message.reply(
-            "<code>Input received... generating response.</code>"
-        )
-        if reply and reply.text:
-            prompts = [str(reply.text), message.input or "answer"]
-        else:
-            prompts = [message.input]
+    load_msg = await message.reply(
+        "<code>Input received... generating response.</code>"
+    )
+    response = await handle_ai_query(
+        prompt=prompt,
+        query=reply,
+        **Settings.get_kwargs(use_search="-ns" not in message.flags)
+    )
 
-        response = await async_client.models.generate_content(
-            contents=prompts,
-            **Settings.get_kwargs(use_search="-ns" not in message.flags),
-        )
-        response_text = get_response_text(response, quoted=True)
+    response_text = get_response_text(response, quoted=True)
 
-    await message_response.edit(
+    await load_msg.edit(
         text=f"**>\n•> {prompt}<**\n{response_text}",
         parse_mode=ParseMode.MARKDOWN,
         disable_preview=True,
