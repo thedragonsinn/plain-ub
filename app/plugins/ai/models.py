@@ -1,3 +1,4 @@
+import logging
 from functools import wraps
 
 from google.genai.client import AsyncClient, Client
@@ -11,6 +12,8 @@ from google.genai.types import (
 from pyrogram import filters
 
 from app import BOT, CustomDB, Message, extra_config
+
+logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
 DB_SETTINGS = CustomDB("COMMON_SETTINGS")
 
@@ -31,7 +34,7 @@ class Settings:
 
         system_instruction=(
             "Answer precisely and in short unless specifically instructed otherwise."
-            "\nWhen asked related to code, do not comment the code and do not explain the code unless instructed."
+            "\nIF asked related to code, do not comment the code and do not explain the code unless instructed."
         ),
 
         temperature=0.69,
@@ -79,56 +82,6 @@ async def init_task():
         Settings.MODEL = model_name
 
 
-@BOT.add_cmd(cmd="llms")
-async def list_ai_models(bot: BOT, message: Message):
-    """
-    CMD: LIST MODELS
-    INFO: List and change Gemini Models.
-    USAGE: .llms
-    """
-    model_list = [
-        model.name.lstrip("models/")
-        async for model in await async_client.models.list(config={"query_base": True})
-        if "generateContent" in model.supported_actions
-    ]
-
-    model_str = "\n\n".join(model_list)
-
-    update_str = (
-        f"\n\nCurrent Model: {Settings.MODEL}"
-        "\n\nTo change to a different model,"
-        "Reply to this message with the model name."
-    )
-
-    model_reply = await message.reply(
-        f"<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>{update_str}"
-    )
-
-    async def resp_filters(_, __, m):
-        return m.reply_id == model_reply.id
-
-    response = await model_reply.get_response(
-        filters=filters.create(resp_filters), timeout=60
-    )
-
-    if not response:
-        await model_reply.delete()
-        return
-
-    if response.text not in model_list:
-        await model_reply.edit(
-            f"Invalid Model... run <code>{message.trigger}{message.cmd}</code> again"
-        )
-        return
-
-    await DB_SETTINGS.add_data(
-        {"_id": "gemini_model_info", "model_name": response.text}
-    )
-    await model_reply.edit(f"{response.text} saved as model.")
-    await model_reply.log()
-    Settings.MODEL = response.text
-
-
 def run_basic_check(function):
     @wraps(function)
     async def wrapper(bot: BOT, message: Message):
@@ -158,21 +111,73 @@ def run_basic_check(function):
     return wrapper
 
 
-def get_response_text(response, quoted: bool = False):
+def get_response_text(response, quoted: bool = False, add_sources: bool = True):
     candidate = response.candidates[0]
+    text = "\n".join([part.text for part in candidate.content.parts])
     sources = ""
 
-    try:
-        hrefs = [
-            f"[{chunk.web.title}]({chunk.web.uri})"
-            for chunk in candidate.grounding_metadata.grounding_chunks
-        ]
-        sources = "\n\nSources: " + " | ".join(hrefs)
-    except (AttributeError, TypeError):
-        pass
-
-    text = "\n".join([part.text for part in candidate.content.parts])
+    if add_sources:
+        try:
+            hrefs = [
+                f"[{chunk.web.title}]({chunk.web.uri})"
+                for chunk in candidate.grounding_metadata.grounding_chunks
+            ]
+            sources = "\n\nSources: " + " | ".join(hrefs)
+        except (AttributeError, TypeError):
+            sources = ""
 
     final_text = (text.strip() + sources).strip()
-
     return f"**>\n{final_text}<**" if quoted and "```" not in final_text else final_text
+
+
+async def resp_filters(flt, __, m):
+    return m.reply_id == flt.message_id
+
+
+@BOT.add_cmd(cmd="llms")
+async def list_ai_models(bot: BOT, message: Message):
+    """
+    CMD: LIST MODELS
+    INFO: List and change Gemini Models.
+    USAGE: .llms
+    """
+    model_list = [
+        model.name.lstrip("models/")
+        async for model in await async_client.models.list(config={"query_base": True})
+        if "generateContent" in model.supported_actions
+    ]
+
+    model_str = "\n\n".join(model_list)
+    update_str = (
+        f"<b>Current Model</b>: <code>{Settings.MODEL}</code>\n\n"
+        f"<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>"
+        "\n\nReply to this message with the <code>model name</code> to change to a different model."
+    )
+
+    model_reply = await message.reply(update_str)
+
+    response = await model_reply.get_response(
+        filters=filters.create(resp_filters, message_id=model_reply.id), timeout=60
+    )
+
+    if not response:
+        await model_reply.delete()
+        return
+
+    if response.text not in model_list:
+        await model_reply.edit(
+            f"Invalid Model... run <code>{message.trigger}{message.cmd}</code> again"
+        )
+        return
+
+    await DB_SETTINGS.add_data(
+        {"_id": "gemini_model_info", "model_name": response.text}
+    )
+
+    resp_str = f"{response.text} saved as model."
+
+    await model_reply.edit(resp_str)
+
+    await bot.log_text(text=resp_str, type="ai")
+
+    Settings.MODEL = response.text
