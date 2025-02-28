@@ -36,21 +36,22 @@ async def handle_media(prompt: str, media_message: Message, **kwargs) -> str:
     download_dir = os.path.join("downloads", str(time.time())) + "/"
     downloaded_file: str = await media_message.download(download_dir)
 
-    uploaded_file = await async_client.files.upload(
-        file=downloaded_file,
-        config={
-            "mime_type": getattr(media, "mime_type", guess_type(downloaded_file)[0])
-        },
-    )
+    try:
+        uploaded_file = await async_client.files.upload(
+            file=downloaded_file,
+            config={
+                "mime_type": getattr(media, "mime_type", guess_type(downloaded_file)[0])
+            },
+        )
 
-    while uploaded_file.state.name == "PROCESSING":
-        await asyncio.sleep(5)
-        uploaded_file = await async_client.files.get(name=uploaded_file.name)
+        while uploaded_file.state.name == "PROCESSING":
+            await asyncio.sleep(5)
+            uploaded_file = await async_client.files.get(name=uploaded_file.name)
 
-    response = await async_client.models.generate_content(
-        **kwargs, contents=[uploaded_file, prompt]
-    )
-    response_text = get_response_text(response, quoted=True)
+        response = await async_client.models.generate_content(
+            **kwargs, contents=[uploaded_file, prompt]
+        )
+        return get_response_text(response, quoted=True)
 
-    shutil.rmtree(download_dir, ignore_errors=True)
-    return response_text
+    finally:
+        shutil.rmtree(download_dir, ignore_errors=True)
