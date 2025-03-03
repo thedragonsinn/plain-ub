@@ -49,7 +49,8 @@ async def handle_media(prompt: str, media_message: Message, **kwargs) -> str:
             uploaded_file = await async_client.files.get(name=uploaded_file.name)
 
         response = await async_client.models.generate_content(
-            **kwargs, contents=[uploaded_file, prompt]
+            contents=[uploaded_file, prompt],
+            **kwargs,
         )
         return get_response_text(response, quoted=True)
 

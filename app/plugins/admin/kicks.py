@@ -1,7 +1,6 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
 
-from pyrogram import filters
 from pyrogram.types import User
 
 from app import BOT, Message
@@ -43,8 +42,7 @@ async def kick_inactive_members(bot: BOT, message: Message):
     chat_id = message.chat.id
 
     async with bot.Convo(
-        client=bot,
-        chat_id=chat_id,
+        client=bot, chat_id=chat_id, from_user=message.from_user.id
     ) as convo:
         async for member in bot.get_chat_members(chat_id):
 
@@ -65,14 +63,7 @@ async def kick_inactive_members(bot: BOT, message: Message):
                     f"\nreply with y to continue"
                 )
 
-                async def user_filter(_, __, m: Message):
-                    return (
-                        m.from_user
-                        and m.from_user.id == message.from_user.id
-                        and m.reply_to_message_id == prompt.id
-                    )
-
-                convo.filters = filters.create(user_filter)
+                convo.reply_to_message_id = prompt.id
 
                 confirmation = await convo.get_response()
 

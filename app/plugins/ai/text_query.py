@@ -2,7 +2,6 @@
 from io import BytesIO
 
 from google.genai.chats import AsyncChat
-from pyrogram import filters
 from pyrogram.enums import ParseMode
 
 from app import BOT, Convo, Message, bot
@@ -24,7 +23,7 @@ async def question(bot: BOT, message: Message):
     CMD: AI
     INFO: Ask a question to Gemini AI or get info about replied message / media.
     FLAGS:
-        -ns: Not use Search
+        -s: to use Search
     USAGE:
         .ai what is the meaning of life.
         .ai [reply to a message] (sends replied text as query)
@@ -43,7 +42,7 @@ async def question(bot: BOT, message: Message):
         response_text = await handle_media(
             prompt=prompt,
             media_message=reply,
-            **Settings.get_kwargs(use_search="-ns" not in message.flags),
+            **Settings.get_kwargs(use_search="-s" in message.flags),
         )
     else:
         message_response = await message.reply(
@@ -56,7 +55,7 @@ async def question(bot: BOT, message: Message):
 
         response = await async_client.models.generate_content(
             contents=prompts,
-            **Settings.get_kwargs(use_search="-ns" not in message.flags),
+            **Settings.get_kwargs(use_search="-s" in message.flags),
         )
         response_text = get_response_text(response, quoted=True)
 
@@ -126,9 +125,10 @@ async def do_convo(chat: AsyncChat, message: Message):
     convo_obj = Convo(
         client=message._client,
         chat_id=chat_id,
-        filters=generate_filter(message),
         timeout=300,
         check_for_duplicates=False,
+        from_user=message.from_user.id,
+        reply_to_user_id=message._client.me.id,
     )
 
     CONVO_CACHE[message.unique_chat_user_id] = convo_obj
@@ -138,7 +138,7 @@ async def do_convo(chat: AsyncChat, message: Message):
             while True:
                 ai_response = await chat.send_message(prompt)
                 ai_response_text = get_response_text(ai_response, quoted=True)
-                text = f"**GEMINI AI**:\n{ai_response_text}"
+                text = f"**GEMINI AI**:{ai_response_text}"
                 _, prompt_message = await convo_obj.send_message(
                     text=text,
                     reply_to_id=reply_to_id,
@@ -152,21 +152,6 @@ async def do_convo(chat: AsyncChat, message: Message):
         await export_history(chat, message)
 
     CONVO_CACHE.pop(message.unique_chat_user_id, 0)
-
-
-def generate_filter(message: Message):
-    async def _filter(_, __, msg: Message):
-        try:
-            assert (
-                msg.text
-                and msg.from_user.id == message.from_user.id
-                and msg.reply_to_message.from_user.id == message._client.me.id
-            )
-            return True
-        except (AssertionError, AttributeError):
-            return False
-
-    return filters.create(_filter)
 
 
 async def export_history(chat: AsyncChat, message: Message):

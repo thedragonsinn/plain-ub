@@ -63,7 +63,7 @@ class Settings:
             )
 
     @staticmethod
-    def get_kwargs(use_search:bool=True) -> dict:
+    def get_kwargs(use_search:bool=False) -> dict:
         tools = Settings.CONFIG.tools
 
         if not use_search and Settings.SEARCH_TOOL in tools:
@@ -130,10 +130,6 @@ def get_response_text(response, quoted: bool = False, add_sources: bool = True):
     return f"**>\n{final_text}<**" if quoted and "```" not in final_text else final_text
 
 
-async def resp_filters(flt, __, m):
-    return m.reply_id == flt.message_id
-
-
 @BOT.add_cmd(cmd="llms")
 async def list_ai_models(bot: BOT, message: Message):
     """
@@ -148,6 +144,7 @@ async def list_ai_models(bot: BOT, message: Message):
     ]
 
     model_str = "\n\n".join(model_list)
+
     update_str = (
         f"<b>Current Model</b>: <code>{Settings.MODEL}</code>\n\n"
         f"<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>"
@@ -157,7 +154,7 @@ async def list_ai_models(bot: BOT, message: Message):
     model_reply = await message.reply(update_str)
 
     response = await model_reply.get_response(
-        filters=filters.create(resp_filters, message_id=model_reply.id), timeout=60
+        timeout=60, reply_to_message_id=model_reply.id, from_user=message.from_user.id
     )
 
     if not response:
