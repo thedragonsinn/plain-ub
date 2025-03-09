@@ -138,7 +138,7 @@ async def do_convo(chat: AsyncChat, message: Message):
             while True:
                 ai_response = await chat.send_message(prompt)
                 ai_response_text = get_response_text(ai_response, quoted=True)
-                text = f"**GEMINI AI**:{ai_response_text}"
+                text = f"**GENAI:**\n{ai_response_text}"
                 _, prompt_message = await convo_obj.send_message(
                     text=text,
                     reply_to_id=reply_to_id,
