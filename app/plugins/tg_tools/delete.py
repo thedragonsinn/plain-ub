@@ -74,8 +74,8 @@ async def purge_(bot: BOT, message: Message) -> None:
         chunk_size = 50
         sleep_interval = 2
     else:
-        chunk_size = 25
-        sleep_interval = 5
+        chunk_size = 40
+        sleep_interval = 2
 
     for chunk in create_chunks(message_ids, chunk_size=chunk_size):
         await bot.delete_messages(chat_id=chat_id, message_ids=chunk, revoke=True)
