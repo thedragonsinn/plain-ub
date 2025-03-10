@@ -1,6 +1,6 @@
 from app import BOT, Config, CustomDB, Message
 
-DB = CustomDB("SUDO_CMD_LIST")
+DB = CustomDB["SUDO_CMD_LIST"]
 
 
 async def init_task():
