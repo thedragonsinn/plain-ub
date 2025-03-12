@@ -1,5 +1,4 @@
 import asyncio
-import os
 import time
 from pathlib import Path
 
@@ -42,7 +41,7 @@ async def down_load(bot: BOT, message: Message):
         download_coro = telegram_download(
             message=message.replied,
             response=response,
-            dir_name=str(dl_dir_name),
+            dir_name=dl_dir_name,
             file_name=file_name,
         )
 
@@ -57,7 +56,7 @@ async def down_load(bot: BOT, message: Message):
             download_coro = telegram_download(
                 message=await bot.get_messages(link=url),
                 response=response,
-                dir_name=str(dl_dir_name),
+                dir_name=dl_dir_name,
                 file_name=file_name,
             )
         else:
@@ -92,7 +91,7 @@ async def down_load(bot: BOT, message: Message):
 
 
 async def telegram_download(
-    message: Message, response: Message, dir_name: str, file_name: str | None = None
+    message: Message, response: Message, dir_name: Path, file_name: str | None = None
 ) -> DownloadedFile:
     """
     :param message: Message Containing Media
@@ -103,10 +102,10 @@ async def telegram_download(
     """
     tg_media = get_tg_media_details(message)
 
-    file_name = file_name or tg_media.file_name
+    file_name = file_name or tg_media.file_name or get_filename_from_mime(tg_media.mime_type)
 
     media_obj: DownloadedFile = DownloadedFile(
-        file=os.path.join(dir_name, file_name), size=tg_media.file_size
+        file=dir_name / file_name, size=tg_media.file_size
     )
 
     progress_args = (response, "Downloading...", media_obj.path)
