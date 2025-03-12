@@ -2,8 +2,8 @@ import asyncio
 import time
 from pathlib import Path
 
-from ub_core.utils import (Download, DownloadedFile, get_tg_media_details,
-                           progress)
+from ub_core.utils import (Download, DownloadedFile, get_filename_from_mime,
+                           get_tg_media_details, progress)
 
 from app import BOT, Message, bot
 
