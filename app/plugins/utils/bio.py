@@ -16,6 +16,8 @@ async def fetch_quote():
         if response.status_code == 200:
             data = response.json()
             quote = data[0].get("q", "Keep pushing forward.")
+            if len(quote) > 30:
+                quote = quote[:71] + "..."
             return quote
     except Exception as e:
         print(f"Error fetching quote: {e}")
