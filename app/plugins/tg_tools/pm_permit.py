@@ -7,8 +7,8 @@ from ub_core.utils.helpers import get_name
 
 from app import BOT, CustomDB, Message, bot, extra_config
 
-PM_USERS = CustomDB("PM_USERS")
-PM_GUARD = CustomDB("COMMON_SETTINGS")
+PM_USERS = CustomDB["PM_USERS"]
+PM_GUARD = CustomDB["COMMON_SETTINGS"]
 
 ALLOWED_USERS: list[int] = []
 RECENT_USERS: dict = defaultdict(int)

@@ -8,7 +8,7 @@ from ub_core.utils.helpers import get_name
 
 from app import BOT, Config, CustomDB, Message, bot, extra_config
 
-LOGGER = CustomDB("COMMON_SETTINGS")
+LOGGER = CustomDB["COMMON_SETTINGS"]
 
 MESSAGE_CACHE: dict[int, list[Message]] = defaultdict(list)
 FLOOD_LIST: list[int] = []

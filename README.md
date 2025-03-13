@@ -42,7 +42,7 @@ async def test_function(bot: BOT, message: Message):
 ```python
 from app import BOT, bot, Message, CustomDB
 
-TEST_COLLECTION = CustomDB("TEST_COLLECTION")
+TEST_COLLECTION = CustomDB["TEST_COLLECTION"]
 
 @bot.add_cmd(cmd="add_data")
 async def test_function(bot: BOT, message: Message):

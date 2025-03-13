@@ -9,13 +9,12 @@ from google.genai.types import (
     SafetySetting,
     Tool,
 )
-from pyrogram import filters
 
 from app import BOT, CustomDB, Message, extra_config
 
 logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
-DB_SETTINGS = CustomDB("COMMON_SETTINGS")
+DB_SETTINGS = CustomDB["COMMON_SETTINGS"]
 
 try:
     client: Client = Client(api_key=extra_config.GEMINI_API_KEY)

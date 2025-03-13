@@ -10,7 +10,7 @@ from app import BOT, Config, CustomDB, Message, bot, extra_config
 
 FBAN_TASK_LOCK = asyncio.Lock()
 
-FED_DB = CustomDB("FED_LIST")
+FED_DB = CustomDB["FED_LIST"]
 
 BASIC_FILTER = filters.user([609517172, 2059887769]) & ~filters.service
 
