@@ -57,7 +57,7 @@ async def question(bot: BOT, message: Message):
             contents=prompts,
             **Settings.get_kwargs(use_search="-s" in message.flags),
         )
-        response_text = get_response_text(response, quoted=True)
+        response_text = get_response_text(response, quoted=False)
 
     await message_response.edit(
         text=f"**>\n•> {prompt}<**\n{response_text}",
@@ -137,7 +137,7 @@ async def do_convo(chat: AsyncChat, message: Message):
         async with convo_obj:
             while True:
                 ai_response = await chat.send_message(prompt)
-                ai_response_text = get_response_text(ai_response, quoted=True)
+                ai_response_text = get_response_text(ai_response, quoted=False)
                 text = f"**GENAI:**\n{ai_response_text}"
                 _, prompt_message = await convo_obj.send_message(
                     text=text,
