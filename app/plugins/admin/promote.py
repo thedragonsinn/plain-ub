@@ -32,9 +32,7 @@ async def promote_or_demote(bot: BOT, message: Message) -> None:
         PROMOTE: .promote [ -anon | -full ] [ UID | REPLY | @ ] Title[Optional]
         DEMOTE: .demote [ UID | REPLY | @ ]
     """
-    response: Message = await message.reply(
-        f"Trying to {message.cmd.capitalize()}....."
-    )
+    response: Message = await message.reply(f"Trying to {message.cmd.capitalize()}.....")
 
     my_status = await bot.get_chat_member(chat_id=message.chat.id, user_id=bot.me.id)
     my_privileges = my_status.privileges
@@ -100,16 +98,12 @@ async def demote_all(bot: BOT, message: Message):
     ):
         try:
             await bot.promote_chat_member(
-                chat_id=message.chat.id,
-                user_id=member.user.id,
-                privileges=DEMOTE_PRIVILEGES,
+                chat_id=message.chat.id, user_id=member.user.id, privileges=DEMOTE_PRIVILEGES
             )
         except FloodWait as f:
             await asyncio.sleep(f.value + 10)
             await bot.promote_chat_member(
-                chat_id=message.chat.id,
-                user_id=member.user.id,
-                privileges=DEMOTE_PRIVILEGES,
+                chat_id=message.chat.id, user_id=member.user.id, privileges=DEMOTE_PRIVILEGES
             )
         await asyncio.sleep(0.5)
         count += 1

@@ -43,9 +43,7 @@ async def add_scmd(bot: BOT, message: Message):
         return
 
     elif not cmd_object.sudo:
-        await response.edit(
-            text=f"<b>{cmd_name}</b> is disabled for sudo users.", del_in=10
-        )
+        await response.edit(text=f"<b>{cmd_name}</b> is disabled for sudo users.", del_in=10)
         return
 
     elif cmd_object.loaded:

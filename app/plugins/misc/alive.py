@@ -43,9 +43,7 @@ async def alive(bot: BOT, message: Message):
     if get_type(url=extra_config.ALIVE_MEDIA) == MediaType.PHOTO:
         await bot.send_photo(photo=extra_config.ALIVE_MEDIA, **kwargs)
     else:
-        await bot.send_animation(
-            animation=extra_config.ALIVE_MEDIA, unsave=True, **kwargs
-        )
+        await bot.send_animation(animation=extra_config.ALIVE_MEDIA, unsave=True, **kwargs)
 
 
 _bot = getattr(bot, "bot", bot)
@@ -60,9 +58,7 @@ if _bot.is_bot:
         )
 
         if get_type(url=extra_config.ALIVE_MEDIA) == MediaType.PHOTO:
-            result_type = InlineQueryResultPhoto(
-                photo_url=extra_config.ALIVE_MEDIA, **kwargs
-            )
+            result_type = InlineQueryResultPhoto(photo_url=extra_config.ALIVE_MEDIA, **kwargs)
         else:
             result_type = InlineQueryResultAnimation(
                 animation_url=extra_config.ALIVE_MEDIA, **kwargs

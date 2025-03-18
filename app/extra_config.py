@@ -1,8 +1,6 @@
 from os import environ
 
-ALIVE_MEDIA: str = environ.get(
-    "ALIVE_MEDIA", "https://telegra.ph/file/a1d35a86c7f54a96188a9.png"
-)
+ALIVE_MEDIA: str = environ.get("ALIVE_MEDIA", "https://telegra.ph/file/a1d35a86c7f54a96188a9.png")
 
 BOT_NAME = environ.get("BOT_NAME", "PLAIN-UB")
 
@@ -18,9 +16,7 @@ GEMINI_API_KEY: str = environ.get("GEMINI_API_KEY")
 
 LOAD_HANDLERS: bool = True
 
-MESSAGE_LOGGER_CHAT: int = int(
-    environ.get("MESSAGE_LOGGER_CHAT", environ.get("LOG_CHAT"))
-)
+MESSAGE_LOGGER_CHAT: int = int(environ.get("MESSAGE_LOGGER_CHAT", environ.get("LOG_CHAT")))
 
 PM_GUARD: bool = False
 
@@ -28,6 +24,4 @@ PM_LOGGER: bool = False
 
 TAG_LOGGER: bool = False
 
-UPSTREAM_REPO: str = environ.get(
-    "UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub"
-)
+UPSTREAM_REPO: str = environ.get("UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub")

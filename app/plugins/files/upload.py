@@ -21,9 +21,7 @@ from app import BOT, Config, Message
 UPLOAD_TYPES = Union[BOT.send_audio, BOT.send_document, BOT.send_photo, BOT.send_video]
 
 
-async def video_upload(
-    bot: BOT, file: DownloadedFile, has_spoiler: bool
-) -> UPLOAD_TYPES:
+async def video_upload(bot: BOT, file: DownloadedFile, has_spoiler: bool) -> UPLOAD_TYPES:
     thumb = await take_ss(file.path, path=file.path)
     if not await check_audio(file.path):
         return partial(
@@ -43,24 +41,16 @@ async def video_upload(
     )
 
 
-async def photo_upload(
-    bot: BOT, file: DownloadedFile, has_spoiler: bool
-) -> UPLOAD_TYPES:
+async def photo_upload(bot: BOT, file: DownloadedFile, has_spoiler: bool) -> UPLOAD_TYPES:
     return partial(bot.send_photo, photo=file.path, has_spoiler=has_spoiler)
 
 
 async def audio_upload(bot: BOT, file: DownloadedFile, *_, **__) -> UPLOAD_TYPES:
-    return partial(
-        bot.send_audio,
-        audio=file.path,
-        duration=await get_duration(file=file.path),
-    )
+    return partial(bot.send_audio, audio=file.path, duration=await get_duration(file=file.path))
 
 
 async def doc_upload(bot: BOT, file: DownloadedFile, *_, **__) -> UPLOAD_TYPES:
-    return partial(
-        bot.send_document, document=file.path, disable_content_type_detection=True
-    )
+    return partial(bot.send_document, document=file.path, disable_content_type_detection=True)
 
 
 FILE_TYPE_MAP = {
@@ -114,14 +104,10 @@ async def upload(bot: BOT, message: Message):
 
         try:
             async with Download(
-                url=input,
-                dir=os.path.join("downloads", str(time.time())),
-                message_to_edit=response,
+                url=input, dir=os.path.join("downloads", str(time.time())), message_to_edit=response
             ) as dl_obj:
                 if size_over_limit(dl_obj.size, client=bot):
-                    await response.edit(
-                        "<b>Aborted</b>, File size exceeds TG Limits!!!"
-                    )
+                    await response.edit("<b>Aborted</b>, File size exceeds TG Limits!!!")
                     return
 
                 await response.edit("URL detected in input, Starting Download....")
@@ -178,9 +164,7 @@ async def bulk_upload(message: Message, response: Message):
         file_info = DownloadedFile(file=file)
 
         if size_over_limit(file_info.size, client=message._client):
-            await response.reply(
-                f"Skipping {file_info.name} due to size exceeding limit."
-            )
+            await response.reply(f"Skipping {file_info.name} due to size exceeding limit.")
             continue
 
         temp_resp = await response.reply(f"starting to upload `{file_info.name}`")
@@ -197,9 +181,7 @@ async def upload_to_tg(file: DownloadedFile, message: Message, response: Message
 
     if "-d" in message.flags:
         upload_method = partial(
-            message._client.send_document,
-            document=file.path,
-            disable_content_type_detection=True,
+            message._client.send_document, document=file.path, disable_content_type_detection=True
         )
     else:
         upload_method: UPLOAD_TYPES = await FILE_TYPE_MAP[file.type](

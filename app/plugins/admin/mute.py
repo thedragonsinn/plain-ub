@@ -26,8 +26,6 @@ async def mute_or_unmute(bot: BOT, message: Message):
                 can_add_web_page_previews=False,
             ),
         )
-        await message.reply(
-            text=f"{message.cmd.capitalize()}d: {user.mention}\nReason: {reason}"
-        )
+        await message.reply(text=f"{message.cmd.capitalize()}d: {user.mention}\nReason: {reason}")
     except Exception as e:
         await message.reply(text=e, del_in=10)

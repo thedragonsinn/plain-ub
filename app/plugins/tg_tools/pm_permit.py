@@ -50,8 +50,7 @@ async def handle_new_pm(bot: BOT, message: Message):
     user_id = message.from_user.id
     if RECENT_USERS[user_id] == 0:
         await bot.log_text(
-            text=f"#PMGUARD\n{message.from_user.mention} [{user_id}] has messaged you.",
-            type="info",
+            text=f"#PMGUARD\n{message.from_user.mention} [{user_id}] has messaged you.", type="info"
         )
     RECENT_USERS[user_id] += 1
 
@@ -91,9 +90,7 @@ async def pm_guard(bot: BOT, message: Message):
         .pmguard | .pmguard -c
     """
     if "-c" in message.flags:
-        await message.reply(
-            text=f"PM Guard is enabled: <b>{extra_config.PM_GUARD}</b>", del_in=8
-        )
+        await message.reply(text=f"PM Guard is enabled: <b>{extra_config.PM_GUARD}</b>", del_in=8)
         return
     value = not extra_config.PM_GUARD
     extra_config.PM_GUARD = value
@@ -140,8 +137,7 @@ async def no_pm(bot: BOT, message: Message):
         return
     ALLOWED_USERS.remove(user_id)
     await asyncio.gather(
-        message.reply(text=f"{name} Dis-allowed to PM.", del_in=8),
-        PM_USERS.delete_data(user_id),
+        message.reply(text=f"{name} Dis-allowed to PM.", del_in=8), PM_USERS.delete_data(user_id)
     )
 
 

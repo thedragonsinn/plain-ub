@@ -50,9 +50,7 @@ async def kang_sticker(bot: BOT, message: Message):
         await create_n_kang(
             kwargs=kwargs, pack_title=pack_title, pack_name=pack_name, message=message
         )
-        await response.edit(
-            text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>"
-        )
+        await response.edit(text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>")
         return
 
     async with bot.Convo(client=bot, chat_id="stickers", timeout=5) as convo:
@@ -76,9 +74,7 @@ async def kang_sticker(bot: BOT, message: Message):
     await response.edit(text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>")
 
 
-async def create_n_kang(
-    kwargs: dict, pack_title: str, pack_name: str, message: Message
-):
+async def create_n_kang(kwargs: dict, pack_title: str, pack_name: str, message: Message):
     async with bot.Convo(client=bot, chat_id="stickers", timeout=5) as convo:
         await convo.send_message(text=kwargs["cmd"], get_response=True)
         await convo.send_message(text=pack_title, get_response=True)
@@ -109,9 +105,7 @@ async def get_sticker_set(limit: int, is_video=False) -> tuple[str, str, bool]:
         try:
             sticker = await bot.invoke(
                 GetStickerSet(
-                    stickerset=InputStickerSetShortName(
-                        short_name=f"{pack_name}{video}_{count}"
-                    ),
+                    stickerset=InputStickerSetShortName(short_name=f"{pack_name}{video}_{count}"),
                     hash=0,
                 )
             )
@@ -124,9 +118,7 @@ async def get_sticker_set(limit: int, is_video=False) -> tuple[str, str, bool]:
     if cus_nick := os.environ.get("CUSTOM_PACK_NAME"):
         pack_title = cus_nick + video
     else:
-        pack_title = (
-            f"{bot.me.username or get_name(bot.me)}'s {video}kang pack vol {count}"
-        )
+        pack_title = f"{bot.me.username or get_name(bot.me)}'s {video}kang pack vol {count}"
     return pack_title, f"{pack_name}{video}_{count}", create_new
 
 
@@ -155,9 +147,7 @@ async def photo_kang(message: Message) -> dict:
 
     file = await asyncio.to_thread(resize_photo, input_file)
 
-    return dict(
-        cmd="/newpack", limit=120, is_video=False, file=file, path=download_path
-    )
+    return dict(cmd="/newpack", limit=120, is_video=False, file=file, path=download_path)
 
 
 def resize_photo(input_file: str) -> BytesIO:
@@ -189,22 +179,14 @@ async def video_kang(message: Message, ff=False) -> dict:
         duration = await get_duration(file=input_file)
     else:
         duration = video.duration
-    await resize_video(
-        input_file=input_file, output_file=output_file, duration=duration, ff=ff
-    )
-    return dict(
-        cmd="/newvideo", limit=50, is_video=True, file=output_file, path=download_path
-    )
+    await resize_video(input_file=input_file, output_file=output_file, duration=duration, ff=ff)
+    return dict(cmd="/newvideo", limit=50, is_video=True, file=output_file, path=download_path)
 
 
-async def resize_video(
-    input_file: str, output_file: str, duration: int, ff: bool = False
-):
+async def resize_video(input_file: str, output_file: str, duration: int, ff: bool = False):
     cmd = f"ffmpeg -hide_banner -loglevel error -i '{input_file}' -vf "
     if ff:
-        cmd += (
-            '"scale=w=512:h=512:force_original_aspect_ratio=decrease,setpts=0.3*PTS" '
-        )
+        cmd += '"scale=w=512:h=512:force_original_aspect_ratio=decrease,setpts=0.3*PTS" '
         cmd += "-ss 0 -t 3 -r 30 -loop 0 -an -c:v libvpx-vp9 -b:v 256k -fs 256k "
     elif duration < 3:
         cmd += '"scale=w=512:h=512:force_original_aspect_ratio=decrease" '
@@ -233,8 +215,6 @@ async def sticker_kang(message: Message) -> dict:
     if sticker.is_video:
         input_file: BytesIO = await message.download(in_memory=True)
         input_file.seek(0)
-        return dict(
-            cmd="/newvideo", emoji=emoji, is_video=True, file=input_file, limit=50
-        )
+        return dict(cmd="/newvideo", emoji=emoji, is_video=True, file=input_file, limit=50)
 
     return dict(cmd="/newpack", emoji=emoji, is_video=False, sticker=sticker, limit=120)

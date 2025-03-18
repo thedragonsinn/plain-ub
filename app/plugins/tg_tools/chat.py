@@ -18,18 +18,14 @@ async def get_ids(bot: BOT, message: Message) -> None:
         resp_str += f"<b>{get_name(reply.chat)}</b>: <code>{reply.chat.id}</code>\n"
 
         if reply_forward:
-            resp_str += (
-                f"<b>{get_name(reply_forward)}</b>: <code>{reply_forward.id}</code>\n"
-            )
+            resp_str += f"<b>{get_name(reply_forward)}</b>: <code>{reply_forward.id}</code>\n"
 
         if reply_user:
             resp_str += f"<b>{get_name(reply_user)}</b>: <code>{reply_user.id}</code>"
     elif message.input:
         resp_str: int = (await bot.get_chat(message.input[1:])).id
     else:
-        resp_str: str = (
-            f"<b>{get_name(message.chat)}</b>: <code>{message.chat.id}</code>"
-        )
+        resp_str: str = f"<b>{get_name(message.chat)}</b>: <code>{message.chat.id}</code>"
     await message.reply(resp_str)
 
 

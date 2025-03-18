@@ -43,18 +43,12 @@ async def logger_switch(bot: BOT, message: Message):
     setattr(extra_config, conf_str, value)
     await asyncio.gather(
         LOGGER.add_data({"_id": f"{text}_logger_switch", "value": value}),
-        message.reply(
-            text=f"{text.capitalize()} Logger is enabled: <b>{value}</b>!", del_in=8
-        ),
-        bot.log_text(
-            text=f"#{text.capitalize()}Logger is enabled: <b>{value}</b>!", type="info"
-        ),
+        message.reply(text=f"{text.capitalize()} Logger is enabled: <b>{value}</b>!", del_in=8),
+        bot.log_text(text=f"#{text.capitalize()}Logger is enabled: <b>{value}</b>!", type="info"),
     )
     for task in Config.BACKGROUND_TASKS:
         if task.get_name() == "pm_tag_logger" and task.done():
-            Config.BACKGROUND_TASKS.append(
-                asyncio.create_task(runner(), name="pm_tag_logger")
-            )
+            Config.BACKGROUND_TASKS.append(asyncio.create_task(runner(), name="pm_tag_logger"))
 
 
 BASIC_FILTERS = (
@@ -103,18 +97,13 @@ async def reply_logger(bot: BOT, message: Message):
 )
 async def mention_logger(bot: BOT, message: Message):
     for entity in message.entities or []:
-        if (
-            entity.type == MessageEntityType.MENTION
-            and entity.user
-            and entity.user.id == bot.me.id
-        ):
+        if entity.type == MessageEntityType.MENTION and entity.user and entity.user.id == bot.me.id:
             cache_message(message)
     message.continue_propagation()
 
 
 @bot.on_message(
-    filters=(BASIC_FILTERS & (filters.text | filters.media) & TAG_FILTER)
-    & ~filters.private,
+    filters=(BASIC_FILTERS & (filters.text | filters.media) & TAG_FILTER) & ~filters.private,
     group=2,
     is_command=False,
 )
@@ -216,13 +205,9 @@ async def log_chat(message: Message):
     )
 
 
-async def log_message(
-    message: Message, notice: str | None = None, extra_info: str | None = None
-):
+async def log_message(message: Message, notice: str | None = None, extra_info: str | None = None):
     try:
-        logged_message: Message = await message.forward(
-            extra_config.MESSAGE_LOGGER_CHAT
-        )
+        logged_message: Message = await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
         if extra_info:
             await logged_message.reply(extra_info, parse_mode=ParseMode.HTML)
     except MessageIdInvalid:

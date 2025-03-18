@@ -132,10 +132,7 @@ async def fed_ban(bot: BOT, message: Message):
             me = await bot.get_chat_member(chat_id=message.chat.id, user_id="me")
             if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
                 await message.replied.reply(
-                    text=f"!dban {reason}",
-                    disable_preview=True,
-                    del_in=3,
-                    block=False,
+                    text=f"!dban {reason}", disable_preview=True, del_in=3, block=False
                 )
         except UserNotParticipant:
             pass
@@ -178,9 +175,7 @@ async def un_fban(bot: BOT, message: Message):
     )
 
 
-async def get_user_reason(
-    message: Message, progress: Message
-) -> tuple[int, str, str] | None:
+async def get_user_reason(message: Message, progress: Message) -> tuple[int, str, str] | None:
     user, reason = await message.extract_user_n_reason()
     if isinstance(user, str):
         await progress.edit(user)
@@ -222,9 +217,7 @@ async def _perform_fed_task(
             cmd: Message = await bot.send_message(
                 chat_id=chat_id, text=command, disable_preview=True
             )
-            response: Message | None = await cmd.get_response(
-                filters=task_filter, timeout=8
-            )
+            response: Message | None = await cmd.get_response(filters=task_filter, timeout=8)
             if not response:
                 failed.append(fed["name"])
             elif "Would you like to update this reason" in response.text:
@@ -253,9 +246,7 @@ async def _perform_fed_task(
     )
 
     if failed:
-        resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(
-            failed
-        )
+        resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(failed)
     else:
         resp_str += f"\n<b>Status</b>: {task_type}ned in <b>{total}</b> feds."
 
@@ -263,9 +254,7 @@ async def _perform_fed_task(
         resp_str += f"\n\n<b>By</b>: {get_name(message.from_user)}"
 
     await bot.send_message(
-        chat_id=extra_config.FBAN_LOG_CHANNEL,
-        text=resp_str,
-        disable_preview=True,
+        chat_id=extra_config.FBAN_LOG_CHANNEL, text=resp_str, disable_preview=True
     )
 
     await progress.edit(text=resp_str, del_in=5, block=True, disable_preview=True)
@@ -279,6 +268,4 @@ async def handle_sudo_fban(command: str):
 
     sudo_cmd = command.replace("/", extra_config.FBAN_SUDO_TRIGGER, 1)
 
-    await bot.send_message(
-        chat_id=extra_config.FBAN_SUDO_ID, text=sudo_cmd, disable_preview=True
-    )
+    await bot.send_message(chat_id=extra_config.FBAN_SUDO_ID, text=sudo_cmd, disable_preview=True)

@@ -22,9 +22,7 @@ async def disable_su(bot: BOT, message: Message):
 
 @bot.on_message(
     filters=filters.command(commands="enable_su", prefixes=Config.SUDO_TRIGGER)
-    & filters.create(
-        lambda _, __, m: m.from_user and m.from_user.id in Config.DISABLED_SUPERUSERS
-    ),
+    & filters.create(lambda _, __, m: m.from_user and m.from_user.id in Config.DISABLED_SUPERUSERS),
     group=1,
     is_command=True,
     filters_edited=True,
@@ -37,6 +35,4 @@ async def enable_su(bot: BOT, message: Message):
 
     await SUDO_USERS.add_data({"_id": u_id, "disabled": False})
 
-    await message.reply(
-        text="Your <b>SuperUser</b> Access is now <code>Enabled</code>.", del_in=10
-    )
+    await message.reply(text="Your <b>SuperUser</b> Access is now <code>Enabled</code>.", del_in=10)

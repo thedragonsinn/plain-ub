@@ -29,8 +29,5 @@ async def reply(bot: BOT, message: Message) -> None:
         return
 
     await bot.send_message(
-        chat_id=chat_id,
-        text=text,
-        reply_to_id=reply_to_id,
-        disable_preview=True,
+        chat_id=chat_id, text=text, reply_to_id=reply_to_id, disable_preview=True
     )

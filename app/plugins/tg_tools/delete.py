@@ -60,13 +60,8 @@ async def purge_(bot: BOT, message: Message) -> None:
         message_ids: list[int] = list(range(start_message, message.id))
 
         # Get messages from server if chat is private or ids are too big.
-        if (
-            message.chat.type in {ChatType.PRIVATE, ChatType.BOT}
-            or len(message_ids) > 100
-        ):
-            messages = await bot.get_messages(
-                chat_id=chat_id, message_ids=message_ids, replies=0
-            )
+        if message.chat.type in {ChatType.PRIVATE, ChatType.BOT} or len(message_ids) > 100:
+            messages = await bot.get_messages(chat_id=chat_id, message_ids=message_ids, replies=0)
             message_ids = [message.id for message in messages]
 
     # Perform Quick purge of bigger chunks

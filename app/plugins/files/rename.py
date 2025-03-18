@@ -1,7 +1,7 @@
 import asyncio
-import os
 import shutil
 import time
+from pathlib import Path
 
 from ub_core.utils.downloader import Download, DownloadedFile
 
@@ -29,17 +29,14 @@ async def rename(bot: BOT, message: Message):
         )
         return
 
-    dl_path = os.path.join("downloads", str(time.time()))
+    dl_path = Path("downloads") / str(time.time())
 
     await response.edit("Input verified....Starting Download...")
 
     if message.replied:
         dl_obj: None = None
         download_coro = telegram_download(
-            message=message.replied,
-            dir_name=dl_path,
-            file_name=input,
-            response=response,
+            message=message.replied, dir_name=dl_path, file_name=input, response=response
         )
 
     else:

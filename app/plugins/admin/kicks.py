@@ -19,9 +19,7 @@ async def kick_user(bot: BOT, message: Message):
         await bot.ban_chat_member(chat_id=message.chat.id, user_id=user.id)
         await asyncio.sleep(2)
         await bot.unban_chat_member(chat_id=message.chat.id, user_id=user.id)
-        await message.reply(
-            text=f"{message.cmd.capitalize()}ed: {user.mention}\nReason: {reason}"
-        )
+        await message.reply(text=f"{message.cmd.capitalize()}ed: {user.mention}\nReason: {reason}")
     except Exception as e:
         await message.reply(text=e, del_in=10)
 
@@ -41,9 +39,7 @@ async def kick_inactive_members(bot: BOT, message: Message):
     count = 0
     chat_id = message.chat.id
 
-    async with bot.Convo(
-        client=bot, chat_id=chat_id, from_user=message.from_user.id
-    ) as convo:
+    async with bot.Convo(client=bot, chat_id=chat_id, from_user=message.from_user.id) as convo:
         async for member in bot.get_chat_members(chat_id):
 
             if member.status in ADMIN_STATUS:
@@ -51,9 +47,7 @@ async def kick_inactive_members(bot: BOT, message: Message):
 
             user = member.user
 
-            message_count = await bot.search_messages_count(
-                chat_id=chat_id, from_user=user.id
-            )
+            message_count = await bot.search_messages_count(chat_id=chat_id, from_user=user.id)
             if message_count >= 10:
                 continue
 

@@ -38,9 +38,7 @@ async def sudo(bot: BOT, message: Message):
 
     await SUDO.add_data({"_id": "sudo_switch", "value": value})
 
-    await (
-        await message.reply(text=f"Sudo is enabled: <b>{value}</b>!", del_in=8)
-    ).log()
+    await (await message.reply(text=f"Sudo is enabled: <b>{value}</b>!", del_in=8)).log()
 
 
 @BOT.add_cmd(cmd="addsudo", allow_sudo=False)
@@ -110,9 +108,7 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
 
     if "-f" in message.flags:
         await SUDO_USERS.delete_data(id=int(message.filtered_input))
-        await message.reply(
-            f"Forcefully deleted {message.filtered_input} from sudo users."
-        )
+        await message.reply(f"Forcefully deleted {message.filtered_input} from sudo users.")
         return
 
     response = await message.reply("Extracting User info...")
@@ -151,9 +147,7 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
     await response.log()
 
 
-def add_and_remove(
-    u_id: int, add_list: list | None = None, remove_list: list | None = None
-):
+def add_and_remove(u_id: int, add_list: list | None = None, remove_list: list | None = None):
     if add_list is not None and u_id not in add_list:
         add_list.append(u_id)
 
