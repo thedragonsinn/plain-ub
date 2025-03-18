@@ -155,7 +155,9 @@ async def do_convo(chat: AsyncChat, message: Message):
                 )
 
                 try:
-                    prompt = await create_prompts(message=prompt_message, is_chat=True)
+                    prompt = await create_prompts(
+                        message=prompt_message, is_chat=True, check_size=False
+                    )
                 except Exception as e:
                     _, prompt_message = await convo_obj.send_message(
                         text=str(e),
@@ -163,6 +165,9 @@ async def do_convo(chat: AsyncChat, message: Message):
                         parse_mode=ParseMode.MARKDOWN,
                         get_response=True,
                         disable_preview=True,
+                    )
+                    prompt = await create_prompts(
+                        message=prompt_message, is_chat=True, check_size=False
                     )
 
                 reply_to_id = prompt_message.id
