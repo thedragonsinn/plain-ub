@@ -109,16 +109,16 @@ async def save_file(message: Message, check_size: bool = True) -> File | None:
 
 
 PROMPT_MAP = {
-    "Video": "Summarize video and audio from the file",
-    "Photo": "Summarize the image file",
-    "Voice": (
+    "video": "Summarize video and audio from the file",
+    "photo": "Summarize the image file",
+    "voice": (
         "\nDo not summarise."
         "\nTranscribe the audio file to english alphabets AS IS."
         "\nTranslate it only if the audio is not english."
         "\nIf the audio is in hindi: Transcribe it to hinglish without translating."
     ),
 }
-PROMPT_MAP["Audio"] = PROMPT_MAP["Voice"]
+PROMPT_MAP["audio"] = PROMPT_MAP["voice"]
 
 
 async def create_prompts(
