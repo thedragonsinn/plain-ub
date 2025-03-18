@@ -147,7 +147,7 @@ async def do_convo(chat: AsyncChat, message: Message):
                 ai_response_text = get_response_text(ai_response, add_sources=True, quoted=True)
 
                 _, prompt_message = await convo_obj.send_message(
-                    text=f"**>\n.><**\n{ai_response_text}",
+                    text=f"**>\n•><**\n{ai_response_text}",
                     reply_to_id=reply_to_id,
                     parse_mode=ParseMode.MARKDOWN,
                     get_response=True,
