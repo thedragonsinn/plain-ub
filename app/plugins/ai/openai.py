@@ -7,7 +7,7 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import InputMediaPhoto
 
 from app import BOT, Message
-from app.plugins.ai.models import Settings
+from app.plugins.ai.gemini_core import Settings
 
 OPENAI_CLIENT = environ.get("OPENAI_CLIENT", "")
 OPENAI_MODEL = environ.get("OPENAI_MODEL", "gpt-4o")
@@ -94,8 +94,7 @@ async def chat_gpt(bot: BOT, message: Message):
 
     response = chat_completion.choices[0].message.content
     await message.reply(
-        text=f"**>\n••>{prompt}<**\n**>{response}\n<**",
-        parse_mode=ParseMode.MARKDOWN,
+        text=f"**>\n••>{prompt}<**\n**>{response}\n<**", parse_mode=ParseMode.MARKDOWN
     )
 
 
@@ -158,8 +157,6 @@ async def chat_gpt(bot: BOT, message: Message):
 
     await response.edit_media(
         InputMediaPhoto(
-            media=image_io,
-            caption=f"**>\n{prompt}\n<**",
-            has_spoiler="-s" in message.flags,
+            media=image_io, caption=f"**>\n{prompt}\n<**", has_spoiler="-s" in message.flags
         )
     )
