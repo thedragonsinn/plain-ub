@@ -1,4 +1,5 @@
 import asyncio
+import io
 import logging
 import shutil
 import time
@@ -23,8 +24,8 @@ logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 DB_SETTINGS = CustomDB["COMMON_SETTINGS"]
 
 try:
-    client: Client = Client(api_key=extra_config.GEMINI_API_KEY)
-    async_client: AsyncClient = client.aio
+    client: Client | None = Client(api_key=extra_config.GEMINI_API_KEY)
+    async_client: AsyncClient | None = client.aio
 except:
     client = async_client = None
 
@@ -32,7 +33,9 @@ except:
 async def init_task():
     model_info = await DB_SETTINGS.find_one({"_id": "gemini_model_info"}) or {}
     if model_name := model_info.get("model_name"):
-        Settings.MODEL = model_name
+        Settings.TEXT_MODEL = model_name
+    if image_model := model_info.get("image_model_name"):
+        Settings.IMAGE_MODEL = image_model
 
 
 def run_basic_check(function):
@@ -64,9 +67,24 @@ def run_basic_check(function):
     return wrapper
 
 
-def get_response_text(response, quoted: bool = False, add_sources: bool = True):
-    candidate = response.candidates[0]
-    text = "\n".join([part.text for part in candidate.content.parts])
+def get_response_content(
+    response, quoted: bool = False, add_sources: bool = True
+) -> tuple[str, io.BytesIO | None]:
+
+    try:
+        candidate = response.candidates
+        parts = candidate[0].content.parts
+        parts[0]
+    except (AttributeError, IndexError):
+        return "Query failed... Try again", None
+
+    try:
+        image_data = io.BytesIO(parts[0].inline_data.data)
+        image_data.name = "photo.jpg"
+    except (AttributeError, IndexError):
+        image_data = None
+
+    text = "\n".join([part.text for part in parts if part.text])
     sources = ""
 
     if add_sources:
@@ -80,7 +98,11 @@ def get_response_text(response, quoted: bool = False, add_sources: bool = True):
             sources = ""
 
     final_text = (text.strip() + sources).strip()
-    return f"**>\n{final_text}<**" if quoted and "```" not in final_text else final_text
+
+    if final_text and quoted and "```" not in final_text:
+        final_text = f"**>\n{final_text}<**"
+
+    return final_text, image_data
 
 
 async def save_file(message: Message, check_size: bool = True) -> File | None:
@@ -132,7 +154,7 @@ async def create_prompts(
     if is_chat:
         if message.media:
             prompt = message.caption or PROMPT_MAP.get(message.media.value) or default_media_prompt
-            return [await save_file(message=message, check_size=check_size), prompt]
+            return [prompt, await save_file(message=message, check_size=check_size)]
         else:
             return [message.text]
 
@@ -142,9 +164,9 @@ async def create_prompts(
             prompt = (
                 message.filtered_input or PROMPT_MAP.get(reply.media.value) or default_media_prompt
             )
-            return [await save_file(message=reply, check_size=check_size), prompt]
+            return [prompt, await save_file(message=reply, check_size=check_size)]
         else:
-            return [str(reply.text), input_prompt]
+            return [input_prompt, str(reply.text)]
 
     return [input_prompt]
 
@@ -165,80 +187,93 @@ async def list_ai_models(bot: BOT, message: Message):
     model_str = "\n\n".join(model_list)
 
     update_str = (
-        f"<b>Current Model</b>: <code>{Settings.MODEL}</code>\n\n"
-        f"<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>"
+        f"<b>Current Model</b>: <code>"
+        f"{Settings.TEXT_MODEL if "-i" not in message.flags else Settings.IMAGE_MODEL}</code>"
+        f"\n\n<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>"
         "\n\nReply to this message with the <code>model name</code> to change to a different model."
     )
 
-    model_reply = await message.reply(update_str)
+    model_info_response = await message.reply(update_str)
 
-    response = await model_reply.get_response(
-        timeout=60, reply_to_message_id=model_reply.id, from_user=message.from_user.id
+    model_response = await model_info_response.get_response(
+        timeout=60, reply_to_message_id=model_info_response.id, from_user=message.from_user.id
     )
 
-    if not response:
-        await model_reply.delete()
+    if not model_response:
+        await model_info_response.delete()
         return
 
-    if response.text not in model_list:
-        await model_reply.edit(
-            f"Invalid Model... run <code>{message.trigger}{message.cmd}</code> again"
-        )
+    if model_response.text not in model_list:
+        await model_info_response.edit(f"<code>Invalid Model... Try again</code>")
         return
 
-    await DB_SETTINGS.add_data({"_id": "gemini_model_info", "model_name": response.text})
-    resp_str = f"{response.text} saved as model."
-    await model_reply.edit(resp_str)
-    await bot.log_text(text=resp_str, type="ai")
-    Settings.MODEL = response.text
+    if "-i" in message.flags:
+        data_key = "image_model_name"
+        Settings.IMAGE_MODEL = model_response.text
+    else:
+        data_key = "model_name"
+        Settings.TEXT_MODEL = model_response.text
+
+    await DB_SETTINGS.add_data({"_id": "gemini_model_info", data_key: model_response.text})
+    resp_str = f"{model_response.text} saved as model."
+    await model_info_response.edit(resp_str)
+    await bot.log_text(text=resp_str, type=f"ai_{data_key}")
+
+
+SAFETY_SETTINGS = [
+    # SafetySetting(category="HARM_CATEGORY_UNSPECIFIED", threshold="BLOCK_NONE"),
+    SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+    SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+    SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+    SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+    SafetySetting(category="HARM_CATEGORY_CIVIC_INTEGRITY", threshold="BLOCK_NONE"),
+]
+
+SEARCH_TOOL = Tool(
+    google_search=GoogleSearchRetrieval(
+        dynamic_retrieval_config=DynamicRetrievalConfig(dynamic_threshold=0.3)
+    )
+)
+
+SYSTEM_INSTRUCTION = (
+    "Answer precisely and in short unless specifically instructed otherwise."
+    "\nIF asked related to code, do not comment the code and do not explain the code unless instructed."
+)
 
 
 class Settings:
-    MODEL = "gemini-2.0-flash"
+    TEXT_MODEL = "gemini-2.0-flash"
 
-    # fmt:off
-    CONFIG = GenerateContentConfig(
-
+    TEXT_CONFIG = GenerateContentConfig(
         candidate_count=1,
-
-        system_instruction=(
-            "Answer precisely and in short unless specifically instructed otherwise."
-            "\nIF asked related to code, do not comment the code and do not explain the code unless instructed."
-        ),
-
-        temperature=0.69,
-
         max_output_tokens=1024,
-
-        safety_settings=[
-            # SafetySetting(category="HARM_CATEGORY_UNSPECIFIED", threshold="BLOCK_NONE"),
-            SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-            SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-            SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-            SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-            SafetySetting(category="HARM_CATEGORY_CIVIC_INTEGRITY", threshold="BLOCK_NONE"),
-        ],
-        # fmt:on
-
+        response_modalities=["Text"],
+        system_instruction=SYSTEM_INSTRUCTION,
+        temperature=0.69,
         tools=[],
     )
 
-    SEARCH_TOOL = Tool(
-                google_search=GoogleSearchRetrieval(
-                    dynamic_retrieval_config=DynamicRetrievalConfig(
-                        dynamic_threshold=0.3
-                    )
-                )
-            )
+    IMAGE_MODEL = "gemini-2.0-flash-exp"
+
+    IMAGE_CONFIG = GenerateContentConfig(
+        candidate_count=1,
+        max_output_tokens=1024,
+        response_modalities=["Text", "Image"],
+        # system_instruction=SYSTEM_INSTRUCTION,
+        temperature=0.99,
+    )
 
     @staticmethod
-    def get_kwargs(use_search:bool=False) -> dict:
-        tools = Settings.CONFIG.tools
+    def get_kwargs(use_search: bool = False, image_mode: bool = False) -> dict:
+        if image_mode:
+            return {"model": Settings.IMAGE_MODEL, "config": Settings.IMAGE_CONFIG}
 
-        if not use_search and Settings.SEARCH_TOOL in tools:
-            tools.remove(Settings.SEARCH_TOOL)
+        tools = Settings.TEXT_CONFIG.tools
 
-        if use_search and Settings.SEARCH_TOOL not in tools:
-            tools.append(Settings.SEARCH_TOOL)
+        if not use_search and SEARCH_TOOL in tools:
+            tools.remove(SEARCH_TOOL)
 
-        return {"model": Settings.MODEL, "config": Settings.CONFIG}
+        if use_search and SEARCH_TOOL not in tools:
+            tools.append(SEARCH_TOOL)
+
+        return {"model": Settings.TEXT_MODEL, "config": Settings.TEXT_CONFIG}
