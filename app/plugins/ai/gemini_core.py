@@ -75,7 +75,7 @@ def get_response_content(
         candidate = response.candidates
         parts = candidate[0].content.parts
         parts[0]
-    except (AttributeError, IndexError):
+    except (AttributeError, IndexError, TypeError):
         return "Query failed... Try again", None
 
     try:
