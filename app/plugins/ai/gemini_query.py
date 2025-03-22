@@ -178,10 +178,8 @@ async def do_convo(chat: AsyncChat, message: Message, is_reloaded: bool = False)
                 reply_to_id = prompt_message.id
 
     except TimeoutError:
-        pass
-
-    finally:
         await export_history(chat, message)
+    finally:
         CONVO_CACHE.pop(message.unique_chat_user_id, 0)
 
 

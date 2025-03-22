@@ -12,6 +12,7 @@ from google.genai.types import (
     File,
     GenerateContentConfig,
     GoogleSearchRetrieval,
+    Part,
     SafetySetting,
     Tool,
 )
@@ -53,16 +54,7 @@ def run_basic_check(function):
             await message.reply("<code>Ask a Question | Reply to a Message</code>")
             return
 
-        try:
-            await function(bot, message)
-        except Exception as e:
-            if "User location is not supported for the API use" in str(e):
-                await message.reply(
-                    "Your server location doesn't allow gemini yet."
-                    "\nIf you are on koyeb change your app region to Washington DC."
-                )
-                return
-            raise
+        await function(bot, message)
 
     return wrapper
 
@@ -154,9 +146,12 @@ async def create_prompts(
     if is_chat:
         if message.media:
             prompt = message.caption or PROMPT_MAP.get(message.media.value) or default_media_prompt
-            return [prompt, await save_file(message=message, check_size=check_size)]
-        else:
-            return [message.text]
+            text_part = Part.from_text(text=prompt)
+            uploaded_file = await save_file(message=message, check_size=check_size)
+            file_part = Part.from_uri(file_uri=uploaded_file.uri, mime_type=uploaded_file.mime_type)
+            return [text_part, file_part]
+
+        return [Part.from_text(text=message.text)]
 
     # Single Use
     if reply := message.replied:
@@ -164,11 +159,14 @@ async def create_prompts(
             prompt = (
                 message.filtered_input or PROMPT_MAP.get(reply.media.value) or default_media_prompt
             )
-            return [prompt, await save_file(message=reply, check_size=check_size)]
-        else:
-            return [input_prompt, str(reply.text)]
+            text_part = Part.from_text(text=prompt)
+            uploaded_file = await save_file(message=reply, check_size=check_size)
+            file_part = Part.from_uri(file_uri=uploaded_file.uri, mime_type=uploaded_file.mime_type)
+            return [text_part, file_part]
 
-    return [input_prompt]
+        return [Part.from_text(text=input_prompt), Part.from_text(text=str(reply.text))]
+
+    return [Part.from_text(text=input_prompt)]
 
 
 @BOT.add_cmd(cmd="llms")
