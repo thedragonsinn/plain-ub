@@ -93,9 +93,8 @@ async def chat_gpt(bot: BOT, message: Message):
     )
 
     response = chat_completion.choices[0].message.content
-    await message.reply(
-        text=f"**>\n••>{prompt}<**\n**>{response}\n<**", parse_mode=ParseMode.MARKDOWN
-    )
+
+    await message.reply(text=f"**>\n••> {prompt}<**\n" + response, parse_mode=ParseMode.MARKDOWN)
 
 
 @BOT.add_cmd(cmd="igen")
@@ -122,6 +121,8 @@ async def chat_gpt(bot: BOT, message: Message):
         -v: for vivid style images (default)
         -n: for less vivid and natural type of images
         -s: to send with spoiler
+        -p: portrait output
+        -l: landscape output
 
     USAGE:
         .igen cats on moon
@@ -138,12 +139,19 @@ async def chat_gpt(bot: BOT, message: Message):
 
     response = await message.reply("Generating image...")
 
+    if "-p" in message.flags:
+        output_res = "1024x1792"
+    elif "-l" in message.flags:
+        output_res = "1792x1024"
+    else:
+        output_res = "1024x1024"
+
     try:
         generated_image = await DALL_E_CLIENT.images.generate(
             model="dall-e-3",
             prompt=prompt,
             n=1,
-            size="1024x1024",
+            size=output_res,
             quality="hd",
             response_format="b64_json",
             style="natural" if "-n" in message.flags else "vivid",
