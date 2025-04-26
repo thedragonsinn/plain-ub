@@ -33,19 +33,23 @@ async def logger_switch(bot: BOT, message: Message):
     """
     text = "pm" if message.cmd == "pmlogger" else "tag"
     conf_str = f"{text.upper()}_LOGGER"
+
     if "-c" in message.flags:
         await message.reply(
             text=f"{text.capitalize()} Logger is enabled: <b>{getattr(extra_config, conf_str)}</b>!",
             del_in=8,
         )
         return
+
     value: bool = not getattr(extra_config, conf_str)
     setattr(extra_config, conf_str, value)
+
     await asyncio.gather(
         LOGGER.add_data({"_id": f"{text}_logger_switch", "value": value}),
         message.reply(text=f"{text.capitalize()} Logger is enabled: <b>{value}</b>!", del_in=8),
         bot.log_text(text=f"#{text.capitalize()}Logger is enabled: <b>{value}</b>!", type="info"),
     )
+
     for task in Config.BACKGROUND_TASKS:
         if task.get_name() == "pm_tag_logger" and task.done():
             Config.BACKGROUND_TASKS.append(asyncio.create_task(runner(), name="pm_tag_logger"))
@@ -65,8 +69,6 @@ BASIC_FILTERS = (
     filters=BASIC_FILTERS
     & filters.private
     & filters.create(lambda _, __, ___: extra_config.PM_LOGGER),
-    group=2,
-    is_command=False,
 )
 async def pm_logger(bot: BOT, message: Message):
     cache_message(message)
@@ -77,8 +79,6 @@ TAG_FILTER = filters.create(lambda _, __, ___: extra_config.TAG_LOGGER)
 
 @bot.on_message(
     filters=(BASIC_FILTERS & filters.reply & TAG_FILTER) & ~filters.private,
-    group=2,
-    is_command=False,
 )
 async def reply_logger(bot: BOT, message: Message):
     if (
@@ -92,8 +92,6 @@ async def reply_logger(bot: BOT, message: Message):
 
 @bot.on_message(
     filters=(BASIC_FILTERS & filters.mentioned & TAG_FILTER) & ~filters.private,
-    group=2,
-    is_command=False,
 )
 async def mention_logger(bot: BOT, message: Message):
     for entity in message.entities or []:
@@ -104,8 +102,6 @@ async def mention_logger(bot: BOT, message: Message):
 
 @bot.on_message(
     filters=(BASIC_FILTERS & (filters.text | filters.media) & TAG_FILTER) & ~filters.private,
-    group=2,
-    is_command=False,
 )
 async def username_logger(bot: BOT, message: Message):
     text = message.text or message.caption or ""
@@ -179,7 +175,7 @@ async def log_pm(message: Message, log_info: bool):
         f"\n\n---\n\n"
         f"Caption:\n{message.caption or 'No Caption in media.'}"
     )
-    await log_message(message=message, notice=notice)
+    await log_message(message=message, notice=notice, thread_id=extra_config.PM_LOGGER_THREAD_ID)
 
 
 async def log_chat(message: Message):
@@ -196,21 +192,31 @@ async def log_chat(message: Message):
     )
 
     if message.reply_to_message:
-        await log_message(message.reply_to_message)
+        await log_message(message.reply_to_message, thread_id=extra_config.TAG_LOGGER_THREAD_ID)
 
     await log_message(
         message=message,
         notice=notice,
         extra_info=f"#TAG\n{mention} [{u_id}]\nMessage: \n<a href='{message.link}'>{message.chat.title}</a> ({message.chat.id})",
+        thread_id=extra_config.TAG_LOGGER_THREAD_ID,
     )
 
 
-async def log_message(message: Message, notice: str | None = None, extra_info: str | None = None):
+async def log_message(
+    message: Message,
+    notice: str | None = None,
+    extra_info: str | None = None,
+    thread_id: int = None,
+):
     try:
-        logged_message: Message = await message.forward(extra_config.MESSAGE_LOGGER_CHAT)
+        logged_message: Message = await message.forward(
+            extra_config.MESSAGE_LOGGER_CHAT, message_thread_id=thread_id
+        )
         if extra_info:
             await logged_message.reply(extra_info, parse_mode=ParseMode.HTML)
     except MessageIdInvalid:
-        logged_message = await message.copy(extra_config.MESSAGE_LOGGER_CHAT)
+        logged_message = await message.copy(
+            extra_config.MESSAGE_LOGGER_CHAT, message_thread_id=thread_id
+        )
         if notice:
             await logged_message.reply(notice, parse_mode=ParseMode.HTML)
