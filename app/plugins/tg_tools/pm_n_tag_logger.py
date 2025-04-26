@@ -167,6 +167,7 @@ async def log_pm(message: Message, log_info: bool):
         await bot.send_message(
             chat_id=extra_config.MESSAGE_LOGGER_CHAT,
             text=f"#PM\n{message.from_user.mention} [{message.from_user.id}]",
+            message_thread_id=extra_config.PM_LOGGER_THREAD_ID,
         )
     notice = (
         f"{message.from_user.mention} [{message.from_user.id}] deleted this message."
