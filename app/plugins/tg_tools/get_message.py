@@ -7,7 +7,7 @@ def parse_link(link: str) -> tuple[int | str, int, int]:
     parsed_url: str = urlparse(link).path.strip("/")
     link_chunks = parsed_url.lstrip("c/").split("/")
 
-    thread = 0
+    thread = "0"
     if len(link_chunks) == 3:
         chat, thread, message = link_chunks
     else:
@@ -16,7 +16,10 @@ def parse_link(link: str) -> tuple[int | str, int, int]:
     if chat.isdigit():
         chat = int(f"-100{chat}")
 
-    return chat, int(thread), int(message)
+    if thread.isdigit():
+        thread = int(thread)
+
+    return chat, thread, int(message)
 
 
 @BOT.add_cmd(cmd="gm")
