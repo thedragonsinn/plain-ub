@@ -18,7 +18,7 @@ from google.genai.types import (
 )
 from ub_core.utils import get_tg_media_details
 
-from app import BOT, CustomDB, Message, extra_config
+from app import BOT, LOGGER, CustomDB, Message, extra_config
 
 logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
@@ -68,6 +68,7 @@ def get_response_content(
         parts = candidate[0].content.parts
         parts[0]
     except (AttributeError, IndexError, TypeError):
+        LOGGER.info(response)
         return "Query failed... Try again", None
 
     try:
@@ -244,7 +245,7 @@ class Settings:
 
     TEXT_CONFIG = GenerateContentConfig(
         candidate_count=1,
-        max_output_tokens=1024,
+        # max_output_tokens=1024,
         response_modalities=["Text"],
         system_instruction=SYSTEM_INSTRUCTION,
         temperature=0.69,
@@ -255,7 +256,7 @@ class Settings:
 
     IMAGE_CONFIG = GenerateContentConfig(
         candidate_count=1,
-        max_output_tokens=1024,
+        # max_output_tokens=1024,
         response_modalities=["Text", "Image"],
         # system_instruction=SYSTEM_INSTRUCTION,
         temperature=0.99,

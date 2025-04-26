@@ -122,13 +122,13 @@ async def history_chat(bot: BOT, message: Message):
     chat = async_client.chats.create(
         **Settings.get_kwargs(use_search="-s" in message.flags, image_mode="-i" in message.flags)
     )
-    await do_convo(chat=chat, message=message, is_reloaded=True)
+    await do_convo(chat=chat, message=message)
 
 
 CONVO_CACHE: dict[str, Convo] = {}
 
 
-async def do_convo(chat: AsyncChat, message: Message, is_reloaded: bool = False):
+async def do_convo(chat: AsyncChat, message: Message):
     chat_id = message.chat.id
 
     old_conversation = CONVO_CACHE.get(message.unique_chat_user_id)
@@ -154,7 +154,7 @@ async def do_convo(chat: AsyncChat, message: Message, is_reloaded: bool = False)
 
     try:
         async with conversation_object:
-            prompt = await create_prompts(message, is_chat=is_reloaded)
+            prompt = await create_prompts(message)
             reply_to_id = message.id
 
             while True:
