@@ -129,8 +129,7 @@ async def fed_ban(bot: BOT, message: Message):
 
     if message.replied and message.chat.type != ChatType.PRIVATE:
         try:
-            me = await bot.get_chat_member(chat_id=message.chat.id, user_id="me")
-            if me.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}:
+            if message.chat._raw.admin_rights:
                 await message.replied.reply(
                     text=f"!dban {reason}", disable_preview=True, del_in=3, block=False
                 )

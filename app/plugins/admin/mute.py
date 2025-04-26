@@ -5,6 +5,10 @@ from app import BOT, Message
 
 @BOT.add_cmd(cmd="mute")
 async def mute_or_unmute(bot: BOT, message: Message):
+    if not message.chat._raw.admin_rights:
+        await message.reply("Cannot mute members without being admin.")
+        return
+
     user, reason = await message.extract_user_n_reason()
 
     if not isinstance(user, User):

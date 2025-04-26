@@ -5,6 +5,7 @@ from pyrogram.errors import FloodWait
 from pyrogram.types import ChatPrivileges, User
 
 from app import BOT, Message
+from app.extra_config import ADMIN_STATUS
 
 DEMOTE_PRIVILEGES = ChatPrivileges(can_manage_chat=False)
 
@@ -35,12 +36,10 @@ async def promote_or_demote(bot: BOT, message: Message) -> None:
     response: Message = await message.reply(f"Trying to {message.cmd.capitalize()}.....")
 
     my_status = await bot.get_chat_member(chat_id=message.chat.id, user_id=bot.me.id)
+
     my_privileges = my_status.privileges
 
-    if not (
-        my_status.status in {ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR}
-        and my_privileges.can_promote_members
-    ):
+    if not (my_status.status in ADMIN_STATUS and my_privileges.can_promote_members):
         await response.edit("You don't to have enough rights to do this.")
         return
 

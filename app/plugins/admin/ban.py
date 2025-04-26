@@ -5,6 +5,10 @@ from app import BOT, Message
 
 @BOT.add_cmd(cmd=["ban", "unban", "unmute"])
 async def ban_or_unban(bot: BOT, message: Message) -> None:
+    if not message.chat._raw.admin_rights:
+        await message.reply("Cannot perform action without being admin.")
+        return
+
     user, reason = await message.extract_user_n_reason()
 
     if not isinstance(user, User):

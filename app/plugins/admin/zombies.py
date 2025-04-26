@@ -1,18 +1,15 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
 
-from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import FloodWait
 
 from app import BOT, Message
-
-ADMIN_STATUS = {ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER}
+from app.extra_config import ADMIN_STATUS
 
 
 @BOT.add_cmd(cmd="zombies")
 async def clean_zombies(bot: BOT, message: Message):
-    me = await bot.get_chat_member(message.chat.id, bot.me.id)
-    if me.status not in ADMIN_STATUS:
+    if not message.chat._raw.admin_rights:
         await message.reply("Cannot clean zombies without being admin.")
         return
 

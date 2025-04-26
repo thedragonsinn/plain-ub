@@ -4,8 +4,7 @@ from datetime import UTC, datetime, timedelta
 from pyrogram.types import User
 
 from app import BOT, Message
-
-from .zombies import ADMIN_STATUS
+from app.extra_config import ADMIN_STATUS
 
 
 @BOT.add_cmd(cmd="kick")
@@ -31,8 +30,7 @@ async def kick_inactive_members(bot: BOT, message: Message):
     INFO: Kick inactive members with message count less than 10
     """
 
-    me = await bot.get_chat_member(message.chat.id, bot.me.id)
-    if me.status not in ADMIN_STATUS:
+    if not message.chat._raw.admin_rights:
         await message.reply("Cannot kick members without being admin.")
         return
 
