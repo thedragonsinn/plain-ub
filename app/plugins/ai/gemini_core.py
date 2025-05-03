@@ -69,16 +69,18 @@ def get_response_content(
         parts[0]
     except (AttributeError, IndexError, TypeError):
         LOGGER.info(response)
-        return "Query failed... Try again", None
+        return "`Query failed... Try again`", None
 
-    try:
-        image_data = io.BytesIO(parts[0].inline_data.data)
-        image_data.name = "photo.jpg"
-    except (AttributeError, IndexError):
-        image_data = None
-
-    text = "\n".join([part.text for part in parts if part.text])
+    image_data = None
+    text = ""
     sources = ""
+
+    for part in parts:
+        if part.text:
+            text += part + "\n"
+        if part.inline_data:
+            image_data = io.BytesIO(part.inline_data.data)
+            image_data.name = "photo.jpg"
 
     if add_sources:
         try:
