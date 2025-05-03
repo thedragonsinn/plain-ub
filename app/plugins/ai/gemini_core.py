@@ -77,7 +77,7 @@ def get_response_content(
 
     for part in parts:
         if part.text:
-            text += part + "\n"
+            text += f"{part.text}\n"
         if part.inline_data:
             image_data = io.BytesIO(part.inline_data.data)
             image_data.name = "photo.jpg"
