@@ -22,9 +22,9 @@ EMOJIS = ("☕", "🤡", "🙂", "🤔", "🔪", "😂", "💀")
 
 
 async def save_sticker(file: Path | BytesIO) -> str:
-    bot = getattr(bot, "bot", bot)
+    client = getattr(bot, "bot", bot)
 
-    sent_file = await bot.send_document(
+    sent_file = await client.send_document(
         chat_id=Config.LOG_CHAT, document=file, message_thread_id=Config.LOG_CHAT_THREAD_ID
     )
 
