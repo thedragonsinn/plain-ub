@@ -22,6 +22,8 @@ EMOJIS = ("☕", "🤡", "🙂", "🤔", "🔪", "😂", "💀")
 
 
 async def save_sticker(file: Path | BytesIO) -> str:
+    bot = getattr(bot, "bot", bot)
+
     sent_file = await bot.send_document(
         chat_id=Config.LOG_CHAT, document=file, message_thread_id=Config.LOG_CHAT_THREAD_ID
     )
@@ -208,11 +210,7 @@ async def kang(bot: BOT, message: Message):
 
     response = await message.reply("<code>Processing...</code>")
 
-    _bot = getattr(bot, "bot", None)
-
-    if _bot:
-        replied = await replied.log()
-        bot = _bot
+    bot = getattr(bot, "bot", bot)
 
     file_id, emoji = await media_func(message=replied, ff="-f" in message.flags)
 
