@@ -7,7 +7,7 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import InputMediaPhoto
 
 from app import BOT, Message
-from app.plugins.ai.gemini_core import SYSTEM_INSTRUCTION
+from app.plugins.ai.gemini.config import SYSTEM_INSTRUCTION
 
 OPENAI_CLIENT = environ.get("OPENAI_CLIENT", "")
 OPENAI_MODEL = environ.get("OPENAI_MODEL", "gpt-4o")

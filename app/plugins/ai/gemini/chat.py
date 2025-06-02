@@ -1,71 +1,12 @@
-﻿import pickle
+import pickle
 from io import BytesIO
 
 from google.genai.chats import AsyncChat
 from pyrogram.enums import ChatType, ParseMode
-from pyrogram.types import InputMediaPhoto
 
 from app import BOT, Convo, Message, bot
-from app.plugins.ai.gemini_core import (
-    Settings,
-    async_client,
-    create_prompts,
-    get_response_content,
-    run_basic_check,
-)
-
-
-@bot.add_cmd(cmd="ai")
-@run_basic_check
-async def question(bot: BOT, message: Message):
-    """
-    CMD: AI
-    INFO: Ask a question to Gemini AI or get info about replied message / media.
-    FLAGS:
-        -s: to use Search
-        -i: to edit/generate images
-    USAGE:
-        .ai what is the meaning of life.
-        .ai [reply to a message] (sends replied text as query)
-        .ai [reply to message] [extra prompt relating to replied text]
-
-        .ai [reply to image | video | gif]
-        .ai [reply to image | video | gif] [custom prompt]
-    """
-    reply = message.replied
-    prompt = message.filtered_input
-
-    if reply and reply.media:
-        resp_str = "<code>Processing... this may take a while.</code>"
-    else:
-        resp_str = "<code>Input received... generating response.</code>"
-
-    message_response = await message.reply(resp_str)
-
-    try:
-        prompts = await create_prompts(message=message)
-    except AssertionError as e:
-        await message_response.edit(e)
-        return
-
-    kwargs = Settings.get_kwargs(use_search="-s" in message.flags, image_mode="-i" in message.flags)
-
-    response = await async_client.models.generate_content(contents=prompts, **kwargs)
-
-    response_text, response_image = get_response_content(response, quoted=True)
-
-    if response_image:
-        await message_response.edit_media(
-            media=InputMediaPhoto(media=response_image, caption=f"**>\n•> {prompt}<**")
-        )
-        if response_text and isinstance(message, Message):
-            await message_response.reply(response_text)
-    else:
-        await message_response.edit(
-            text=f"**>\n•> {prompt}<**\n{response_text}",
-            parse_mode=ParseMode.MARKDOWN,
-            disable_preview=True,
-        )
+from app.plugins.ai.gemini import AIConfig, Response, async_client
+from app.plugins.ai.gemini.utils import create_prompts, run_basic_check
 
 
 @bot.add_cmd(cmd="aic")
@@ -77,6 +18,8 @@ async def ai_chat(bot: BOT, message: Message):
     FLAGS:
         "-s": use search
         "-i": use image gen/edit mode
+        -a: audio output
+        -sp: multi speaker output
     USAGE:
         .aic hello
         keep replying to AI responses with text | media [no need to reply in DM]
@@ -84,9 +27,7 @@ async def ai_chat(bot: BOT, message: Message):
         use .load_history to continue
 
     """
-    chat = async_client.chats.create(
-        **Settings.get_kwargs(use_search="-s" in message.flags, image_mode="-i" in message.flags)
-    )
+    chat = async_client.chats.create(**AIConfig.get_kwargs(message.flags))
     await do_convo(chat=chat, message=message)
 
 
@@ -119,9 +60,7 @@ async def history_chat(bot: BOT, message: Message):
 
     await resp.edit("__History Loaded... Resuming chat__")
 
-    chat = async_client.chats.create(
-        **Settings.get_kwargs(use_search="-s" in message.flags, image_mode="-i" in message.flags)
-    )
+    chat = async_client.chats.create(**AIConfig.get_kwargs(message.flags))
     await do_convo(chat=chat, message=message)
 
 
@@ -159,11 +98,9 @@ async def do_convo(chat: AsyncChat, message: Message):
 
             while True:
                 ai_response = await chat.send_message(prompt)
-                response_text, response_image = get_response_content(ai_response, quoted=True)
                 prompt_message = await send_and_get_resp(
                     convo_obj=conversation_object,
-                    response_text=response_text,
-                    response_image=response_image,
+                    response=ai_response,
                     reply_to_id=reply_to_id,
                 )
 
@@ -185,28 +122,36 @@ async def do_convo(chat: AsyncChat, message: Message):
 
 async def send_and_get_resp(
     convo_obj: Convo,
-    response_text: str | None = None,
-    response_image: BytesIO | None = None,
+    response,
     reply_to_id: int | None = None,
 ) -> Message:
 
-    if response_image:
-        await convo_obj.send_photo(photo=response_image, reply_to_id=reply_to_id)
+    response = Response(response)
 
-    if response_text:
+    if text := response.text():
         await convo_obj.send_message(
-            text=f"**>\n•><**\n{response_text}",
+            text=f"**>\n•><**\n{text}",
             reply_to_id=reply_to_id,
             parse_mode=ParseMode.MARKDOWN,
             disable_preview=True,
         )
+
+    if response.image:
+        await convo_obj.send_photo(photo=response.image_file, reply_to_id=reply_to_id)
+
+    if response.audio:
+        await convo_obj.send_voice(
+            voice=response.audio_file,
+            waveform=response.audio_file.waveform,
+            reply_to_id=reply_to_id,
+            duration=response.audio_file.duration,
+        )
+
     return await convo_obj.get_response()
 
 
 async def export_history(chat: AsyncChat, message: Message):
     doc = BytesIO(pickle.dumps(chat._curated_history))
     doc.name = "AI_Chat_History.pkl"
-    caption, _ = get_response_content(
-        await chat.send_message("Summarize our Conversation into one line.")
-    )
+    caption = Response(await chat.send_message("Summarize our Conversation into one line.")).text()
     await bot.send_document(chat_id=message.from_user.id, document=doc, caption=caption)
