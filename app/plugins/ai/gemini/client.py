@@ -50,7 +50,7 @@ class Response:
         _text = text.strip()
         match mode:
             case ParseMode.MARKDOWN:
-                return f"**>\n{_text}<**"
+                return _text if "```" in _text else f"**>\n{_text}<**"
             case ParseMode.HTML:
                 return f"<blockquote expandable=true>{_text}</blockquote>"
             case _:
