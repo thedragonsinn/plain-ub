@@ -6,8 +6,7 @@ yt-dlp>=2024.5.27
 pillow
 openai
 
-google-auth
 google-auth-oauthlib
 google-auth-httplib2
-googleapiclient
+google-api-python-client
 google-genai
