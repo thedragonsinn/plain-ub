@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from pyrogram.enums import ParseMode
-from ub_core import BOT, Config, CustomDB, Message
+from ub_core import BOT, Config, CustomDB, Message, bot
 from ub_core.utils import Download, get_tg_media_details, progress
 
 DB = CustomDB["COMMON_SETTINGS"]
@@ -78,7 +78,10 @@ class Drive:
             and self._creds.refresh_token
         ):
             self._creds.refresh(Request())
-            await DB.add_data({"_id": "drive_creds", "creds": json.loads(creds.to_json())})
+            asyncio.run_coroutine_threadsafe(
+                coro=DB.add_data({"_id": "drive_creds", "creds": json.loads(creds.to_json())}),
+                loop=bot.loop,
+            )
         return self._creds
 
     @creds.setter
