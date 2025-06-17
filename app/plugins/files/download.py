@@ -104,9 +104,7 @@ async def telegram_download(
 
     file_name = file_name or tg_media.file_name or get_filename_from_mime(tg_media.mime_type)
 
-    media_obj: DownloadedFile = DownloadedFile(
-        file=dir_name / file_name, size=tg_media.file_size
-    )
+    media_obj: DownloadedFile = DownloadedFile(file=dir_name / file_name, size=tg_media.file_size)
 
     progress_args = (response, "Downloading...", media_obj.path)
 
