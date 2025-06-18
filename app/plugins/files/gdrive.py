@@ -7,6 +7,7 @@ from functools import wraps
 import aiohttp
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from pyrogram.enums import ParseMode
 from ub_core import BOT, Config, CustomDB, Message, bot
@@ -15,38 +16,20 @@ from ub_core.utils import Download, get_tg_media_details, progress
 DB = CustomDB["COMMON_SETTINGS"]
 
 INSTRUCTIONS = """
-Step 1 - Get credentials.json from:
-https://developers.google.com/workspace/drive/api/quickstart/python
+Gdrive Credentials and Access token not found!
 
+- Get credentials.json from: https://console.cloud.google.com
 
-Step 2 - Run this to generate a token.json:
-(make sure to keep credentials.json in the same directory)
-```
-import json
+<blockquote>Steps:
+• Enable google drive api.
+• Setup consent screen.
+• Select external app.
+• Add yourself in audience.
+• Go back.
+• Add the Google drive scope in data access.
+• Create a desktop app and download the json in credentials section.</blockquote>
 
-from google_auth_oauthlib.flow import InstalledAppFlow
-
-flow = InstalledAppFlow.from_client_secrets_file("credentials.json", ["https://www.googleapis.com/auth/drive"])
-flow.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-
-auth_url, state = flow.authorization_url(prompt="consent")
-print("Please go to this URL and authorize:")
-print(auth_url)
-
-code = input("Enter the authorization code here: ")
-flow.fetch_token(code=code)
-
-creds = flow.credentials
-
-with open("token.json", "w") as token_file:
-    json.dump(creds.to_json(), token_file, indent=4)
-print("Credentials successfully saved to token.json!")
-
-```
-
-Step 3:
-Copy the contents of token.json and save them to db using:
-.agcreds <data>
+- Upload this file to your saved messages and reply to it with .gsetup
 """
 
 
@@ -54,7 +37,7 @@ class Drive:
     URL_TEMPLATE = "https://drive.google.com/file/d/{_id}/view?usp=sharing"
     FOLDER_MIME = "application/vnd.google-apps.folder"
     SHORTCUT_MIME = "application/vnd.google-apps.shortcut"
-    DRIVE_ROOT = os.getenv("DRIVE_ROOT_ID", "root")
+    DRIVE_ROOT_ID = os.getenv("DRIVE_ROOT_ID", "root")
 
     def __init__(self):
         self._aiohttp_session = None
@@ -189,7 +172,7 @@ class Drive:
             else:
                 query_params.append(f"name contains '{search_param}'")
         else:
-            query_params.append(f"'{self.DRIVE_ROOT}' in parents")
+            query_params.append(f"'{self.DRIVE_ROOT_ID}' in parents")
 
         query = " and ".join(query_params)
 
@@ -222,7 +205,7 @@ class Drive:
         }
         async with self._aiohttp_session.post(
             url="https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
-            json={"name": file_name, "parents": [folder_id or self.DRIVE_ROOT]},
+            json={"name": file_name, "parents": [folder_id or self.DRIVE_ROOT_ID]},
             headers=headers,
         ) as resp:
             if resp.status != 200:
@@ -348,19 +331,61 @@ async def init_task():
     await drive.async_init()
 
 
+@BOT.add_cmd("gsetup")
+async def gdrive_creds_setup(bot: BOT, message: Message):
+    """
+    CMD: GSETUP
+    INFO: Generated and save O-Auth Creds Json to bot.
+    USAGE: .gsetup {reply to credentials.json file}
+    """
+
+    try:
+        assert message.replied.document.file_name == "credentials.json"
+    except (AssertionError, AttributeError):
+        await message.reply("credentials.json not found.")
+        return
+
+    try:
+        cred_file = await message.replied.download(in_memory=True)
+        cred_file.seek(0)
+        flow = InstalledAppFlow.from_client_config(
+            json.load(cred_file),
+            ["https://www.googleapis.com/auth/drive"],
+        )
+        flow.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+        auth_url, state = flow.authorization_url(prompt="consent")
+
+        auth_message = await message.reply(
+            f"Please go to this URL and authorize:\n{auth_url}\n\nReply to this message with the code within 30 seconds.",
+        )
+        code_message = await auth_message.get_response(
+            from_user=message.from_user.id, reply_to_message_id=auth_message.id, timeout=30
+        )
+
+        await auth_message.delete()
+
+        if not code_message:
+            await message.reply("expired")
+            return
+
+        await code_message.delete()
+        flow.fetch_token(code=code_message.text)
+        await DB.add_data({"_id": "drive_creds", "creds": json.loads(flow.credentials.to_json())})
+        await drive.set_creds()
+        await message.reply("Creds Saved!")
+    except Exception as e:
+        await message.reply(e)
+
+
 @BOT.add_cmd("agcreds")
 async def set_drive_creds(bot: BOT, message: Message):
     """
     CMD: AGCREDS
-    INFO: Add your O-Auth Creds Json to bot.
+    INFO: Add your pre generated O-Auth Creds Json to bot.
     USAGE: .agcreds {data}
     """
-    if "-r" in message.flags:
-        await drive.set_creds()
-        await message.reply("Creds added...")
-        return
-
     creds = message.input.strip()
+
     if not creds:
         await message.reply("Enter Creds!!!")
         return
@@ -368,11 +393,13 @@ async def set_drive_creds(bot: BOT, message: Message):
     try:
         creds_json = json.loads(creds)
         creds = Credentials.from_authorized_user_info(info=creds_json)
+
         if creds.expired and creds.refresh_token:
             creds.refresh(Request())
+
         await DB.add_data({"_id": "drive_creds", "creds": json.loads(creds.to_json())})
         await drive.set_creds()
-        await message.reply("Creds added...")
+        await message.reply("Creds added!")
     except Exception as e:
         await message.reply(e)
 
