@@ -62,7 +62,7 @@ class Drive:
         ):
             self._creds.refresh(Request())
             asyncio.run_coroutine_threadsafe(
-                coro=DB.add_data({"_id": "drive_creds", "creds": json.loads(creds.to_json())}),
+                coro=DB.add_data({"_id": "drive_creds", "creds": json.loads(self._creds.to_json())}),
                 loop=bot.loop,
             )
         return self._creds
