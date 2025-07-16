@@ -34,7 +34,7 @@ Gdrive Credentials and Access token not found!
 
 
 class Drive:
-    URL_TEMPLATE = "https://drive.google.com/file/d/{_id}/view?usp=sharing"
+    URL_TEMPLATE = "https://drive.google.com/file/d/{media_id}/view?usp=sharing"
     FOLDER_MIME = "application/vnd.google-apps.folder"
     SHORTCUT_MIME = "application/vnd.google-apps.shortcut"
     DRIVE_ROOT_ID = os.getenv("DRIVE_ROOT_ID", "root")
@@ -62,9 +62,12 @@ class Drive:
         ):
             self._creds.refresh(Request())
             asyncio.run_coroutine_threadsafe(
-                coro=DB.add_data({"_id": "drive_creds", "creds": json.loads(self._creds.to_json())}),
+                coro=DB.add_data(
+                    {"_id": "drive_creds", "creds": json.loads(self._creds.to_json())}
+                ),
                 loop=bot.loop,
             )
+            bot.log.info("Gdrive Creds Auto-Refreshed")
         return self._creds
 
     @creds.setter
@@ -124,7 +127,7 @@ class Drive:
         try:
             file_id = await self._upload_from_url(file_url, is_encoded, folder_id, message_to_edit)
             if file_id is not None:
-                return self.URL_TEMPLATE.format(_id=file_id)
+                return self.URL_TEMPLATE.format(media_id=file_id)
         except Exception as e:
             return f"Error:\n{e}"
         finally:
@@ -140,7 +143,7 @@ class Drive:
         try:
             file_id = await self._upload_from_telegram(media_message, message_to_edit, folder_id)
             if file_id is not None:
-                return self.URL_TEMPLATE.format(_id=file_id)
+                return self.URL_TEMPLATE.format(media_id=file_id)
         except Exception as e:
             return f"Error:\n{e}"
         finally:
@@ -249,7 +252,7 @@ class Drive:
             buffer = b""
             chunk_size = 524288
 
-            async for chunk in file_session.content.iter_chunked(chunk_size):
+            async for chunk in downloader.iter_chunks(chunk_size):
                 buffer += chunk
                 if len(buffer) < chunk_size:
                     continue
@@ -319,7 +322,6 @@ class Drive:
                 total_size=store["size"] or 1,
                 response=message,
                 action_str="Uploading to Drive...",
-                file_path="",
             )
             await asyncio.sleep(5)
 
@@ -482,7 +484,7 @@ async def list_drive(bot: BOT, message: Message):
     shortcuts = [""]
 
     for file in remote_files:
-        url = drive.URL_TEMPLATE.format(_id=file["id"])
+        url = drive.URL_TEMPLATE.format(media_id=file["id"])
         mime = file["mimeType"]
         if mime == drive.FOLDER_MIME:
             folders.append(f"📁 <a href={url}>{file["name"]}</a>")
@@ -490,7 +492,7 @@ async def list_drive(bot: BOT, message: Message):
             shortcut_details = file.get("shortcutDetails", {})
             target_id = shortcut_details.get("targetId")
             if target_id:
-                url = drive.URL_TEMPLATE.format(_id=target_id)
+                url = drive.URL_TEMPLATE.format(media_id=target_id)
             shortcuts.append(f"🔗 <a href={url}>{file["name"]}</a>")
         else:
             files.append(f"📄 <a href={url}>{file["name"]}</a>")
