@@ -1,7 +1,7 @@
 import asyncio
 
 from pyrogram import filters
-from pyrogram.enums import ChatMemberStatus, ChatType
+from pyrogram.enums import ChatType
 from pyrogram.errors import UserNotParticipant
 from pyrogram.types import Chat, User
 from ub_core.utils.helpers import get_name
@@ -105,8 +105,21 @@ async def fed_list(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd=["fban", "fbanp"])
 async def fed_ban(bot: BOT, message: Message):
+    """
+    CMD: FBAN / FBANP
+    INFO:
+        Initiates a fed-ban in fed-chats added in .addf
+        If cmd is fbanp, it logs the replied message as proof for fban
+        and appends the link in reason.
+    FLAGS:
+        -nrc: Don't do sudo fban
+    USAGE:
+        .fban(p) [uid | @ | reply to message] reason
+    """
     progress: Message = await message.reply("❯")
+
     extracted_info = await get_user_reason(message=message, progress=progress)
+
     if not extracted_info:
         await progress.edit("Unable to extract user info.")
         return
@@ -129,7 +142,7 @@ async def fed_ban(bot: BOT, message: Message):
 
     if message.replied and message.chat.type != ChatType.PRIVATE:
         try:
-            if message.chat._raw.admin_rights:
+            if message.chat.admin_privileges and message.chat.admin_privileges.can_restrict_members:
                 await message.replied.reply(
                     text=f"!dban {reason}", disable_preview=True, del_in=3, block=False
                 )
@@ -152,6 +165,15 @@ async def fed_ban(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="unfban")
 async def un_fban(bot: BOT, message: Message):
+    """
+    CMD: UBFBAN
+    INFO:
+        Initiates a fed-unban in fed-chats added in .addf
+    FLAGS:
+        -nrc: Don't do sudo unfban
+    USAGE:
+        .unfban [uid | @ | reply to message] reason
+    """
     progress: Message = await message.reply("❯")
     extracted_info = await get_user_reason(message=message, progress=progress)
 
@@ -258,7 +280,8 @@ async def _perform_fed_task(
 
     await progress.edit(text=resp_str, del_in=5, block=True, disable_preview=True)
 
-    await handle_sudo_fban(command=command)
+    if "-nrc" not in message.flags:
+        await handle_sudo_fban(command=command)
 
 
 async def handle_sudo_fban(command: str):
@@ -266,5 +289,8 @@ async def handle_sudo_fban(command: str):
         return
 
     sudo_cmd = command.replace("/", extra_config.FBAN_SUDO_TRIGGER, 1)
-
-    await bot.send_message(chat_id=extra_config.FBAN_SUDO_ID, text=sudo_cmd, disable_preview=True)
+    head, body = sudo_cmd.split(" ", maxsplit=1)
+    no_recurse_cmd = " ".join((head, "-nrc", body))
+    await bot.send_message(
+        chat_id=extra_config.FBAN_SUDO_ID, text=no_recurse_cmd, disable_preview=True
+    )
