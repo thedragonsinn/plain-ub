@@ -70,8 +70,10 @@ async def fed_list(bot: BOT, message: Message):
 
     async for fed in FED_DB.find():
         output += f'<b>• {fed["name"]}</b>\n'
+
         if "-id" in message.flags:
             output += f'  <code>{fed["_id"]}</code>\n'
+
         total += 1
 
     if not total:
@@ -93,7 +95,7 @@ async def fed_ban(bot: BOT, message: Message):
         return
 
     user_id, user_mention, reason = extracted_info
-    
+
     if not reason:
         reason = "No reason specified."
 
@@ -114,7 +116,7 @@ async def fed_ban(bot: BOT, message: Message):
     # Perform local ban action if applicable
     if message.replied and message.chat.type != ChatType.PRIVATE:
         try:
-            # FIX: Use a reliable method to check admin rights
+            # FIX: Use a reliable method to check for admin rights
             me = await bot.get_me()
             member = await bot.get_chat_member(message.chat.id, me.id)
             if member.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR] and member.privileges.can_restrict_members:
@@ -149,7 +151,7 @@ async def un_fban(bot: BOT, message: Message):
         return
 
     user_id, user_mention, reason = extracted_info
-    
+
     if not reason:
         reason = "No reason specified."
         
