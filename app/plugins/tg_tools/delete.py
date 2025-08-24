@@ -54,55 +54,33 @@ async def purge_(bot: BOT, message: Message) -> None:
         .purge [reply to message]
     """
     chat_id = message.chat.id
-
     start_message: int = message.reply_id
 
-    # Not replied to a message
     if not start_message:
         await message.reply("Reply to a message.")
         return
 
-    # Replied was topic creation message
-    if message.thread_origin_message:
-        await message.reply("Reply to a message.")
-        return
-
-    if message.is_topic_message:
-        _generator = bot.get_discussion_replies(
-            chat_id=chat_id, message_id=message.message_thread_id
-        )
-    else:
-        _generator = bot.get_chat_history(
-            chat_id=chat_id,
-            offset_date=message.replied.date,
-            min_id=start_message,
-            max_id=message.id,
-        )
-
-    message_ids: set[int] = set()
-
-    async def delete_chunk(chunk):
-        await bot.delete_messages(chat_id=chat_id, message_ids=chunk, revoke=True)
-        await asyncio.sleep(5)
-
-    last = 0
-
-    async for _message in _generator:
+    message_ids: list[int] = []
+    
+    # Iterate through chat history backwards from the command message
+    async for _message in bot.get_chat_history(chat_id=chat_id, offset_id=message.id):
         if _message.id == message.id:
             continue
+            
+        message_ids.append(_message.id)
 
-        message_ids.add(_message.id)
-
-        if _message.id in {start_message, last}:
-            for chunk in create_chunks(list(message_ids), chunk_size=100):
-                await delete_chunk(chunk)
-            message_ids.clear()
+        # Stop when we reach the replied-to message
+        if _message.id == start_message:
             break
 
-        if len(message_ids) == 100:
-            await delete_chunk(message_ids)
+        if len(message_ids) >= 100:
+            await bot.delete_messages(chat_id=chat_id, message_ids=message_ids, revoke=True)
             message_ids.clear()
+            await asyncio.sleep(2)
 
-        last = _message.id
+    # Delete any remaining messages
+    if message_ids:
+        await bot.delete_messages(chat_id=chat_id, message_ids=message_ids, revoke=True)
 
+    # Delete the command and the replied-to message itself
     await message.delete(reply=True)
