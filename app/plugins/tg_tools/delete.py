@@ -105,4 +105,4 @@ async def purge_(bot: BOT, message: Message) -> None:
 
         last = _message.id
 
-    await message.delete(replied=True)
+    await message.delete(reply=True)
