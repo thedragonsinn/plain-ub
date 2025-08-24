@@ -94,7 +94,7 @@ async def purge_(bot: BOT, message: Message) -> None:
         message_ids.add(_message.id)
 
         if _message.id in {start_message, last}:
-            for chunk in create_chunks(message_ids, chunk_size=100):
+            for chunk in create_chunks(list(message_ids), chunk_size=100):
                 await delete_chunk(chunk)
             message_ids.clear()
             break
