@@ -23,6 +23,28 @@ async def delete_message(bot: BOT, message: Message) -> None:
     await message.delete(reply=True)
 
 
+@BOT.add_cmd("del_uh")
+async def delete_user_history(bot: BOT, message: Message):
+    if not (message.replied and message.chat.type in {ChatType.GROUP, ChatType.SUPERGROUP}):
+        await message.reply("Reply to the user's message and use in a chat.")
+        return
+
+    user = message.replied.from_user
+    warning = await message.reply(
+        f"Delete all messages from {user.mention}?\nReply with `y` to continue."
+    )
+    text, _ = await warning.get_response(quote=True, lower=True)
+    if text == "y":
+        await bot.delete_user_history(chat_id=message.chat.id, user_id=user.id)
+        await warning.edit("Done.")
+        await bot.log_text(
+            f"Deleted all texts from {user.mention} in chat <a href='{message.link}'>{message.chat.title}</a> [{message.chat.id}]",
+            type="info",
+        )
+    else:
+        await warning.edit("Aborted...")
+
+
 @BOT.add_cmd(cmd="purge")
 async def purge_(bot: BOT, message: Message) -> None:
     """
@@ -45,33 +67,42 @@ async def purge_(bot: BOT, message: Message) -> None:
         await message.reply("Reply to a message.")
         return
 
-    # Get Topic messages till replied
     if message.is_topic_message:
-        message_ids = []
-
-        async for _message in bot.get_discussion_replies(
-            chat_id=message.chat.id, message_id=message.message_thread_id, limit=100
-        ):
-            message_ids.append(_message.id)
-            if _message.id == message.reply_id or len(message_ids) > 100:
-                break
+        _generator = bot.get_discussion_replies(
+            chat_id=chat_id, message_id=message.message_thread_id
+        )
     else:
-        # Generate Message Ids
-        message_ids: list[int] = list(range(start_message, message.id))
+        _generator = bot.get_chat_history(
+            chat_id=chat_id,
+            offset_date=message.replied.date,
+            min_id=start_message,
+            max_id=message.id,
+        )
 
-        # Get messages from server if chat is private or ids are too big.
-        if message.chat.type in {ChatType.PRIVATE, ChatType.BOT} or len(message_ids) > 100:
-            messages = await bot.get_messages(chat_id=chat_id, message_ids=message_ids, replies=0)
-            message_ids = [message.id for message in messages]
+    message_ids: set[int] = set()
 
-    # Perform Quick purge of bigger chunks
-    if len(message_ids) < 100:
-        chunk_size = 50
-        sleep_interval = 2
-    else:
-        chunk_size = 25
-        sleep_interval = 5
-
-    for chunk in create_chunks(message_ids, chunk_size=chunk_size):
+    async def delete_chunk(chunk):
         await bot.delete_messages(chat_id=chat_id, message_ids=chunk, revoke=True)
-        await asyncio.sleep(sleep_interval)
+        await asyncio.sleep(5)
+
+    last = 0
+
+    async for _message in _generator:
+        if _message.id == message.id:
+            continue
+
+        message_ids.add(_message.id)
+
+        if _message.id in {start_message, last}:
+            for chunk in create_chunks(message_ids, chunk_size=100):
+                await delete_chunk(chunk)
+            message_ids.clear()
+            break
+
+        if len(message_ids) == 100:
+            await delete_chunk(message_ids)
+            message_ids.clear()
+
+        last = _message.id
+
+    await message.delete(replied=True)
