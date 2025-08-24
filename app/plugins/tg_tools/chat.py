@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 from pyrogram.errors import BadRequest
@@ -54,8 +53,11 @@ async def leave_chat(bot: BOT, message: Message) -> None:
             del_in=5,
             block=True,
         )
-        await asyncio.sleep(5)
     try:
         await bot.leave_chat(chat)
-    except Exception as e:
-        await message.reply(str(e))
+    except (KeyError, BadRequest):
+        try:
+            await bot.leave_chat(os.path.basename(chat).strip())
+        except Exception as e:
+            await message.reply(str(e))
+    message.stop_propagation()

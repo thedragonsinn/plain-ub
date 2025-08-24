@@ -5,7 +5,7 @@ from app import BOT, Message
 
 @BOT.add_cmd(cmd=["ban", "unban", "unmute"])
 async def ban_or_unban(bot: BOT, message: Message) -> None:
-    if not message.chat._raw.admin_rights:
+    if not (message.chat.admin_privileges and message.chat.admin_privileges.can_restrict_members):
         await message.reply("Cannot perform action without being admin.")
         return
 

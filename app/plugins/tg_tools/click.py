@@ -3,7 +3,14 @@ from app import BOT, Message
 
 @BOT.add_cmd(cmd="click")
 async def click(bot: BOT, message: Message):
-    if not message.input or not message.replied:
+    """
+    CMD: CLICK
+    INFO: Clicks a button in replied message
+    USAGE:
+        .click ok (clicks a button with text ok)
+        .click 0 (clicks the button at index 0)
+    """
+    if not (message.input and message.replied):
         await message.reply("reply to a message containing a button and give a button to click")
         return
     try:

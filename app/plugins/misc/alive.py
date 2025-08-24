@@ -21,6 +21,15 @@ PY_VERSION = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
 
 @bot.add_cmd(cmd="alive")
 async def alive(bot: BOT, message: Message):
+    """
+    CMD: ALIVE
+    INFO: Show bot info.
+    USAGE:
+        Normal:
+            .alive
+        Inline if on dual mode:
+            @bot_name inline_alive
+    """
     # Inline Alive if Dual Mode
     if bot.is_user and getattr(bot, "has_bot", False):
         inline_result: BotResults = await bot.get_inline_bot_results(

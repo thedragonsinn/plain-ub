@@ -126,26 +126,29 @@ async def list_ai_models(bot: BOT, message: Message):
 
     model_info_response = await message.reply(update_str)
 
-    model_response = await model_info_response.get_response(
-        timeout=60, reply_to_message_id=model_info_response.id, from_user=message.from_user.id
+    model_name, _ = await model_info_response.get_response(
+        timeout=60,
+        reply_to_message_id=model_info_response.id,
+        from_user=message.from_user.id,
+        quote=True,
     )
 
-    if not model_response:
+    if not model_name:
         await model_info_response.delete()
         return
 
-    if model_response.text not in model_list:
+    if model_name not in model_list:
         await model_info_response.edit(f"<code>Invalid Model... Try again</code>")
         return
 
     if "-i" in message.flags:
         data_key = "image_model_name"
-        AIConfig.IMAGE_MODEL = model_response.text
+        AIConfig.IMAGE_MODEL = model_name
     else:
         data_key = "model_name"
-        AIConfig.TEXT_MODEL = model_response.text
+        AIConfig.TEXT_MODEL = model_name
 
-    await DB_SETTINGS.add_data({"_id": "gemini_model_info", data_key: model_response.text})
-    resp_str = f"{model_response.text} saved as model."
+    await DB_SETTINGS.add_data({"_id": "gemini_model_info", data_key: model_name})
+    resp_str = f"{model_name} saved as model."
     await model_info_response.edit(resp_str)
     await bot.log_text(text=resp_str, type=f"ai_{data_key}")

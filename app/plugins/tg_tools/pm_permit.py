@@ -126,6 +126,10 @@ async def allow_pm(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="nopm")
 async def no_pm(bot: BOT, message: Message):
+    """
+    CMD: NO PM
+    INFO: Dis-Allow a user to PM.
+    """
     user_id, name = get_userID_name(message)
     if not user_id:
         await message.reply(

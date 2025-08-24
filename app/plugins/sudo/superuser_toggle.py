@@ -6,6 +6,10 @@ from app.plugins.sudo.users import SUDO_USERS
 
 @BOT.add_cmd(cmd="disable_su", allow_sudo=False)
 async def disable_su(bot: BOT, message: Message):
+    """
+    CMD: DISABLE SU
+    INFO: Disables your super user access until enabled via .enable_su
+    """
     u_id = message.from_user.id
 
     if u_id in Config.DISABLED_SUPERUSERS:

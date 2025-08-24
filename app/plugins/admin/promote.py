@@ -1,25 +1,14 @@
 import asyncio
 
-from pyrogram.enums import ChatMembersFilter, ChatMemberStatus
+from pyrogram.enums import ChatMembersFilter
 from pyrogram.errors import FloodWait
 from pyrogram.types import ChatPrivileges, User
 
 from app import BOT, Message
-from app.extra_config import ADMIN_STATUS
 
 DEMOTE_PRIVILEGES = ChatPrivileges(can_manage_chat=False)
 
-NO_PRIVILEGES = ChatPrivileges(
-    can_manage_chat=True,
-    can_manage_video_chats=False,
-    can_pin_messages=False,
-    can_delete_messages=False,
-    can_change_info=False,
-    can_restrict_members=False,
-    can_invite_users=False,
-    can_promote_members=False,
-    is_anonymous=False,
-)
+NO_PRIVILEGES = ChatPrivileges()
 
 
 @BOT.add_cmd(cmd=["promote", "demote"])
@@ -35,11 +24,9 @@ async def promote_or_demote(bot: BOT, message: Message) -> None:
     """
     response: Message = await message.reply(f"Trying to {message.cmd.capitalize()}.....")
 
-    my_status = await bot.get_chat_member(chat_id=message.chat.id, user_id=bot.me.id)
+    my_privileges = message.chat.admin_privileges
 
-    my_privileges = my_status.privileges
-
-    if not (my_status.status in ADMIN_STATUS and my_privileges.can_promote_members):
+    if not (my_privileges and my_privileges.can_promote_members):
         await response.edit("You don't to have enough rights to do this.")
         return
 
@@ -84,8 +71,11 @@ async def promote_or_demote(bot: BOT, message: Message) -> None:
 
 @BOT.add_cmd(cmd="demote_all", allow_sudo=False)
 async def demote_all(bot: BOT, message: Message):
-    me = await bot.get_chat_member(message.chat.id, bot.me.id)
-    if me.status != ChatMemberStatus.OWNER:
+    """
+    CMD: DEMOTE ALL
+    INFO: Removes everyone as admins.
+    """
+    if not message.chat.is_creator:
         await message.reply("Cannot Demote all without being Chat Owner.")
         return
 

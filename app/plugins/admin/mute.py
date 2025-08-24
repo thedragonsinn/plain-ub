@@ -5,7 +5,7 @@ from app import BOT, Message
 
 @BOT.add_cmd(cmd="mute")
 async def mute_or_unmute(bot: BOT, message: Message):
-    if not message.chat._raw.admin_rights:
+    if not (message.chat.admin_privileges and message.chat.admin_privileges.can_restrict_members):
         await message.reply("Cannot mute members without being admin.")
         return
 
@@ -21,12 +21,12 @@ async def mute_or_unmute(bot: BOT, message: Message):
             user_id=user.id,
             permissions=ChatPermissions(
                 can_send_messages=False,
+                can_send_media_messages=False,
+                can_send_other_messages=False,
                 can_pin_messages=False,
                 can_invite_users=False,
                 can_change_info=False,
-                can_send_media_messages=False,
                 can_send_polls=False,
-                can_send_other_messages=False,
                 can_add_web_page_previews=False,
             ),
         )

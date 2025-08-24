@@ -9,6 +9,10 @@ from app.extra_config import ADMIN_STATUS
 
 @BOT.add_cmd(cmd="kick")
 async def kick_user(bot: BOT, message: Message):
+    """
+    CMD: KICK
+    INFO: Kicks a person out of the chat.
+    """
     user, reason = await message.extract_user_n_reason()
     if not isinstance(user, User):
         await message.reply(user, del_in=10)
@@ -30,7 +34,7 @@ async def kick_inactive_members(bot: BOT, message: Message):
     INFO: Kick inactive members with message count less than 10
     """
 
-    if not message.chat._raw.admin_rights:
+    if not (message.chat.admin_privileges and message.chat.admin_privileges.can_restrict_members):
         await message.reply("Cannot kick members without being admin.")
         return
 
@@ -57,9 +61,9 @@ async def kick_inactive_members(bot: BOT, message: Message):
 
                 convo.reply_to_message_id = prompt.id
 
-                confirmation = await convo.get_response()
+                text, _ = await convo.get_quote_or_text(lower=True)
 
-                if confirmation.text == "y":
+                if text == "y":
                     await bot.ban_chat_member(
                         chat_id=chat_id,
                         user_id=user.id,

@@ -41,7 +41,13 @@ def extract_link_from_reply(message: Message) -> str | None:
 
 
 @BOT.add_cmd(cmd="song")
-async def song_dl(bot: BOT, message: Message) -> None | Message:
+async def song_dl(bot: BOT, message: Message):
+    """
+    CMD: SONG
+    INFO: Download given song from youtube.
+    WARNING: THIS CMD MAY NOT WORK ON SERVERS.
+    """
+
     query = extract_link_from_reply(message.replied) or message.filtered_input
 
     if not query:
@@ -50,7 +56,7 @@ async def song_dl(bot: BOT, message: Message) -> None | Message:
 
     response: Message = await message.reply("Searching....")
 
-    download_path: str = Path("downloads") / str(time())
+    download_path: Path = Path("downloads") / str(time())
 
     query_or_search: str = query if query.startswith("http") else f"ytsearch:{query}"
 

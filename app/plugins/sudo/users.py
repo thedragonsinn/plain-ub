@@ -48,7 +48,7 @@ async def add_sudo(bot: BOT, message: Message) -> Message | None:
     INFO: Add Sudo User.
     FLAGS:
         -temp: to temporarily add until bot restarts.
-        -su: to give SuperUser access.
+        -su: to give SuperUser[Owner level] access.
     USAGE:
         .addsudo [-temp | -su] [ UID | @ | Reply to Message ]
     """

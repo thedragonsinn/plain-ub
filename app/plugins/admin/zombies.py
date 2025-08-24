@@ -9,8 +9,12 @@ from app.extra_config import ADMIN_STATUS
 
 @BOT.add_cmd(cmd="zombies")
 async def clean_zombies(bot: BOT, message: Message):
-    if not message.chat._raw.admin_rights:
-        await message.reply("Cannot clean zombies without being admin.")
+    """
+    CMD: ZOMBIES
+    INFO: Cleans deleted accounts from chat.
+    """
+    if not (message.chat.admin_privileges and message.chat.admin_privileges.can_restrict_members):
+        await message.reply("Cannot clean zombies without being admin / Not enough rights.")
         return
 
     zombies = 0
