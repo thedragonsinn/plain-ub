@@ -1,7 +1,7 @@
 import asyncio
 
 from pyrogram import filters
-from pyrogram.enums import ChatType, ChatMemberStatus
+from pyrogram.enums import ChatType
 from pyrogram.errors import UserNotParticipant
 from pyrogram.types import Chat, User
 from ub_core.utils.helpers import get_name
@@ -30,6 +30,12 @@ UNFBAN_REGEX = BASIC_FILTER & filters.regex(r"(New un-FedBan|I'll give|Un-FedBan
 
 @bot.add_cmd(cmd="addf")
 async def add_fed(bot: BOT, message: Message):
+    """
+    CMD: ADDF
+    INFO: Add a Fed Chat to DB.
+    USAGE:
+        .addf | .addf NAME
+    """
     data = dict(name=message.input or message.chat.title, type=str(message.chat.type))
     await FED_DB.add_data({"_id": message.chat.id, **data})
     text = f"#FBANS\n<b>{data['name']}</b>: <code>{message.chat.id}</code> added to FED LIST."
@@ -39,6 +45,13 @@ async def add_fed(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="delf")
 async def remove_fed(bot: BOT, message: Message):
+    """
+    CMD: DELF
+    INFO: Delete a Fed from DB.
+    FLAGS: -all to delete all feds.
+    USAGE:
+        .delf | .delf id | .delf -all
+    """
     if "-all" in message.flags:
         await FED_DB.drop()
         await message.reply("FED LIST cleared.")
@@ -65,6 +78,12 @@ async def remove_fed(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="listf")
 async def fed_list(bot: BOT, message: Message):
+    """
+    CMD: LISTF
+    INFO: View Connected Feds.
+    FLAGS: -id to list Fed Chat IDs.
+    USAGE: .listf | .listf -id
+    """
     output: str = ""
     total = 0
 
@@ -86,6 +105,17 @@ async def fed_list(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd=["fban", "fbanp"])
 async def fed_ban(bot: BOT, message: Message):
+    """
+    CMD: FBAN / FBANP
+    INFO:
+        Initiates a fed-ban in fed-chats added in .addf
+        If cmd is fbanp, it logs the replied message as proof for fban
+        and appends the link in reason.
+    FLAGS:
+        -nrc: Don't do sudo fban
+    USAGE:
+        .fban(p) [uid | @ | reply to message] reason
+    """
     progress: Message = await message.reply("❯")
 
     extracted_info = await get_user_reason(message=message, progress=progress)
@@ -95,9 +125,6 @@ async def fed_ban(bot: BOT, message: Message):
         return
 
     user_id, user_mention, reason = extracted_info
-
-    if not reason:
-        reason = "No reason specified."
 
     if user_id in [Config.OWNER_ID, *Config.SUPERUSERS, *Config.SUDO_USERS]:
         await progress.edit("Cannot Fban Owner/Sudo users.")
@@ -109,25 +136,24 @@ async def fed_ban(bot: BOT, message: Message):
             await progress.edit("Reply to a proof")
             return
         proof = await message.replied.forward(extra_config.FBAN_LOG_CHANNEL)
-        proof_str = f" [Proof]({proof.link})"
+        proof_str = f"\n{ {proof.link} }"
 
-    final_reason = f"{reason}{proof_str}"
+    reason = f"{reason}{proof_str}"
 
-    # Perform local ban action if applicable
     if message.replied and message.chat.type != ChatType.PRIVATE:
         try:
-            # FIX: Use a reliable method to check for admin rights
+            # FIX: Use a reliable method to check admin rights
             me = await bot.get_me()
             member = await bot.get_chat_member(message.chat.id, me.id)
             if member.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR] and member.privileges.can_restrict_members:
                 await message.replied.reply(
-                    text=f"!dban {final_reason}", disable_web_page_preview=True, del_in=3, block=False
+                    text=f"!dban {reason}", disable_web_page_preview=True, del_in=3, block=False
                 )
         except Exception:
-            # Silently ignore if local action fails
+            # Silently ignore if local action fails for any reason
             pass
 
-    fban_cmd: str = f"/fban <a href='tg://user?id={user_id}'>{user_id}</a> {final_reason}"
+    fban_cmd: str = f"/fban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"
 
     await perform_fed_task(
         user_id=user_id,
@@ -135,7 +161,7 @@ async def fed_ban(bot: BOT, message: Message):
         command=fban_cmd,
         task_filter=FBAN_REGEX,
         task_type="Fban",
-        reason=final_reason,
+        reason=reason,
         progress=progress,
         message=message,
     )
@@ -143,6 +169,15 @@ async def fed_ban(bot: BOT, message: Message):
 
 @bot.add_cmd(cmd="unfban")
 async def un_fban(bot: BOT, message: Message):
+    """
+    CMD: UBFBAN
+    INFO:
+        Initiates a fed-unban in fed-chats added in .addf
+    FLAGS:
+        -nrc: Don't do sudo unfban
+    USAGE:
+        .unfban [uid | @ | reply to message] reason
+    """
     progress: Message = await message.reply("❯")
     extracted_info = await get_user_reason(message=message, progress=progress)
 
@@ -151,10 +186,6 @@ async def un_fban(bot: BOT, message: Message):
         return
 
     user_id, user_mention, reason = extracted_info
-
-    if not reason:
-        reason = "No reason specified."
-        
     unfban_cmd: str = f"/unfban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"
 
     await perform_fed_task(
@@ -173,15 +204,13 @@ async def get_user_reason(message: Message, progress: Message) -> tuple[int, str
     user, reason = await message.extract_user_n_reason()
     if isinstance(user, str):
         await progress.edit(user)
-        return None
-    
+        return
     if not isinstance(user, User):
         user_id = user
         user_mention = f"<a href='tg://user?id={user_id}'>{user_id}</a>"
     else:
         user_id = user.id
         user_mention = user.mention
-    
     return user_id, user_mention, reason
 
 
@@ -211,7 +240,7 @@ async def _perform_fed_task(
 
         try:
             cmd: Message = await bot.send_message(
-                chat_id=chat_id, text=command, disable_web_page_preview=True
+                chat_id=chat_id, text=command, disable_preview=True
             )
             response: Message | None = await cmd.get_response(filters=task_filter, timeout=8)
             if not response:
@@ -250,10 +279,10 @@ async def _perform_fed_task(
         resp_str += f"\n\n<b>By</b>: {get_name(message.from_user)}"
 
     await bot.send_message(
-        chat_id=extra_config.FBAN_LOG_CHANNEL, text=resp_str, disable_web_page_preview=True
+        chat_id=extra_config.FBAN_LOG_CHANNEL, text=resp_str, disable_preview=True
     )
 
-    await progress.edit(text=resp_str, del_in=5, block=True, disable_web_page_preview=True)
+    await progress.edit(text=resp_str, del_in=5, block=True, disable_preview=True)
 
     if "-nrc" not in message.flags:
         await handle_sudo_fban(command=command)
@@ -267,5 +296,5 @@ async def handle_sudo_fban(command: str):
     head, body = sudo_cmd.split(" ", maxsplit=1)
     no_recurse_cmd = " ".join((head, "-nrc", body))
     await bot.send_message(
-        chat_id=extra_config.FBAN_SUDO_ID, text=no_recurse_cmd, disable_web_page_preview=True
+        chat_id=extra_config.FBAN_SUDO_ID, text=no_recurse_cmd, disable_preview=True
     )
