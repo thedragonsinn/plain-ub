@@ -79,11 +79,12 @@ async def purge_(bot: BOT, message: Message) -> None:
             max_id=message.id,
         )
 
-    message_ids: set[int] = set()
+    message_ids: list[int] = []
 
-    async def delete_chunk(chunk):
-        await bot.delete_messages(chat_id=chat_id, message_ids=chunk, revoke=True)
-        await asyncio.sleep(5)
+    async def delete_chunk():
+        for chunk in create_chunks(message_ids, chunk_size=100):
+            await bot.delete_messages(chat_id=chat_id, message_ids=chunk, revoke=True)
+            await asyncio.sleep(5)
 
     last = 0
 
@@ -91,18 +92,19 @@ async def purge_(bot: BOT, message: Message) -> None:
         if _message.id == message.id:
             continue
 
-        message_ids.add(_message.id)
+        message_ids.append(_message.id)
 
         if _message.id in {start_message, last}:
-            for chunk in create_chunks(list(message_ids), chunk_size=100):
-                await delete_chunk(chunk)
+            await delete_chunk()
             message_ids.clear()
             break
 
         if len(message_ids) == 100:
-            await delete_chunk(message_ids)
+            await delete_chunk()
             message_ids.clear()
 
         last = _message.id
+
+    await delete_chunk()
 
     await message.delete(reply=True)
