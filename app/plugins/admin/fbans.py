@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 from pyrogram import filters
 from pyrogram.enums import ChatType
@@ -17,15 +18,15 @@ BASIC_FILTER = filters.user([609517172, 2059887769, 1376954911, 885745757]) & ~f
 FBAN_REGEX = BASIC_FILTER & filters.regex(
     r"(New FedBan|"
     r"starting a federation ban|"
-    r"Starting a federation ban|"
     r"start a federation ban|"
     r"FedBan Reason update|"
     r"FedBan reason updated|"
-    r"Would you like to update this reason)"
+    r"Would you like to update this reason)",
+    re.IGNORECASE,
 )
 
 
-UNFBAN_REGEX = BASIC_FILTER & filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)")
+UNFBAN_REGEX = BASIC_FILTER & filters.regex(r"(New un-FedBan|I'll give|Un-FedBan)", re.IGNORECASE)
 
 
 @bot.add_cmd(cmd="addf")
@@ -140,14 +141,19 @@ async def fed_ban(bot: BOT, message: Message):
 
     reason = f"{reason}{proof_str}"
 
-    if message.replied and message.chat.type != ChatType.PRIVATE:
-        try:
-            if message.chat.admin_privileges and message.chat.admin_privileges.can_restrict_members:
-                await message.replied.reply(
-                    text=f"!dban {reason}", disable_preview=True, del_in=3, block=False
-                )
-        except UserNotParticipant:
-            pass
+    if (
+        message.replied
+        and message.chat.admin_privileges
+        and message.chat.admin_privileges.can_restrict_members
+    ):
+        await message.replied.reply(
+            text=f"!dban {reason}", disable_preview=True, del_in=3, block=False
+        )
+        bot_resp = await message.get_response(
+            filters=BASIC_FILTER & filters.regex(r"anonymous|Banned", re.IGNORECASE), timeout=5
+        )
+        if bot_resp and "anonymous" in bot_resp.text.lower() and bot_resp.reply_markup:
+            await bot_resp.click(0)
 
     fban_cmd: str = f"/fban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"
 
