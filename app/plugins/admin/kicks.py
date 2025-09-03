@@ -43,7 +43,6 @@ async def kick_inactive_members(bot: BOT, message: Message):
 
     async with bot.Convo(client=bot, chat_id=chat_id, from_user=message.from_user.id) as convo:
         async for member in bot.get_chat_members(chat_id):
-
             if member.status in ADMIN_STATUS:
                 continue
 

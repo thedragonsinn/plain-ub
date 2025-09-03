@@ -25,7 +25,6 @@ async def clean_zombies(bot: BOT, message: Message):
     async for member in bot.get_chat_members(chat_id=message.chat.id):
         try:
             if member.user.is_deleted:
-
                 if member.status in ADMIN_STATUS:
                     admin_zombies += 1
                     continue

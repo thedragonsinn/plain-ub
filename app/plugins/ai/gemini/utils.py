@@ -71,7 +71,6 @@ PROMPT_MAP["audio"] = PROMPT_MAP["voice"]
 async def create_prompts(
     message: Message, is_chat: bool = False, check_size: bool = True
 ) -> list[File, str] | list[Part]:
-
     default_media_prompt = "Analyse the file and explain."
     input_prompt = message.filtered_input or "answer"
 
@@ -119,7 +118,7 @@ async def list_ai_models(bot: BOT, message: Message):
 
     update_str = (
         f"<b>Current Model</b>: <code>"
-        f"{AIConfig.TEXT_MODEL if "-i" not in message.flags else AIConfig.IMAGE_MODEL}</code>"
+        f"{AIConfig.TEXT_MODEL if '-i' not in message.flags else AIConfig.IMAGE_MODEL}</code>"
         f"\n\n<blockquote expandable=True><pre language=text>{model_str}</pre></blockquote>"
         "\n\nReply to this message with the <code>model name</code> to change to a different model."
     )
@@ -138,7 +137,7 @@ async def list_ai_models(bot: BOT, message: Message):
         return
 
     if model_name not in model_list:
-        await model_info_response.edit(f"<code>Invalid Model... Try again</code>")
+        await model_info_response.edit("<code>Invalid Model... Try again</code>")
         return
 
     if "-i" in message.flags:

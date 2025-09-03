@@ -72,7 +72,6 @@ async def del_scmd(bot: BOT, message: Message):
         .delscmd ping | .delscmd -all
     """
     if "-all" in message.flags:
-
         for cmd_object in Config.CMD_DICT.values():
             cmd_object.loaded = False
 

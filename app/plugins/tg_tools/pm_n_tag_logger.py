@@ -139,7 +139,6 @@ async def runner():
 
         for idx, msg in enumerate(cached_list):
             if msg.chat.type == ChatType.PRIVATE:
-
                 if last_pm_logged_id != first_key:
                     last_pm_logged_id = first_key
                     log_info = True

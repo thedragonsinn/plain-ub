@@ -61,7 +61,7 @@ if _bot.is_bot:
     @_bot.on_inline_query(filters=filters.regex("^inline_alive$"), group=2)
     async def return_inline_alive_results(client: BOT, inline_query: InlineQuery):
         kwargs = dict(
-            title=f"Send Alive Media.",
+            title="Send Alive Media.",
             caption=await get_alive_text(),
             reply_markup=get_alive_buttons(client),
         )
@@ -93,7 +93,7 @@ def get_alive_buttons(client: BOT):
         return
     return InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton(text=f"UB-Core", url=Config.UPDATE_REPO)],
-            [InlineKeyboardButton(text=f"Support Group", url="t.me/plainub")],
+            [InlineKeyboardButton(text="UB-Core", url=Config.UPDATE_REPO)],
+            [InlineKeyboardButton(text="Support Group", url="t.me/plainub")],
         ]
     )

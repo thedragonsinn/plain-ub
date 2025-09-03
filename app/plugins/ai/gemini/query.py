@@ -1,4 +1,4 @@
-﻿from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode
 from pyrogram.types import InputMediaAudio, InputMediaPhoto
 
 from app import BOT, Message, bot

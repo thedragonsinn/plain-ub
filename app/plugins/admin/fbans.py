@@ -87,10 +87,10 @@ async def fed_list(bot: BOT, message: Message):
     total = 0
 
     async for fed in FED_DB.find():
-        output += f'<b>• {fed["name"]}</b>\n'
+        output += f"<b>• {fed['name']}</b>\n"
 
         if "-id" in message.flags:
-            output += f'  <code>{fed["_id"]}</code>\n'
+            output += f"  <code>{fed['_id']}</code>\n"
 
         total += 1
 

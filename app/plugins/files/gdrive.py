@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import json
 import os
 from collections import defaultdict
@@ -161,7 +161,6 @@ class Drive:
         folder_only: bool = False,
         search_param: str | None = None,
     ) -> list[dict[str, str | int]]:
-
         query_params = ["trashed=false"]
 
         if folder_only:
@@ -302,7 +301,7 @@ class Drive:
         async for chunk in message_to_edit._client.stream_media(message=media_message):
             end = start + len(chunk) - 1
             headers = {
-                "Content-Range": f"bytes {start}-{end}/{getattr(media, "file_size", 0)}",
+                "Content-Range": f"bytes {start}-{end}/{getattr(media, 'file_size', 0)}",
                 "Authorization": f"Bearer {self.creds.token}",
             }
             file_id = await self.upload_chunk(drive_location, headers, chunk)
@@ -487,15 +486,15 @@ async def list_drive(bot: BOT, message: Message):
         url = drive.URL_TEMPLATE.format(media_id=file["id"])
         mime = file["mimeType"]
         if mime == drive.FOLDER_MIME:
-            folders.append(f"📁 <a href={url}>{file["name"]}</a>")
+            folders.append(f"📁 <a href={url}>{file['name']}</a>")
         elif mime == drive.SHORTCUT_MIME:
             shortcut_details = file.get("shortcutDetails", {})
             target_id = shortcut_details.get("targetId")
             if target_id:
                 url = drive.URL_TEMPLATE.format(media_id=target_id)
-            shortcuts.append(f"🔗 <a href={url}>{file["name"]}</a>")
+            shortcuts.append(f"🔗 <a href={url}>{file['name']}</a>")
         else:
-            files.append(f"📄 <a href={url}>{file["name"]}</a>")
+            files.append(f"📄 <a href={url}>{file['name']}</a>")
 
     list_str = "Results:\n\n" + "\n".join(folders + shortcuts + files)
 

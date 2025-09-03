@@ -1,4 +1,4 @@
-﻿from base64 import b64decode
+from base64 import b64decode
 from io import BytesIO
 from os import environ
 
@@ -73,7 +73,7 @@ async def chat_gpt(bot: BOT, message: Message):
         .gpt [reply to a message]
     """
     if TEXT_CLIENT is None:
-        await message.reply(f"OpenAI Creds not set or are invalid.\nCheck Help.")
+        await message.reply("OpenAI Creds not set or are invalid.\nCheck Help.")
         return
 
     reply_text = message.replied.text if message.replied else ""
@@ -128,7 +128,7 @@ async def chat_gpt(bot: BOT, message: Message):
         .igen cats on moon
     """
     if DALL_E_CLIENT is None:
-        await message.reply(f"OpenAI Creds not set or are invalid.\nCheck Help.")
+        await message.reply("OpenAI Creds not set or are invalid.\nCheck Help.")
         return
 
     prompt = message.filtered_input.strip()

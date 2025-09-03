@@ -125,7 +125,6 @@ async def send_and_get_resp(
     response,
     reply_to_id: int | None = None,
 ) -> Message:
-
     response = Response(response)
 
     if text := response.text():

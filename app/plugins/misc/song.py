@@ -89,7 +89,7 @@ async def song_dl(bot: BOT, message: Message):
 
 async def get_download_info(query: str, path: Path) -> dict:
     download_cmd = (
-        f"yt-dlp -o '{path/'%(title)s.%(ext)s'}' "
+        f"yt-dlp -o '{path / '%(title)s.%(ext)s'}' "
         f"-f 'bestaudio' "
         f"--no-warnings "
         f"--ignore-errors "

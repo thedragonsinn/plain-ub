@@ -101,7 +101,6 @@ async def upload(bot: BOT, message: Message):
         return
 
     elif input.startswith("http") and not file_exists(input):
-
         try:
             async with Download(
                 url=input, dir=os.path.join("downloads", str(time.time())), message_to_edit=response
@@ -145,7 +144,6 @@ async def upload(bot: BOT, message: Message):
 
 
 async def bulk_upload(message: Message, response: Message):
-
     if "-r" in message.flags:
         path_regex = message.filtered_input
     else:
@@ -160,7 +158,6 @@ async def bulk_upload(message: Message, response: Message):
     await response.edit(f"Preparing to upload {len(file_list)} files.")
 
     for file in file_list:
-
         file_info = DownloadedFile(file=file)
 
         if size_over_limit(file_info.size, client=message._client):
@@ -176,7 +173,6 @@ async def bulk_upload(message: Message, response: Message):
 
 
 async def upload_to_tg(file: DownloadedFile, message: Message, response: Message):
-
     progress_args = (response, "Uploading...", file.path)
 
     if "-d" in message.flags:

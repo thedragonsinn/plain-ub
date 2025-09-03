@@ -168,14 +168,14 @@ async def sudo_list(bot: BOT, message: Message):
     total = 0
 
     async for user in SUDO_USERS.find():
-        output += f'\n<b>• {user["name"]}</b>'
+        output += f"\n<b>• {user['name']}</b>"
 
         if "-id" in message.flags:
-            output += f'\n  ID: <code>{user["_id"]}</code>'
+            output += f"\n  ID: <code>{user['_id']}</code>"
 
-        output += f'\n  Super: <b>{user.get("super", False)}</b>'
+        output += f"\n  Super: <b>{user.get('super', False)}</b>"
 
-        output += f'\n  Disabled: <b>{user.get("disabled", False)}</b>\n'
+        output += f"\n  Disabled: <b>{user.get('disabled', False)}</b>\n"
 
         total += 1
 
