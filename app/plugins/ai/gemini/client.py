@@ -4,9 +4,8 @@ import wave
 
 import numpy as np
 from google.genai.client import AsyncClient, Client
-from google.genai.types import Blob, GenerateContentResponse
+from google.genai.types import GenerateContentResponse
 from pyrogram.enums import ParseMode
-from ub_core.utils import MediaExts
 
 from app import CustomDB, extra_config
 

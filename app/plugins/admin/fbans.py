@@ -2,8 +2,6 @@ import asyncio
 import re
 
 from pyrogram import filters
-from pyrogram.enums import ChatType
-from pyrogram.errors import UserNotParticipant
 from pyrogram.types import Chat, User
 from ub_core.utils.helpers import get_name
 
