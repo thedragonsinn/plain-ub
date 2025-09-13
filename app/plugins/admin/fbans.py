@@ -270,7 +270,7 @@ async def _perform_fed_task(
         f"\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
     )
 
-    failed_str = "Placeholder"
+    failed_str = ""
     if failed:
         resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}"
         failed_str = "\n• " + "\n• ".join(failed)
@@ -286,7 +286,7 @@ async def _perform_fed_task(
     )
 
     await progress.edit(
-        text=resp_str.replace(failed_str, ""), del_in=5, block=True, disable_preview=True
+        text=resp_str.replace(failed_str, "", 1), del_in=5, block=True, disable_preview=True
     )
 
     if "-nrc" not in message.flags:
