@@ -270,8 +270,11 @@ async def _perform_fed_task(
         f"\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
     )
 
+    failed_str = "Placeholder"
     if failed:
-        resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}\n• " + "\n• ".join(failed)
+        resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}"
+        failed_str = "\n• " + "\n• ".join(failed)
+        resp_str += failed_str
     else:
         resp_str += f"\n<b>Status</b>: {task_type}ned in <b>{total}</b> feds."
 
@@ -282,7 +285,9 @@ async def _perform_fed_task(
         chat_id=extra_config.FBAN_LOG_CHANNEL, text=resp_str, disable_preview=True
     )
 
-    await progress.edit(text=resp_str, del_in=5, block=True, disable_preview=True)
+    await progress.edit(
+        text=resp_str.replace(failed_str, ""), del_in=5, block=True, disable_preview=True
+    )
 
     if "-nrc" not in message.flags:
         await handle_sudo_fban(command=command)
