@@ -87,12 +87,16 @@ async def demote_all(bot: BOT, message: Message):
     ):
         try:
             await bot.promote_chat_member(
-                chat_id=message.chat.id, user_id=member.user.id, privileges=DEMOTE_PRIVILEGES
+                chat_id=message.chat.id,
+                user_id=member.user.id,
+                privileges=DEMOTE_PRIVILEGES,
             )
         except FloodWait as f:
             await asyncio.sleep(f.value + 10)
             await bot.promote_chat_member(
-                chat_id=message.chat.id, user_id=member.user.id, privileges=DEMOTE_PRIVILEGES
+                chat_id=message.chat.id,
+                user_id=member.user.id,
+                privileges=DEMOTE_PRIVILEGES,
             )
         await asyncio.sleep(0.5)
         count += 1

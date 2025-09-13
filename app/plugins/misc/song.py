@@ -1,4 +1,3 @@
-import asyncio
 import json
 import shutil
 from pathlib import Path
@@ -111,7 +110,7 @@ async def get_download_info(query: str, path: Path) -> dict:
         serialised_json = json.loads(song_info)
         return serialised_json
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         shutil.rmtree(path=path, ignore_errors=True)
 
     except json.JSONDecodeError:

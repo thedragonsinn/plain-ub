@@ -25,7 +25,9 @@ async def save_sticker(file: Path | BytesIO) -> str:
     client = getattr(bot, "bot", bot)
 
     sent_file = await client.send_document(
-        chat_id=Config.LOG_CHAT, document=file, message_thread_id=Config.LOG_CHAT_THREAD_ID
+        chat_id=Config.LOG_CHAT,
+        document=file,
+        message_thread_id=Config.LOG_CHAT_THREAD_ID,
     )
 
     if isinstance(file, Path) and file.is_file():

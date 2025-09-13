@@ -25,6 +25,12 @@ async def delete_message(bot: BOT, message: Message) -> None:
 
 @BOT.add_cmd("del_uh")
 async def delete_user_history(bot: BOT, message: Message):
+    """
+    CMD: DELETE USER HISTORY 
+    INFO: Deletes all messages from a user in chat.
+    USAGE:
+        .del_uh [reply to user's message]
+    """
     if not (message.replied and message.chat.type in {ChatType.GROUP, ChatType.SUPERGROUP}):
         await message.reply("Reply to the user's message and use in a chat.")
         return

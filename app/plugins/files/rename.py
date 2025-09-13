@@ -36,7 +36,10 @@ async def rename(bot: BOT, message: Message):
     if message.replied:
         dl_obj: None = None
         download_coro = telegram_download(
-            message=message.replied, dir_name=dl_path, file_name=input, response=response
+            message=message.replied,
+            dir_name=dl_path,
+            file_name=input,
+            response=response,
         )
 
     else:

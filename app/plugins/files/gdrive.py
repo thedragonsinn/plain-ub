@@ -84,7 +84,10 @@ class Drive:
             info=cred_data["creds"], scopes=["https://www.googleapis.com/auth/drive"]
         )
         self.service = build(
-            serviceName="drive", version="v3", credentials=self.creds, cache_discovery=False
+            serviceName="drive",
+            version="v3",
+            credentials=self.creds,
+            cache_discovery=False,
         )
         self.files = self.service.files()
         self.is_authenticated = True
@@ -138,7 +141,10 @@ class Drive:
                 task.cancel()
 
     async def upload_from_telegram(
-        self, media_message: Message, message_to_edit: Message = None, folder_id: str = None
+        self,
+        media_message: Message,
+        message_to_edit: Message = None,
+        folder_id: str = None,
     ):
         try:
             file_id = await self._upload_from_telegram(media_message, message_to_edit, folder_id)
@@ -282,7 +288,10 @@ class Drive:
         return file_id
 
     async def _upload_from_telegram(
-        self, media_message: Message, message_to_edit: Message = None, folder_id: str = None
+        self,
+        media_message: Message,
+        message_to_edit: Message = None,
+        folder_id: str = None,
     ):
         media = get_tg_media_details(media_message)
 
@@ -295,7 +304,7 @@ class Drive:
         )
 
         start = 0
-        drive_location = await self.create_file(getattr(media, "file_name"), folder_id)
+        drive_location = await self.create_file(media.file_name, folder_id)
         file_id = None
         # noinspection PyTypeChecker
         async for chunk in message_to_edit._client.stream_media(message=media_message):
@@ -360,7 +369,9 @@ async def gdrive_creds_setup(bot: BOT, message: Message):
             f"Please go to this URL and authorize:\n{auth_url}\n\nReply to this message with the code within 30 seconds.",
         )
         code_message = await auth_message.get_response(
-            from_user=message.from_user.id, reply_to_message_id=auth_message.id, timeout=30
+            from_user=message.from_user.id,
+            reply_to_message_id=auth_message.id,
+            timeout=30,
         )
 
         await auth_message.delete()

@@ -208,7 +208,8 @@ async def kang_sticker(bot: BOT, message: Message):
         shutil.rmtree(kwargs["path"], ignore_errors=True)
 
     await response.edit(
-        text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>", disable_preview=True
+        text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>",
+        disable_preview=True,
     )
 
 

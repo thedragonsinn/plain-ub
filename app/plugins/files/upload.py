@@ -103,7 +103,9 @@ async def upload(bot: BOT, message: Message):
     elif input.startswith("http") and not file_exists(input):
         try:
             async with Download(
-                url=input, dir=os.path.join("downloads", str(time.time())), message_to_edit=response
+                url=input,
+                dir=os.path.join("downloads", str(time.time())),
+                message_to_edit=response,
             ) as dl_obj:
                 if size_over_limit(dl_obj.size, client=bot):
                     await response.edit("<b>Aborted</b>, File size exceeds TG Limits!!!")
@@ -177,7 +179,9 @@ async def upload_to_tg(file: DownloadedFile, message: Message, response: Message
 
     if "-d" in message.flags:
         upload_method = partial(
-            message._client.send_document, document=file.path, disable_content_type_detection=True
+            message._client.send_document,
+            document=file.path,
+            disable_content_type_detection=True,
         )
     else:
         upload_method: UPLOAD_TYPES = await FILE_TYPE_MAP[file.type](

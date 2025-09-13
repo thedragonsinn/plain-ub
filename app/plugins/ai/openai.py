@@ -98,7 +98,7 @@ async def chat_gpt(bot: BOT, message: Message):
 
 
 @BOT.add_cmd(cmd="igen")
-async def chat_gpt(bot: BOT, message: Message):
+async def dall_e(bot: BOT, message: Message):
     """
     CMD: IGEN
     INFO: Generate Images using Dall-E.
@@ -165,6 +165,8 @@ async def chat_gpt(bot: BOT, message: Message):
 
     await response.edit_media(
         InputMediaPhoto(
-            media=image_io, caption=f"**>\n{prompt}\n<**", has_spoiler="-s" in message.flags
+            media=image_io,
+            caption=f"**>\n{prompt}\n<**",
+            has_spoiler="-s" in message.flags,
         )
     )
