@@ -1,0 +1,1 @@
+from app.core.db.models.coin_flips_model import CoinFlips
