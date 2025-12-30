@@ -251,7 +251,7 @@ async def _perform_fed_task(
 
             replies_found = []
             
-            async for msg in bot.get_chat_history(chat_id=chat_id, limit=10):
+            async for msg in bot.get_chat_history(chat_id=chat_id, limit=30):
                 if msg.reply_to_message_id == cmd.id:
                     replies_found.append(msg)
 
