@@ -242,11 +242,29 @@ async def _perform_fed_task(
             cmd: Message = await bot.send_message(
                 chat_id=chat_id, text=command, disable_preview=True
             )
-            response: Message | None = await cmd.get_response(filters=task_filter, timeout=8)
-            if not response:
+
+            try:
+                await cmd.get_response(filters=task_filter, timeout=8)
+                await asyncio.sleep(2)
+            except asyncio.TimeoutError:
+                pass
+
+            replies_found = []
+            
+            async for msg in bot.get_chat_history(chat_id=chat_id, limit=10):
+                if msg.reply_to_message_id == cmd.id:
+                    replies_found.append(msg)
+
+            if not replies_found:
                 failed.append(fed["name"])
-            elif "Would you like to update this reason" in response.text:
-                await response.click("Update reason")
+            else:
+                for response in replies_found:
+                    if response.text and "Would you like to update this reason" in response.text:
+                        try:
+                            await response.click("Update reason")
+                            await asyncio.sleep(0.2)
+                        except Exception:
+                            pass
 
         except Exception as e:
             await bot.log_text(
