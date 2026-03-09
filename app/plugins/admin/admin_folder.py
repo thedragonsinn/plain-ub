@@ -5,9 +5,7 @@ from ub_core import BOT, Message, bot
 
 
 async def get_folder() -> raw.types.DialogFilter | int:
-    dialog_filters: raw.types.messages.DialogFilters = await bot.invoke(
-        raw.functions.messages.GetDialogFilters()
-    )
+    dialog_filters: raw.types.messages.DialogFilters = await bot.invoke(raw.functions.messages.GetDialogFilters())
     folder_ids = set()
 
     for filter in dialog_filters.filters:
@@ -168,9 +166,7 @@ async def create_admin_folder(bot: BOT, message: Message):
 
     await resp.edit("`Fetching Admin Chats and Channels...`")
     new = 0
-    async with bot.Convo(
-        chat_id=message.chat.id, client=bot, from_user=message.from_user.id
-    ) as convo:
+    async with bot.Convo(chat_id=message.chat.id, client=bot, from_user=message.from_user.id) as convo:
         async for d in get_dialogs():
             if not d.chat.admin_privileges or d.chat._raw.access_hash in existing_hashes:
                 continue
@@ -187,7 +183,7 @@ async def create_admin_folder(bot: BOT, message: Message):
                     confirmation = None
 
                 if confirmation != "y":
-                    await prompt.edit(text=prompt.text + "\n\n**Aborted.. continuing**")
+                    await prompt.edit(text=prompt.quoted_text + "\n\n**Aborted.. continuing**")
                     await sleep(2)
                     continue
 
@@ -207,7 +203,7 @@ async def create_admin_folder(bot: BOT, message: Message):
 @BOT.add_cmd("raf")
 async def refresh_admin_folder(bot: BOT, message: Message):
     """
-    INFO: Refresh Admins Folder.
+    INFO: Filters Non admin chats out of the folder.
     """
     folder = await get_folder()
 
@@ -220,9 +216,7 @@ async def refresh_admin_folder(bot: BOT, message: Message):
     chats = await bot.invoke(raw.functions.channels.GetChannels(id=folder.include_peers))
     to_delete_hash = [chat.access_hash for chat in chats.chats if not chat.admin_rights]
 
-    folder.include_peers = list(
-        filter(lambda x: x.access_hash not in to_delete_hash, folder.include_peers)
-    )
+    folder.include_peers = list(filter(lambda x: x.access_hash not in to_delete_hash, folder.include_peers))
 
     success = await update_folder(folder_id=folder.id, folder=folder)
     resp_text = f"Admin folder updated: {success}\nDeleted: {len(to_delete_hash)}"

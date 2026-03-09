@@ -49,15 +49,11 @@ async def promote_or_demote(bot: BOT, message: Message) -> None:
     response_text = f"{message.cmd.capitalize()}d: {user.mention}"
 
     try:
-        await bot.promote_chat_member(
-            chat_id=message.chat.id, user_id=user.id, privileges=final_privileges
-        )
+        await bot.promote_chat_member(chat_id=message.chat.id, user_id=user.id, privileges=final_privileges)
 
         if promote:
             await asyncio.sleep(1)
-            await bot.set_administrator_title(
-                chat_id=message.chat.id, user_id=user.id, title=title or "Admin"
-            )
+            await bot.set_administrator_title(chat_id=message.chat.id, user_id=user.id, title=title or "Admin")
 
             if title:
                 response_text += f"\nTitle: {title}"
@@ -82,9 +78,7 @@ async def demote_all(bot: BOT, message: Message):
     resp = await message.reply("Hang on demoting all Admins...")
     count = 0
 
-    async for member in bot.get_chat_members(
-        chat_id=message.chat.id, filter=ChatMembersFilter.ADMINISTRATORS
-    ):
+    async for member in bot.get_chat_members(chat_id=message.chat.id, filter=ChatMembersFilter.ADMINISTRATORS):
         try:
             await bot.promote_chat_member(
                 chat_id=message.chat.id,

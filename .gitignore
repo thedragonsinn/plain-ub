@@ -9,3 +9,4 @@ logs/
 .mypy_cache
 psutil
 app/temp
+usage_record.txt

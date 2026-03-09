@@ -36,9 +36,7 @@ async def delete_user_history(bot: BOT, message: Message):
         return
 
     user = message.replied.from_user
-    warning = await message.reply(
-        f"Delete all messages from {user.mention}?\nReply with `y` to continue."
-    )
+    warning = await message.reply(f"Delete all messages from {user.mention}?\nReply with `y` to continue.")
     text, _ = await warning.get_response(quote=True, lower=True)
     if text == "y":
         await bot.delete_user_history(chat_id=message.chat.id, user_id=user.id)
@@ -74,9 +72,7 @@ async def purge_(bot: BOT, message: Message) -> None:
         return
 
     if message.is_topic_message:
-        _generator = bot.get_discussion_replies(
-            chat_id=chat_id, message_id=message.message_thread_id
-        )
+        _generator = bot.get_discussion_replies(chat_id=chat_id, message_id=message.message_thread_id)
     else:
         _generator = bot.get_chat_history(
             chat_id=chat_id,

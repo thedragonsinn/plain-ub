@@ -50,21 +50,15 @@ class Drive:
     async def async_init(self):
         if self._aiohttp_session is None:
             self._aiohttp_session = aiohttp.ClientSession()
-            Config.EXIT_TASKS.append(self._aiohttp_session.close)
+            Config.TASK_MANAGER.add_exit(self._aiohttp_session.close)
         await self.set_creds()
 
     @property
     def creds(self):
-        if (
-            isinstance(self._creds, Credentials)
-            and self._creds.expired
-            and self._creds.refresh_token
-        ):
+        if isinstance(self._creds, Credentials) and self._creds.expired and self._creds.refresh_token:
             self._creds.refresh(Request())
             asyncio.run_coroutine_threadsafe(
-                coro=DB.add_data(
-                    {"_id": "drive_creds", "creds": json.loads(self._creds.to_json())}
-                ),
+                coro=DB.add_data({"_id": "drive_creds", "creds": json.loads(self._creds.to_json())}),
                 loop=bot.loop,
             )
             bot.log.info("Gdrive Creds Auto-Refreshed")
@@ -195,9 +189,7 @@ class Drive:
                 break
             else:
                 file_limit = limit - len(files)
-            result = self.files.list(
-                q=query, pageSize=file_limit, fields=fields, pageToken=next_token
-            ).execute()
+            result = self.files.list(q=query, pageSize=file_limit, fields=fields, pageToken=next_token).execute()
             files.extend(result.get("files", []))
 
         return files[0:limit]
@@ -217,7 +209,7 @@ class Drive:
             headers=headers,
         ) as resp:
             if resp.status != 200:
-                text = await resp.text()
+                text = await resp.quoted_text()
                 raise Exception(f"Initiate failed: {text}")
             return resp.headers["Location"]
 
@@ -231,7 +223,7 @@ class Drive:
                 file = await put.json()
                 return file["id"]
             else:
-                text = await put.text()
+                text = await put.quoted_text()
                 raise Exception(f"Chunk upload failed with {put.status}: {text}")
 
     async def _upload_from_url(
@@ -299,9 +291,7 @@ class Drive:
         store["size"] = getattr(media, "file_size", 0)
         store["done"] = False
         store["uploaded_size"] = 0
-        store["edit_task"] = asyncio.create_task(
-            self.progress_worker(store, message_to_edit), name="tg_drive_up_prog"
-        )
+        store["edit_task"] = asyncio.create_task(self.progress_worker(store, message_to_edit), name="tg_drive_up_prog")
 
         start = 0
         drive_location = await self.create_file(media.file_name, folder_id)
@@ -381,7 +371,7 @@ async def gdrive_creds_setup(bot: BOT, message: Message):
             return
 
         await code_message.delete()
-        flow.fetch_token(code=code_message.text)
+        flow.fetch_token(code=code_message.quoted_text)
         await DB.add_data({"_id": "drive_creds", "creds": json.loads(flow.credentials.to_json())})
         await drive.set_creds()
         await message.reply("Creds Saved!")
@@ -418,12 +408,10 @@ async def set_drive_creds(bot: BOT, message: Message):
 
 @BOT.add_cmd("rgcreds")
 async def remove_drive_creds(bot: BOT, message: Message):
-    response = await message.reply(
-        "Are you sure you want to delete drive creds?\nreply with y to continue"
-    )
+    response = await message.reply("Are you sure you want to delete drive creds?\nreply with y to continue")
 
     resp = await response.get_response(from_user=message.from_user.id)
-    if not (resp and resp.text in ("y", "Y")):
+    if not (resp and resp.quoted_text in ("y", "Y")):
         await response.edit("Aborted!!!")
         return
 

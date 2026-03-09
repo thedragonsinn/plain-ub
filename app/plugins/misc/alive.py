@@ -32,9 +32,7 @@ async def alive(bot: BOT, message: Message):
     """
     # Inline Alive if Dual Mode
     if bot.is_user and getattr(bot, "has_bot", False):
-        inline_result: BotResults = await bot.get_inline_bot_results(
-            bot=bot.bot.me.username, query="inline_alive"
-        )
+        inline_result: BotResults = await bot.get_inline_bot_results(bot=bot.bot.me.username, query="inline_alive")
         await bot.send_inline_bot_result(
             chat_id=message.chat.id,
             result_id=inline_result.results[0].id,
@@ -69,9 +67,7 @@ if _bot.is_bot:
         if get_type(url=extra_config.ALIVE_MEDIA) == MediaType.PHOTO:
             result_type = InlineQueryResultPhoto(photo_url=extra_config.ALIVE_MEDIA, **kwargs)
         else:
-            result_type = InlineQueryResultAnimation(
-                animation_url=extra_config.ALIVE_MEDIA, **kwargs
-            )
+            result_type = InlineQueryResultAnimation(animation_url=extra_config.ALIVE_MEDIA, **kwargs)
 
         await inline_query.answer(results=[result_type], cache_time=300)
 

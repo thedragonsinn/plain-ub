@@ -14,9 +14,7 @@ def run_with_timeout_guard(func):
                 await message.reply(error)
                 return
 
-            await bot.send_inline_bot_result(
-                chat_id=message.chat.id, query_id=query_id, result_id=result_id
-            )
+            await bot.send_inline_bot_result(chat_id=message.chat.id, query_id=query_id, result_id=result_id)
 
         except Exception as e:
             await message.reply(str(e), del_in=10)

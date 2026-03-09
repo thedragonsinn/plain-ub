@@ -25,9 +25,7 @@ async def get_sticker_set(limit: int, is_video=False) -> tuple[str, str, bool]:
         try:
             sticker = await bot.invoke(
                 raw.functions.messages.GetStickerSet(
-                    stickerset=raw.types.InputStickerSetShortName(
-                        short_name=f"{pack_name}{video}_{count}"
-                    ),
+                    stickerset=raw.types.InputStickerSetShortName(short_name=f"{pack_name}{video}_{count}"),
                     hash=0,
                 )
             )
@@ -40,9 +38,7 @@ async def get_sticker_set(limit: int, is_video=False) -> tuple[str, str, bool]:
     if cus_nick := os.environ.get("CUSTOM_PACK_NAME"):
         pack_title = cus_nick + video
     else:
-        pack_title = (
-            f"{bot.me.username or core_utils.get_name(bot.me)}'s {video}kang pack vol {count}"
-        )
+        pack_title = f"{bot.me.username or core_utils.get_name(bot.me)}'s {video}kang pack vol {count}"
     return pack_title, f"{pack_name}{video}_{count}", create_new
 
 
@@ -107,9 +103,9 @@ async def resize_video(input_file: str, output_file: str, duration: int, ff: boo
 
 async def document_kang(message: Message, ff: bool = False) -> dict:
     name, ext = os.path.splitext(message.document.file_name)
-    if ext.lower() in core_utils.MediaExts.PHOTO:
+    if ext.lower() in core_utils.MediaExtensions.PHOTO:
         return await photo_kang(message)
-    elif ext.lower() in {*core_utils.MediaExts.VIDEO, *core_utils.MediaExts.GIF}:
+    elif ext.lower() in {*core_utils.MediaExtensions.VIDEO, *core_utils.MediaExtensions.GIF}:
         return await video_kang(message=message, ff=ff)
 
 
@@ -148,9 +144,7 @@ async def create_n_kang(kwargs: dict, pack_title: str, pack_name: str, message: 
         else:
             await convo.send_document(document=kwargs["file"], get_response=True)
 
-        await convo.send_message(
-            text=kwargs.get("emoji") or random.choice(EMOJIS), get_response=True
-        )
+        await convo.send_message(text=kwargs.get("emoji") or random.choice(EMOJIS), get_response=True)
         await convo.send_message(text="/publish", get_response=True)
         await convo.send_message("/skip")
         await convo.send_message(pack_name, get_response=True)
@@ -178,14 +172,10 @@ async def kang_sticker(bot: BOT, message: Message):
 
     kwargs: dict = await media_func(message=replied, ff="-f" in message.flags)
 
-    pack_title, pack_name, create_new = await get_sticker_set(
-        limit=kwargs["limit"], is_video=kwargs["is_video"]
-    )
+    pack_title, pack_name, create_new = await get_sticker_set(limit=kwargs["limit"], is_video=kwargs["is_video"])
 
     if create_new:
-        await create_n_kang(
-            kwargs=kwargs, pack_title=pack_title, pack_name=pack_name, message=message
-        )
+        await create_n_kang(kwargs=kwargs, pack_title=pack_title, pack_name=pack_name, message=message)
         await response.edit(text=f"Kanged: <a href='t.me/addstickers/{pack_name}'>here</a>")
         return
 
@@ -199,9 +189,7 @@ async def kang_sticker(bot: BOT, message: Message):
         else:
             await convo.send_document(document=kwargs["file"], get_response=True)
 
-        await convo.send_message(
-            text=kwargs.get("emoji") or random.choice(EMOJIS), get_response=True
-        )
+        await convo.send_message(text=kwargs.get("emoji") or random.choice(EMOJIS), get_response=True)
         await convo.send_message(text="/done", get_response=True)
 
     if kwargs.get("path"):
