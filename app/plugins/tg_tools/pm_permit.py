@@ -8,16 +8,16 @@ from ub_core.utils.helpers import get_name
 from app import BOT, CustomDB, Message, bot, extra_config
 
 PM_USERS = CustomDB["PM_USERS"]
-PM_GUARD = CustomDB["COMMON_SETTINGS"]
+SETTINGS = CustomDB["COMMON_SETTINGS"]
 
-ALLOWED_USERS: list[int] = []
-RECENT_USERS: dict = defaultdict(int)
+ALLOWED_USERS: set[int] = set()
+RECENT_MESSAGE_COUNT: dict = defaultdict(int)
 
 
 async def init_task():
-    guard = (await PM_GUARD.find_one({"_id": "guard_switch"})) or {}
+    guard = (await SETTINGS.find_one({"_id": "guard_switch"})) or {}
     extra_config.PM_GUARD = guard.get("value", False)
-    [ALLOWED_USERS.append(user_id["_id"]) async for user_id in PM_USERS.find()]
+    [ALLOWED_USERS.add(user_id["_id"]) async for user_id in PM_USERS.find()]
 
 
 async def pm_permit_filter(_, __, message: Message):
@@ -48,33 +48,33 @@ PERMIT_FILTER = filters.create(pm_permit_filter)
 @bot.on_message(PERMIT_FILTER & filters.incoming, group=0)
 async def handle_new_pm(bot: BOT, message: Message):
     user_id = message.from_user.id
-    if RECENT_USERS[user_id] == 0:
+    if RECENT_MESSAGE_COUNT[user_id] == 0:
         await bot.log_text(
             text=f"#PMGUARD\n{message.from_user.mention} [{user_id}] has messaged you.",
             type="info",
         )
-    RECENT_USERS[user_id] += 1
+    RECENT_MESSAGE_COUNT[user_id] += 1
 
     if message.chat.is_support:
         return
 
-    if RECENT_USERS[user_id] >= 5:
+    if RECENT_MESSAGE_COUNT[user_id] >= 5:
         await message.reply("You've been blocked for spamming.")
         await bot.block_user(user_id)
-        RECENT_USERS.pop(user_id)
+        RECENT_MESSAGE_COUNT.pop(user_id)
         await bot.log_text(
             text=f"#PMGUARD\n{message.from_user.mention} [{user_id}] has been blocked for spamming.",
             type="info",
         )
         return
-    if RECENT_USERS[user_id] % 2:
+    if RECENT_MESSAGE_COUNT[user_id] % 2:
         await message.reply("You are not authorised to PM.")
 
 
 @bot.on_message(PERMIT_FILTER & filters.outgoing, group=2)
 async def auto_approve(bot: BOT, message: Message):
     message = Message(message=message)
-    ALLOWED_USERS.append(message.chat.id)
+    ALLOWED_USERS.add(message.chat.id)
     await asyncio.gather(
         PM_USERS.insert_one({"_id": message.chat.id}),
         message.reply(text="Auto-Approved to PM.", del_in=5),
@@ -96,7 +96,7 @@ async def pm_guard(bot: BOT, message: Message):
     value = not extra_config.PM_GUARD
     extra_config.PM_GUARD = value
     await asyncio.gather(
-        PM_GUARD.add_data({"_id": "guard_switch", "value": value}),
+        SETTINGS.add_data({"_id": "guard_switch", "value": value}),
         message.reply(text=f"PM Guard is enabled: <b>{value}</b>!", del_in=8),
     )
 
@@ -109,6 +109,7 @@ async def allow_pm(bot: BOT, message: Message):
     USAGE: .a|.allow [reply to a user or in pm]
     """
     user_id, name = get_userID_name(message)
+
     if not user_id:
         await message.reply(
             "Unable to extract User to allow.\n<code>Give user id | Reply to a user | use in PM.</code>"
@@ -117,8 +118,9 @@ async def allow_pm(bot: BOT, message: Message):
     if user_id in ALLOWED_USERS:
         await message.reply(f"{name} is already approved.")
         return
-    ALLOWED_USERS.append(user_id)
-    RECENT_USERS.pop(user_id, 0)
+
+    ALLOWED_USERS.add(user_id)
+    RECENT_MESSAGE_COUNT.pop(user_id, 0)
     await asyncio.gather(
         message.reply(text=f"{name} allowed to PM.", del_in=8),
         PM_USERS.insert_one({"_id": user_id}),
@@ -137,9 +139,11 @@ async def no_pm(bot: BOT, message: Message):
             "Unable to extract User to Dis-allow.\n<code>Give user id | Reply to a user | use in PM.</code>"
         )
         return
+
     if user_id not in ALLOWED_USERS:
         await message.reply(f"{name} is not approved to PM.")
         return
+
     ALLOWED_USERS.remove(user_id)
     await asyncio.gather(
         message.reply(text=f"{name} Dis-allowed to PM.", del_in=8),

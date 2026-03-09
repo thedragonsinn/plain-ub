@@ -7,7 +7,7 @@ async def init_task():
     async for sudo_cmd in DB.find():
         cmd_object = Config.CMD_DICT.get(sudo_cmd["_id"])
         if cmd_object:
-            cmd_object.loaded = True
+            cmd_object.loaded_for_sudo = True
 
 
 @BOT.add_cmd(cmd="addscmd", allow_sudo=False)
@@ -23,8 +23,8 @@ async def add_scmd(bot: BOT, message: Message):
         cmds = []
 
         for cmd_name, cmd_object in Config.CMD_DICT.items():
-            if cmd_object.sudo:
-                cmd_object.loaded = True
+            if cmd_object.allow_sudo:
+                cmd_object.loaded_for_sudo = True
                 cmds.append({"_id": cmd_name})
 
         await DB.drop()
@@ -42,11 +42,11 @@ async def add_scmd(bot: BOT, message: Message):
         await response.edit(text=f"<b>{cmd_name}</b> not a valid command.", del_in=10)
         return
 
-    elif not cmd_object.sudo:
+    elif not cmd_object.allow_sudo:
         await response.edit(text=f"<b>{cmd_name}</b> is disabled for sudo users.", del_in=10)
         return
 
-    elif cmd_object.loaded:
+    elif cmd_object.loaded_for_sudo:
         await response.edit(text=f"<b>{cmd_name}</b> already in Sudo!", del_in=10)
         return
 
@@ -57,9 +57,10 @@ async def add_scmd(bot: BOT, message: Message):
     else:
         await DB.add_data(data={"_id": cmd_name})
 
-    cmd_object.loaded = True
+    cmd_object.loaded_for_sudo = True
 
-    await (await response.edit(resp_str)).log()
+    await response.edit(resp_str)
+    await response.log()
 
 
 @BOT.add_cmd(cmd="delscmd", allow_sudo=False)
@@ -73,7 +74,7 @@ async def del_scmd(bot: BOT, message: Message):
     """
     if "-all" in message.flags:
         for cmd_object in Config.CMD_DICT.values():
-            cmd_object.loaded = False
+            cmd_object.loaded_for_sudo = False
 
         await DB.drop()
         await (await message.reply("All Commands Removed from Sudo!")).log()
@@ -87,11 +88,11 @@ async def del_scmd(bot: BOT, message: Message):
 
     response = await message.reply(f"Removing <b>{cmd_name}</b> from sudo....")
 
-    if not cmd_object.loaded:
+    if not cmd_object.loaded_for_sudo:
         await response.edit(f"<b>{cmd_name}</b> not in Sudo!")
         return
 
-    cmd_object.loaded = False
+    cmd_object.loaded_for_sudo = False
     resp_str = f"#SUDO\n<b>{cmd_name}</b> removed from Sudo!"
 
     if "-temp" in message.flags:
@@ -99,12 +100,13 @@ async def del_scmd(bot: BOT, message: Message):
     else:
         await DB.delete_data(cmd_name)
 
-    await (await response.edit(resp_str)).log()
+    await response.edit(resp_str)
+    await response.log()
 
 
 @BOT.add_cmd(cmd="vscmd")
 async def view_sudo_cmd(bot: BOT, message: Message):
-    cmds = [cmd_name for cmd_name, cmd_obj in Config.CMD_DICT.items() if cmd_obj.loaded]
+    cmds = [cmd_name for cmd_name, cmd_obj in Config.CMD_DICT.items() if cmd_obj.loaded_for_sudo]
 
     if not cmds:
         await message.reply("No Commands in SUDO!")

@@ -19,9 +19,7 @@ async def disable_su(bot: BOT, message: Message):
 
     await SUDO_USERS.add_data({"_id": u_id, "disabled": True})
 
-    await message.reply(
-        text="Your <b>SuperUser</b> Access is now <code>Disabled</code>.", del_in=10
-    )
+    await message.reply(text="Your <b>SuperUser</b> Access is now <code>Disabled</code>.", del_in=10)
 
 
 @bot.on_message(

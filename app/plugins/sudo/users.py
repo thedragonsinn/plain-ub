@@ -13,17 +13,17 @@ async def init_task():
 
     async for sudo_user in SUDO_USERS.find():
         config = Config.SUPERUSERS if sudo_user.get("super") else Config.SUDO_USERS
-        config.append(sudo_user["_id"])
+        config.add(sudo_user["_id"])
 
         if sudo_user.get("disabled"):
-            Config.DISABLED_SUPERUSERS.append(sudo_user["_id"])
+            Config.DISABLED_SUPERUSERS.add(sudo_user["_id"])
 
 
 @BOT.add_cmd(cmd="sudo", allow_sudo=False)
 async def sudo(bot: BOT, message: Message):
     """
     CMD: SUDO
-    INFO: Enable/Disable sudo..
+    INFO: Enable/Disable sudo.
     FLAGS: -c to check sudo status.
     USAGE:
         .sudo | .sudo -c
@@ -61,21 +61,20 @@ async def add_sudo(bot: BOT, message: Message) -> Message | None:
         return
 
     if "-su" in message.flags:
-        add_list, remove_list = Config.SUPERUSERS, Config.SUDO_USERS
+        set_to_add, set_to_remove = Config.SUPERUSERS, Config.SUDO_USERS
         text = "Super Users"
     else:
-        add_list, remove_list = Config.SUDO_USERS, Config.SUPERUSERS
+        set_to_add, set_to_remove = Config.SUDO_USERS, Config.SUPERUSERS
         text = "Sudo Users"
 
-    if user.id in add_list:
-        await response.edit(
-            text=f"{get_name(user)} already in Sudo with same privileges!", del_in=5
-        )
+    if user.id in set_to_add:
+        await response.edit(text=f"{get_name(user)} already in Sudo with same privileges!", del_in=5)
         return
 
     response_str = f"#SUDO\n{user.mention} added to {text} List."
 
-    add_and_remove(user.id, add_list, remove_list)
+    set_to_add.add(user.id)
+    set_to_remove.discard(user.id)
 
     if "-temp" not in message.flags:
         await SUDO_USERS.add_data(
@@ -128,10 +127,11 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
 
     if "-su" in message.flags:
         response_str = f"{user.mention}'s Super User access is revoked to Sudo only."
-        add_and_remove(user.id, Config.SUDO_USERS, Config.SUPERUSERS)
+        Config.SUDO_USERS.add(user.id)
+        Config.SUPERUSERS.discard(user.id)
     else:
-        add_and_remove(user.id, remove_list=Config.SUPERUSERS)
-        add_and_remove(user.id, remove_list=Config.SUDO_USERS)
+        Config.SUPERUSERS.discard(user.id)
+        Config.SUDO_USERS.discard(user.id)
         response_str = f"{user.mention}'s access to bot has been removed."
 
     if "-temp" not in message.flags:
@@ -145,14 +145,6 @@ async def remove_sudo(bot: BOT, message: Message) -> Message | None:
 
     await response.edit(text=response_str, del_in=5)
     await response.log()
-
-
-def add_and_remove(u_id: int, add_list: list | None = None, remove_list: list | None = None):
-    if add_list is not None and u_id not in add_list:
-        add_list.append(u_id)
-
-    if remove_list is not None and u_id in remove_list:
-        remove_list.remove(u_id)
 
 
 @BOT.add_cmd(cmd="vsudo")
