@@ -32,14 +32,36 @@ async def add_fed(bot: BOT, message: Message):
     """
     CMD: ADDF
     INFO: Add a Fed Chat to DB.
+    FLAGS:
+        -n: number of bots to fban in
     USAGE:
-        .addf | .addf NAME
+        .addf
+        ,addf -n 3
+        .addf NAME
     """
-    data = dict(name=message.input or message.chat.title, type=str(message.chat.type))
-    await FED_DB.add_data({"_id": message.chat.id, **data})
-    text = f"#FBANS\n<b>{data['name']}</b>: <code>{message.chat.id}</code> added to FED LIST."
-    await message.reply(text=text, del_in=5, block=True)
-    await bot.log_text(text=text, type="info")
+    data = dict(
+        name=message.input or message.chat.title,
+        type=str(message.chat.type),
+        total_bots=1,
+    )
+    if "-n" in message.flags:
+        try:
+            data["total_bots"] = int(message.get_flag_value("-n"))
+        except Exception as e:
+            await message.reply(f"Invalid input: {e}")
+            return
+
+    text = (
+        f"#FBANS"
+        f"\n<b>{data['name']}</b>: <code>{message.chat.id}</code> added to FED LIST."
+        f"\nTotal bots to wait for: {data['total_bots']}"
+    )
+
+    await asyncio.gather(
+        FED_DB.add_data({"_id": message.chat.id, **data}),
+        message.reply(text=text, del_in=5, block=True),
+        bot.log_text(text=text, type="info"),
+    )
 
 
 @bot.add_cmd(cmd="delf")
@@ -80,17 +102,25 @@ async def fed_list(bot: BOT, message: Message):
     """
     CMD: LISTF
     INFO: View Connected Feds.
-    FLAGS: -id to list Fed Chat IDs.
+    FLAGS:
+        -id:
+            to list Fed Chat IDs.
+        -n:
+            to list bot count
     USAGE: .listf | .listf -id
     """
-    output: str = ""
+    output_list: list[str] = []
+
     total = 0
 
     async for fed in FED_DB.find():
-        output += f"<b>• {fed['name']}</b>\n"
+        output_list.append(f"<b>• {fed['name']}</b>")
 
         if "-id" in message.flags:
-            output += f"  <code>{fed['_id']}</code>\n"
+            output_list.append(f"  <code>{fed['_id']}</code>")
+
+        if "-n" in message.flags:
+            output_list.append(f"  <code>{fed['total_bots']} </code>")
 
         total += 1
 
@@ -98,8 +128,9 @@ async def fed_list(bot: BOT, message: Message):
         await message.reply("You don't have any Feds Connected.")
         return
 
-    output: str = f"List of <b>{total}</b> Connected Feds:\n\n{output}"
-    await message.reply(output, del_in=30, block=True)
+    output_list.insert(0, f"List of <b>{total}</b> Connected Feds:\n\n")
+
+    await message.reply("\n".join(output_list), del_in=30, block=True)
 
 
 @bot.add_cmd(cmd=["fban", "fbanp"])
@@ -139,18 +170,12 @@ async def fed_ban(bot: BOT, message: Message):
 
     reason = f"{reason}{proof_str}"
 
-    if (
-        message.replied
-        and message.chat.admin_privileges
-        and message.chat.admin_privileges.can_restrict_members
-    ):
-        await message.replied.reply(
-            text=f"!dban {reason}", disable_preview=True, del_in=3, block=False
-        )
+    if message.replied and message.chat.admin_privileges and message.chat.admin_privileges.can_restrict_members:
+        await message.replied.reply(text=f"!dban {reason}", disable_preview=True, del_in=3, block=False)
         bot_resp = await message.get_response(
             filters=BASIC_FILTER & filters.regex(r"anonymous|Banned", re.IGNORECASE), timeout=5
         )
-        if bot_resp and "anonymous" in bot_resp.text.lower() and bot_resp.reply_markup:
+        if bot_resp and "anonymous" in bot_resp.quoted_text.lower() and bot_resp.reply_markup:
             await bot_resp.click(0)
 
     fban_cmd: str = f"/fban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"
@@ -232,29 +257,36 @@ async def _perform_fed_task(
     await progress.edit("❯❯")
 
     total: int = 0
-    failed: list[str] = []
+    failed_bans: list[str] = []
 
     async for fed in FED_DB.find():
         chat_id = int(fed["_id"])
         total += 1
-
+        fed_name = fed["name"]
         try:
-            cmd: Message = await bot.send_message(
-                chat_id=chat_id, text=command, disable_preview=True
-            )
-            response: Message | None = await cmd.get_response(filters=task_filter, timeout=8)
-            if not response:
-                failed.append(fed["name"])
-            elif "Would you like to update this reason" in response.text:
-                await response.click("Update reason")
+            async with bot.Convo(client=bot, chat_id=chat_id, timeout=8, filters=task_filter) as convo:
+                await convo.send_message(text=command, disable_preview=True)
+
+                coroutines = (convo.get_response() for _ in range(0, fed.get("total_bots", 1)))
+
+                bot_responses: tuple[Message | None] = await asyncio.gather(*coroutines, return_exceptions=True)
+
+                for msg in bot_responses:
+                    if isinstance(msg, Message):
+                        if "Would you like to update this reason" in msg.text:
+                            await msg.click("Update reason")
+
+                        continue
+
+                    if fed_name not in failed_bans:
+                        failed_bans.append(fed_name)
 
         except Exception as e:
             await bot.log_text(
-                text=f"An Error occured while banning in fed: {fed['name']} [{chat_id}]"
-                f"\nError: {e}",
+                text=f"An Error occurred while banning in fed: {fed_name} [{chat_id}]\nError: {e}",
                 type=task_type.upper(),
             )
-            failed.append(fed["name"])
+            failed_bans.append(fed_name)
             continue
 
         await asyncio.sleep(1)
@@ -263,43 +295,36 @@ async def _perform_fed_task(
         await progress.edit("You Don't have any feds connected!")
         return
 
-    resp_str = (
+    task_status = (
         f"❯❯❯ <b>{task_type}ned</b> {user_mention}"
         f"\n<b>ID</b>: {user_id}"
         f"\n<b>Reason</b>: {reason}"
         f"\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
+        f"\n<b>{task_type}ned</b in>: {len(failed_bans)} / {total}"
     )
 
-    failed_str = ""
-    if failed:
-        resp_str += f"\n<b>Failed</b> in: {len(failed)}/{total}"
-        failed_str = "\n• " + "\n• ".join(failed)
-        resp_str += failed_str
-    else:
-        resp_str += f"\n<b>Status</b>: {task_type}ned in <b>{total}</b> feds."
-
-    if not message.is_from_owner:
-        resp_str += f"\n\n<b>By</b>: {get_name(message.from_user)}"
+    failed = ("\n• " + "\n• ".join(failed_bans)) if failed_bans else ""
+    sudo = f"\n\n<b>By</b>: {get_name(message.from_user)}" if not message.is_from_owner else ""
 
     await bot.send_message(
-        chat_id=extra_config.FBAN_LOG_CHANNEL, text=resp_str, disable_preview=True
+        chat_id=extra_config.FBAN_LOG_CHANNEL,
+        text=task_status + failed + sudo,
+        disable_preview=True,
     )
 
-    await progress.edit(
-        text=resp_str.replace(failed_str, "", 1), del_in=5, block=True, disable_preview=True
-    )
+    await progress.edit(text=task_status + sudo, del_in=5, block=True, disable_preview=True)
 
     if "-nrc" not in message.flags:
         await handle_sudo_fban(command=command)
 
 
 async def handle_sudo_fban(command: str):
-    if not (extra_config.FBAN_SUDO_ID and extra_config.FBAN_SUDO_TRIGGER):
+    sudo_acc = extra_config.FBAN_SUDO_ID or extra_config.FBAN_SUDO_USERNAME
+
+    if not (sudo_acc and extra_config.FBAN_SUDO_TRIGGER):
         return
 
     sudo_cmd = command.replace("/", extra_config.FBAN_SUDO_TRIGGER, 1)
     head, body = sudo_cmd.split(" ", maxsplit=1)
     no_recurse_cmd = " ".join((head, "-nrc", body))
-    await bot.send_message(
-        chat_id=extra_config.FBAN_SUDO_ID, text=no_recurse_cmd, disable_preview=True
-    )
+    await bot.send_message(chat_id=sudo_acc, text=no_recurse_cmd, disable_preview=True)

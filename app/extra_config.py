@@ -16,9 +16,13 @@ FBAN_LOG_CHANNEL: int = int(getenv("FBAN_LOG_CHANNEL") or getenv("LOG_CHAT"))
 
 FBAN_SUDO_ID: int = int(getenv("FBAN_SUDO_ID", 0))
 
+FBAN_SUDO_USERNAME = getenv("FBAN_SUDO_USERNAME")
+
 FBAN_SUDO_TRIGGER: str = getenv("FBAN_SUDO_TRIGGER")
 
 GEMINI_API_KEY: str = getenv("GEMINI_API_KEY")
+
+INDEX_EXTRA_MODULES: int = int(getenv("INDEX_EXTRA_MODULES", 0))
 
 LOAD_HANDLERS: bool = True
 
