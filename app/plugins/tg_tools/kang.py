@@ -1,14 +1,13 @@
 import asyncio
 import os
 import random
-import shutil
 import time
 from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
 from pyrogram.enums import MessageMediaType
-from pyrogram.errors import StickersetInvalid
+from pyrogram.errors import StickerFileInvalid, StickersetInvalid
 from pyrogram.raw import functions
 from pyrogram.raw import types as raw_types
 from pyrogram.raw.base.messages import StickerSet as BaseStickerSet
@@ -28,10 +27,11 @@ async def save_sticker(file: Path | BytesIO) -> str:
         chat_id=Config.LOG_CHAT,
         document=file,
         message_thread_id=Config.LOG_CHAT_THREAD_ID,
+        disable_content_type_detection=True,
     )
 
     if isinstance(file, Path) and file.is_file():
-        shutil.rmtree(file.parent, ignore_errors=True)
+        file.parent.unlink(missing_ok=True)
 
     return sent_file.document.file_id
 
@@ -41,7 +41,7 @@ def resize_photo(input_file: BytesIO) -> BytesIO:
     maxsize = 512
     scale = maxsize / max(image.width, image.height)
     new_size = (int(image.width * scale), int(image.height * scale))
-    image = image.resize(new_size, Image.LANCZOS)
+    image = image.resize(new_size, Image.Resampling.LANCZOS)
     resized_photo = BytesIO()
     resized_photo.name = "sticker.png"
     image.save(resized_photo, format="PNG")
@@ -78,9 +78,7 @@ async def video_kang(message: Message, ff=False) -> tuple[str, None]:
     return await save_sticker(output_file), None
 
 
-async def resize_video(
-    input_file: Path | str, output_file: Path | str, duration: int, ff: bool = False
-):
+async def resize_video(input_file: Path | str, output_file: Path | str, duration: int, ff: bool = False):
     cmd = f"ffmpeg -hide_banner -loglevel error -i '{input_file}' -vf "
     if ff:
         cmd += '"scale=w=512:h=512:force_original_aspect_ratio=decrease,setpts=0.3*PTS" '
@@ -96,9 +94,9 @@ async def resize_video(
 
 async def document_kang(message: Message, ff: bool = False) -> tuple[str, None]:
     name, ext = os.path.splitext(core_utils.get_tg_media_details(message).file_name)
-    if ext.lower() in core_utils.MediaExts.PHOTO:
+    if ext.lower() in core_utils.MediaExtensions.PHOTO:
         return await photo_kang(message)
-    elif ext.lower() in {*core_utils.MediaExts.VIDEO, *core_utils.MediaExts.GIF}:
+    elif ext.lower() in {*core_utils.MediaExtensions.VIDEO, *core_utils.MediaExtensions.GIF}:
         return await video_kang(message=message, ff=ff)
 
 
@@ -106,7 +104,14 @@ async def sticker_kang(message: Message, **_) -> tuple[str, str]:
     sticker = message.sticker
     if sticker.is_animated:
         raise TypeError("Animated Stickers Not Supported.")
-    return sticker.file_id, sticker.emoji
+
+    # valid sticker
+    if sticker.set_name:
+        return sticker.file_id, sticker.emoji
+
+    # invalid sticker needs to be saved and added manually
+    file_id = await save_sticker(await message.download(in_memory=True))
+    return file_id, sticker.emoji
 
 
 MEDIA_TYPE_MAP = {
@@ -118,9 +123,7 @@ MEDIA_TYPE_MAP = {
 }
 
 
-async def get_sticker_set(
-    client: BOT, user: User
-) -> tuple[str, str, bool, raw_types.StickerSet | None]:
+async def get_sticker_set(client: BOT, user: User) -> tuple[str, str, bool, raw_types.StickerSet | None]:
     count = 0
     create_new = False
     suffix = f"_by_{client.me.username}" if client.is_bot else ""
@@ -151,39 +154,38 @@ async def get_sticker_set(
     return shortname, pack_title, create_new, sticker_set
 
 
-async def kang_sticker(
-    client: BOT, media_file_id: str, emoji: str = None, user: User = None
-) -> BaseStickerSet:
+async def kang_sticker(client: BOT, media_file_id: str, emoji: str = None, user: User = None) -> BaseStickerSet:
     shortname, pack_title, create_new, sticker_set = await get_sticker_set(client, user)
-
     file_id = FileId.decode(media_file_id)
-
-    document = raw_types.InputDocument(
-        access_hash=file_id.access_hash,
-        id=file_id.media_id,
-        file_reference=file_id.file_reference,
-    )
-
-    set_item = raw_types.InputStickerSetItem(
-        document=document, emoji=emoji or random.choice(EMOJIS)
-    )
-
-    if create_new:
-        query = functions.stickers.CreateStickerSet(
-            user_id=await bot.resolve_peer(peer_id=user.id),
-            short_name=shortname,
-            title=pack_title,
-            stickers=[set_item],
-        )
-    else:
-        query = functions.stickers.AddStickerToSet(
-            stickerset=raw_types.InputStickerSetID(
-                id=sticker_set.id, access_hash=sticker_set.access_hash
-            ),
-            sticker=set_item,
+    retry_count = 0
+    while retry_count < 2:
+        document = raw_types.InputDocument(
+            access_hash=file_id.access_hash,
+            id=file_id.media_id,
+            file_reference=file_id.file_reference,
         )
 
-    return await client.invoke(query)
+        set_item = raw_types.InputStickerSetItem(document=document, emoji=emoji or random.choice(EMOJIS))
+
+        if create_new:
+            query = functions.stickers.CreateStickerSet(
+                user_id=await bot.resolve_peer(peer_id=user.id),
+                short_name=shortname,
+                title=pack_title,
+                stickers=[set_item],
+            )
+        else:
+            query = functions.stickers.AddStickerToSet(
+                stickerset=raw_types.InputStickerSetID(id=sticker_set.id, access_hash=sticker_set.access_hash),
+                sticker=set_item,
+            )
+        try:
+            return await client.invoke(query)
+        except StickerFileInvalid:
+            sent_file_id = await save_sticker(await bot.download_media(file_id, in_memory=True))
+            file_id = FileId.decode(sent_file_id)
+            retry_count += 1
+            continue
 
 
 async def kang(bot: BOT, message: Message):
@@ -193,7 +195,7 @@ async def kang(bot: BOT, message: Message):
     FLAGS: -f to fastforward video tp fit 3 sec duration.
     USAGE: .kang | .kang -f
 
-    Diffrences to legacy version:
+    Differences to legacy version:
         • Is almost instantaneous because uses built-in methods.
         • Sudo users get their own packs.
         • If in dual mode pack ownership is given to respective Sudo users.
@@ -216,10 +218,13 @@ async def kang(bot: BOT, message: Message):
 
     file_id, emoji = await media_func(message=replied, ff="-f" in message.flags)
 
+    if message.filtered_input:
+        emoji = message.filtered_input
+
     try:
         stickers = await kang_sticker(bot, file_id, emoji, user=message.from_user)
         await response.edit(
-            f"Kanged: <a href='t.me/addstickers/{stickers.set.short_name}'>here</a>",
+            text=f"Kanged: <a href='t.me/addstickers/{stickers.set.short_name}'>here</a>",
             disable_preview=True,
         )
     except Exception as e:
