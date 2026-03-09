@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from collections import defaultdict
 
 from pyrogram import filters
@@ -6,22 +7,22 @@ from pyrogram.enums import ChatType, MessageEntityType, ParseMode
 from pyrogram.errors import MessageIdInvalid
 from ub_core.utils.helpers import get_name
 
-from app import BOT, Config, CustomDB, Message, bot, extra_config
+from app import BOT, LOGGER, CustomDB, Message, bot, extra_config
 
-LOGGER = CustomDB["COMMON_SETTINGS"]
+SETTINGS = CustomDB["COMMON_SETTINGS"]
 
+LAST_PM_ID: int = 0
 MESSAGE_CACHE: dict[int, list[Message]] = defaultdict(list)
 FLOOD_LIST: list[int] = []
 
 
 async def init_task():
-    tag_check = await LOGGER.find_one({"_id": "tag_logger_switch"})
-    pm_check = await LOGGER.find_one({"_id": "pm_logger_switch"})
+    tag_check = await SETTINGS.find_one({"_id": "tag_logger_switch"})
+    pm_check = await SETTINGS.find_one({"_id": "pm_logger_switch"})
     if tag_check:
         extra_config.TAG_LOGGER = tag_check["value"]
     if pm_check:
         extra_config.PM_LOGGER = pm_check["value"]
-    Config.BACKGROUND_TASKS.append(asyncio.create_task(runner(), name="pm_tag_logger"))
 
 
 @bot.add_cmd(cmd=["taglogger", "pmlogger"])
@@ -45,14 +46,10 @@ async def logger_switch(bot: BOT, message: Message):
     setattr(extra_config, conf_str, value)
 
     await asyncio.gather(
-        LOGGER.add_data({"_id": f"{text}_logger_switch", "value": value}),
+        SETTINGS.add_data({"_id": f"{text}_logger_switch", "value": value}),
         message.reply(text=f"{text.capitalize()} Logger is enabled: <b>{value}</b>!", del_in=8),
         bot.log_text(text=f"#{text.capitalize()}Logger is enabled: <b>{value}</b>!", type="info"),
     )
-
-    for task in Config.BACKGROUND_TASKS:
-        if task.get_name() == "pm_tag_logger" and task.done():
-            Config.BACKGROUND_TASKS.append(asyncio.create_task(runner(), name="pm_tag_logger"))
 
 
 BASIC_FILTERS = (
@@ -66,9 +63,7 @@ BASIC_FILTERS = (
 
 
 @bot.on_message(
-    filters=BASIC_FILTERS
-    & filters.private
-    & filters.create(lambda _, __, ___: extra_config.PM_LOGGER),
+    filters=BASIC_FILTERS & filters.private & filters.create(lambda _, __, ___: extra_config.PM_LOGGER),
 )
 async def pm_logger(bot: BOT, message: Message):
     cache_message(message)
@@ -121,44 +116,31 @@ def cache_message(message: Message):
     MESSAGE_CACHE[chat_id].append(message)
 
 
-async def runner():
+@BOT.register_worker(interval=5, name="pm-tag-worker")
+async def worker():
     if not (extra_config.TAG_LOGGER or extra_config.PM_LOGGER):
         return
-    last_pm_logged_id = 0
 
-    while True:
-        cached_keys = list(MESSAGE_CACHE.keys())
-        if not cached_keys:
-            await asyncio.sleep(5)
+    for key, val in MESSAGE_CACHE.copy().items():
+        if not val:
             continue
 
-        first_key = cached_keys[0]
-        cached_list = MESSAGE_CACHE.copy()[first_key]
-        if not cached_list:
-            MESSAGE_CACHE.pop(first_key)
-
-        for idx, msg in enumerate(cached_list):
+        for msg in val:
             if msg.chat.type == ChatType.PRIVATE:
-                if last_pm_logged_id != first_key:
-                    last_pm_logged_id = first_key
-                    log_info = True
-                else:
-                    log_info = False
-
-                coro = log_pm(message=msg, log_info=log_info)
-
+                global LAST_PM_ID
+                await log_pm(message=msg, log_info=LAST_PM_ID != key)
+                LAST_PM_ID = key
             else:
-                coro = log_chat(message=msg)
+                await log_chat(message=msg)
 
-            try:
-                await coro
-            except BaseException:
-                pass
-
-            MESSAGE_CACHE[first_key].remove(msg)
+            MESSAGE_CACHE[key].remove(msg)
             await asyncio.sleep(5)
 
         await asyncio.sleep(15)
+
+    new_data = {k: v for k, v in MESSAGE_CACHE.items() if v}
+    MESSAGE_CACHE.clear()
+    MESSAGE_CACHE.update(new_data)
 
 
 async def log_pm(message: Message, log_info: bool):
@@ -208,15 +190,24 @@ async def log_message(
     extra_info: str | None = None,
     thread_id: int = None,
 ):
+    schedule_date = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=10)
     try:
         logged_message: Message = await message.forward(
-            extra_config.MESSAGE_LOGGER_CHAT, message_thread_id=thread_id
+            extra_config.MESSAGE_LOGGER_CHAT,
+            message_thread_id=thread_id,
+            schedule_date=schedule_date,
         )
         if extra_info:
-            await logged_message.reply(extra_info, parse_mode=ParseMode.HTML)
+            await logged_message.reply(extra_info, parse_mode=ParseMode.HTML, schedule_date=schedule_date)
     except MessageIdInvalid:
+        schedule_date = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=10)
         logged_message = await message.copy(
-            extra_config.MESSAGE_LOGGER_CHAT, message_thread_id=thread_id
+            extra_config.MESSAGE_LOGGER_CHAT,
+            message_thread_id=thread_id,
+            schedule_date=schedule_date,
         )
         if notice:
-            await logged_message.reply(notice, parse_mode=ParseMode.HTML)
+            await logged_message.reply(notice, parse_mode=ParseMode.HTML, schedule_date=schedule_date)
+    except Exception as e:
+        LOGGER.error(f"Error logging message [{get_name(message.chat)} - {message.id}]: {e}")
+    return None
