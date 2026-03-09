@@ -175,7 +175,7 @@ async def fed_ban(bot: BOT, message: Message):
         bot_resp = await message.get_response(
             filters=BASIC_FILTER & filters.regex(r"anonymous|Banned", re.IGNORECASE), timeout=5
         )
-        if bot_resp and "anonymous" in bot_resp.quoted_text.lower() and bot_resp.reply_markup:
+        if bot_resp and "anonymous" in bot_resp.text.lower() and bot_resp.reply_markup:
             await bot_resp.click(0)
 
     fban_cmd: str = f"/fban <a href='tg://user?id={user_id}'>{user_id}</a> {reason}"

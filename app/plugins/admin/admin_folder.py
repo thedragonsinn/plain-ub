@@ -183,7 +183,7 @@ async def create_admin_folder(bot: BOT, message: Message):
                     confirmation = None
 
                 if confirmation != "y":
-                    await prompt.edit(text=prompt.quoted_text + "\n\n**Aborted.. continuing**")
+                    await prompt.edit(text=prompt.text + "\n\n**Aborted.. continuing**")
                     await sleep(2)
                     continue
 

@@ -209,7 +209,7 @@ class Drive:
             headers=headers,
         ) as resp:
             if resp.status != 200:
-                text = await resp.quoted_text()
+                text = await resp.text()
                 raise Exception(f"Initiate failed: {text}")
             return resp.headers["Location"]
 
@@ -223,7 +223,7 @@ class Drive:
                 file = await put.json()
                 return file["id"]
             else:
-                text = await put.quoted_text()
+                text = await put.text()
                 raise Exception(f"Chunk upload failed with {put.status}: {text}")
 
     async def _upload_from_url(
@@ -371,7 +371,7 @@ async def gdrive_creds_setup(bot: BOT, message: Message):
             return
 
         await code_message.delete()
-        flow.fetch_token(code=code_message.quoted_text)
+        flow.fetch_token(code=code_message.text)
         await DB.add_data({"_id": "drive_creds", "creds": json.loads(flow.credentials.to_json())})
         await drive.set_creds()
         await message.reply("Creds Saved!")
@@ -411,7 +411,7 @@ async def remove_drive_creds(bot: BOT, message: Message):
     response = await message.reply("Are you sure you want to delete drive creds?\nreply with y to continue")
 
     resp = await response.get_response(from_user=message.from_user.id)
-    if not (resp and resp.quoted_text in ("y", "Y")):
+    if not (resp and resp.text in ("y", "Y")):
         await response.edit("Aborted!!!")
         return
 
