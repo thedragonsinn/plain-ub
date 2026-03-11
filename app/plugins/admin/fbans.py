@@ -50,7 +50,7 @@ async def add_fed(bot: BOT, message: Message):
         if "-n" in message.flags:
             data["total_bots"] = int(message.get_flag_value("-n"))
         if "-name" in message.flags:
-            data["name"] = int(message.get_flag_value("-name"))
+            data["name"] = message.get_flag_value("-name")
     except Exception as e:
         await message.reply(f"Invalid input: {e}")
         return
