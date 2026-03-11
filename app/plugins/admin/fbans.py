@@ -34,22 +34,26 @@ async def add_fed(bot: BOT, message: Message):
     INFO: Add a Fed Chat to DB.
     FLAGS:
         -n: number of bots to fban in
+        -name: name to set in db
     USAGE:
         .addf
-        ,addf -n 3
-        .addf NAME
+        .addf -n 3 -name NAME
+        .addf -name NAME
     """
     data = dict(
         name=message.input or message.chat.title,
         type=str(message.chat.type),
         total_bots=1,
     )
-    if "-n" in message.flags:
-        try:
+
+    try:
+        if "-n" in message.flags:
             data["total_bots"] = int(message.get_flag_value("-n"))
-        except Exception as e:
-            await message.reply(f"Invalid input: {e}")
-            return
+        if "-name" in message.flags:
+            data["name"] = int(message.get_flag_value("-name"))
+    except Exception as e:
+        await message.reply(f"Invalid input: {e}")
+        return
 
     text = (
         f"#FBANS"
@@ -300,8 +304,12 @@ async def _perform_fed_task(
         f"\n<b>ID</b>: {user_id}"
         f"\n<b>Reason</b>: {reason}"
         f"\n<b>Initiated in</b>: {message.chat.title or 'PM'}"
-        f"\n<b>{task_type}ned</b in>: {len(failed_bans)} / {total}"
     )
+
+    if failed_bans:
+        task_status += f"\n<b>Failed</b in>: {len(failed_bans)} / {total}"
+    else:
+        task_status += f"\n<b>{task_type}ned</b in>: <b>{total}</b> feds"
 
     failed = ("\n• " + "\n• ".join(failed_bans)) if failed_bans else ""
     sudo = f"\n\n<b>By</b>: {get_name(message.from_user)}" if not message.is_from_owner else ""
