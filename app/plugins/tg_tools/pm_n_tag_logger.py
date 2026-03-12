@@ -210,4 +210,10 @@ async def log_message(
             await logged_message.reply(notice, parse_mode=ParseMode.HTML, schedule_date=schedule_date)
     except Exception as e:
         LOGGER.error(f"Error logging message [{get_name(message.chat)} - {message.id}]: {e}")
+        return
+
+    # wait till message is sent
+    wait_time = schedule_date - datetime.datetime.now(datetime.UTC)
+    await asyncio.sleep(wait_time.total_seconds())
+
     return None
