@@ -32,40 +32,48 @@ async def add_fed(bot: BOT, message: Message):
     """
     CMD: ADDF
     INFO: Add a Fed Chat to DB.
-    FLAGS:
-        -n: number of bots to fban in
-        -name: name to set in db
     USAGE:
-        .addf
-        .addf -n 3 -name NAME
-        .addf -name NAME
-    """
-    data = dict(
-        name=message.input or message.chat.title,
-        type=str(message.chat.type),
-        total_bots=1,
-    )
+        .addf | .addf NAME
 
-    try:
-        if "-n" in message.flags:
-            data["total_bots"] = int(message.get_flag_value("-n"))
-        if "-name" in message.flags:
-            data["name"] = message.get_flag_value("-name")
-    except Exception as e:
-        await message.reply(f"Invalid input: {e}")
-        return
+    NOTE: use .addfb after .addf to set number of bots to wait for
+    """
+    data = dict(name=message.input or message.chat.title, type=str(message.chat.type), total_bots=1)
 
     text = (
         f"#FBANS"
-        f"\n<b>{data['name']}</b>: <code>{message.chat.id}</code> added to FED LIST."
+        f"\n<b>{data['name']}</b> [<code>{message.chat.id}</code>] added to FED LIST."
         f"\nTotal bots to wait for: {data['total_bots']}"
     )
 
     await asyncio.gather(
         FED_DB.add_data({"_id": message.chat.id, **data}),
-        message.reply(text=text, del_in=5, block=True),
+        message.reply(text=text, del_in=5),
         bot.log_text(text=text, type="info"),
     )
+
+
+@BOT.add_cmd(cmd="addfb")
+async def set_bot_count(bot: BOT, message: Message):
+    """
+    CMD: ADD TOTAL FED BOTS
+    INFO: Add number of bots to wait for in a fed.
+    USAGE:
+        .addfb 3
+
+    NOTE: Make sure to run this after doing .addf
+    """
+    try:
+        count = int(message.input)
+        confirmation = (
+            f"#FBANS\n<b>{message.chat.title}</b> [<code>{message.chat.id}</code>] bot count updated to: <b>{count}</b>"
+        )
+        await asyncio.gather(
+            FED_DB.add_data({"_id": message.chat.id, "total_bots": count}),
+            message.reply(confirmation, del_in=5),
+            bot.log_text(confirmation, type="info"),
+        )
+    except Exception as e:
+        await message.reply(f"give a number: {e}")
 
 
 @bot.add_cmd(cmd="delf")
@@ -315,9 +323,7 @@ async def _perform_fed_task(
     sudo = f"\n\n<b>By</b>: {get_name(message.from_user)}" if not message.is_from_owner else ""
 
     await bot.send_message(
-        chat_id=extra_config.FBAN_LOG_CHANNEL,
-        text=task_status + failed + sudo,
-        disable_preview=True,
+        chat_id=extra_config.FBAN_LOG_CHANNEL, text=task_status + failed + sudo, disable_preview=True
     )
 
     await progress.edit(text=task_status + sudo, del_in=5, block=True, disable_preview=True)
