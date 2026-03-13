@@ -20,6 +20,7 @@ async def question(bot: BOT, message: Message):
             -m: male voice
             -f: female voice
         -sp: to create speech between two people
+        -wc: uploads ub repo and core and extra modules [ if set ] to ai for context
 
     USAGE:
         .ai what is the meaning of life.
@@ -34,6 +35,8 @@ async def question(bot: BOT, message: Message):
         .ai -sp TTS the following conversation between Joe and Jane:
             Joe: How's it going today Jane?
             Jane: Not too bad, how about you?
+
+        .ai -wc how does the -wc flag in .ai work, what are the potential usages?
     """
 
     reply = message.replied
