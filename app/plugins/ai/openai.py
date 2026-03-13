@@ -1,39 +1,35 @@
 from base64 import b64decode
 from io import BytesIO
-from os import environ
+from os import getenv
 
 import openai
 from pyrogram.enums import ParseMode
 from pyrogram.types import InputMediaPhoto
+from ub_core import BOT, Message, utils
 
-from app import BOT, Message
-from app.plugins.ai.gemini.config import SYSTEM_INSTRUCTION
+from app.plugins.ai.gemini.configs import SYSTEM_INSTRUCTION
 
-OPENAI_CLIENT = environ.get("OPENAI_CLIENT", "")
-OPENAI_MODEL = environ.get("OPENAI_MODEL", "gpt-4o")
+OPENAI_CLIENT = getenv("OPENAI_CLIENT", "")
+OPENAI_MODEL = getenv("OPENAI_MODEL", "gpt-4o")
 
 AI_CLIENT = getattr(openai, f"Async{OPENAI_CLIENT}OpenAI")
 
 if AI_CLIENT == openai.AsyncAzureOpenAI:
     text_init_kwargs = dict(
-        api_key=environ.get("AZURE_OPENAI_API_KEY"),
-        api_version=environ.get("OPENAI_API_VERSION"),
-        azure_endpoint=environ.get("AZURE_OPENAI_ENDPOINT"),
-        azure_deployment=environ.get("AZURE_DEPLOYMENT"),
+        api_key=getenv("AZURE_OPENAI_API_KEY"),
+        api_version=getenv("OPENAI_API_VERSION"),
+        azure_endpoint=getenv("AZURE_OPENAI_ENDPOINT"),
+        azure_deployment=getenv("AZURE_DEPLOYMENT"),
     )
     image_init_kwargs = dict(
-        api_key=environ.get("DALL_E_API_KEY"),
-        api_version=environ.get("DALL_E_API_VERSION"),
-        azure_endpoint=environ.get("DALL_E_ENDPOINT"),
-        azure_deployment=environ.get("DALL_E_DEPLOYMENT"),
+        api_key=getenv("DALL_E_API_KEY"),
+        api_version=getenv("DALL_E_API_VERSION"),
+        azure_endpoint=getenv("DALL_E_ENDPOINT"),
+        azure_deployment=getenv("DALL_E_DEPLOYMENT"),
     )
 else:
-    text_init_kwargs = dict(
-        api_key=environ.get("OPENAI_API_KEY"), base_url=environ.get("OPENAI_BASE_URL")
-    )
-    image_init_kwargs = dict(
-        api_key=environ.get("DALL_E_API_KEY"), base_url=environ.get("DALL_E_ENDPOINT")
-    )
+    text_init_kwargs = dict(api_key=getenv("OPENAI_API_KEY"), base_url=getenv("OPENAI_BASE_URL"))
+    image_init_kwargs = dict(api_key=getenv("DALL_E_API_KEY"), base_url=getenv("DALL_E_ENDPOINT"))
 
 try:
     TEXT_CLIENT = AI_CLIENT(**text_init_kwargs)
@@ -85,16 +81,14 @@ async def chat_gpt(bot: BOT, message: Message):
         return
 
     chat_completion = await TEXT_CLIENT.chat.completions.create(
-        messages=[
-            {"role": "system", "content": SYSTEM_INSTRUCTION},
-            {"role": "user", "content": prompt},
-        ],
+        messages=[{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": prompt}],
         model=OPENAI_MODEL,
     )
 
     response = chat_completion.choices[0].message.content
-
-    await message.reply(text=f"**>\n••> {prompt}<**\n" + response, parse_mode=ParseMode.MARKDOWN)
+    quoted_prompt = utils.wrap_in_block_quote(prompt, "**>", "<**")
+    quoted_response = utils.wrap_in_block_quote(response, "**>", "<**")
+    await message.reply(text="\n".join((quoted_prompt, quoted_response)), parse_mode=ParseMode.MARKDOWN)
 
 
 @BOT.add_cmd(cmd="igen")
@@ -165,8 +159,6 @@ async def dall_e(bot: BOT, message: Message):
 
     await response.edit_media(
         InputMediaPhoto(
-            media=image_io,
-            caption=f"**>\n{prompt}\n<**",
-            has_spoiler="-s" in message.flags,
+            media=image_io, caption=utils.wrap_in_block_quote(prompt, "**>", "<**"), has_spoiler="-s" in message.flags
         )
     )

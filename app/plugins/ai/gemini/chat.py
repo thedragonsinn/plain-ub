@@ -1,11 +1,11 @@
 import pickle
-from io import BytesIO
 
 from google.genai.chats import AsyncChat
 from pyrogram.enums import ChatType, ParseMode
+from ub_core import BOT, Convo, Message, bot
 
-from app import BOT, Convo, Message, bot
-from app.plugins.ai.gemini import AIConfig, Response, async_client
+from app.plugins.ai.gemini import Response, async_client, export_history, get_model_config
+from app.plugins.ai.gemini.code import create_plugin
 from app.plugins.ai.gemini.utils import create_prompts, run_basic_check
 
 
@@ -16,18 +16,18 @@ async def ai_chat(bot: BOT, message: Message):
     CMD: AICHAT
     INFO: Have a Conversation with Gemini AI.
     FLAGS:
-        "-s": use search
-        "-i": use image gen/edit mode
+        -s: use search
+        -i: use image gen/edit mode
         -a: audio output
         -sp: multi speaker output
     USAGE:
         .aic hello
         keep replying to AI responses with text | media [no need to reply in DM]
-        After 5 mins of Idle bot will export history and stop chat.
+        After 5 minutes of Idle bot will export history and stop chat.
         use .load_history to continue
 
     """
-    chat = async_client.chats.create(**AIConfig.get_kwargs(message.flags))
+    chat = async_client.chats.create(**get_model_config(message.flags))
     await do_convo(chat=chat, message=message)
 
 
@@ -45,9 +45,11 @@ async def history_chat(bot: BOT, message: Message):
     if not message.input:
         await message.reply(f"Ask a question along with {message.trigger}{message.cmd}")
         return
+    expected_name = "AI_Chat_History.pkl"
 
     try:
-        assert reply.document.file_name == "AI_Chat_History.pkl"
+        file_name = reply.document.file_name
+        assert file_name == expected_name or file_name.endswith("chat_history.pkl")
     except (AssertionError, AttributeError):
         await message.reply("Reply to a Valid History file.")
         return
@@ -56,12 +58,15 @@ async def history_chat(bot: BOT, message: Message):
 
     doc = await reply.download(in_memory=True)
     doc.seek(0)
-    pickle.load(doc)
+    history = pickle.load(doc)
 
     await resp.edit("__History Loaded... Resuming chat__")
 
-    chat = async_client.chats.create(**AIConfig.get_kwargs(message.flags))
-    await do_convo(chat=chat, message=message)
+    if file_name == expected_name:
+        chat = async_client.chats.create(**get_model_config(message.flags), history=history)
+        await do_convo(chat=chat, message=message)
+    else:
+        await create_plugin(bot, message, history)
 
 
 CONVO_CACHE: dict[str, Convo] = {}
@@ -99,17 +104,13 @@ async def do_convo(chat: AsyncChat, message: Message):
             while True:
                 ai_response = await chat.send_message(prompt)
                 prompt_message = await send_and_get_resp(
-                    convo_obj=conversation_object,
-                    response=ai_response,
-                    reply_to_id=reply_to_id,
+                    convo_obj=conversation_object, response=ai_response, reply_to_id=reply_to_id
                 )
 
                 try:
                     prompt = await create_prompts(prompt_message, is_chat=True, check_size=False)
                 except Exception as e:
-                    prompt_message = await send_and_get_resp(
-                        conversation_object, str(e), reply_to_id=reply_to_id
-                    )
+                    prompt_message = await send_and_get_resp(conversation_object, str(e), reply_to_id=reply_to_id)
                     prompt = await create_prompts(prompt_message, is_chat=True, check_size=False)
 
                 reply_to_id = prompt_message.id
@@ -120,19 +121,12 @@ async def do_convo(chat: AsyncChat, message: Message):
         CONVO_CACHE.pop(message.unique_chat_user_id, 0)
 
 
-async def send_and_get_resp(
-    convo_obj: Convo,
-    response,
-    reply_to_id: int | None = None,
-) -> Message:
+async def send_and_get_resp(convo_obj: Convo, response, reply_to_id: int | None = None) -> Message:
     response = Response(response)
 
-    if text := response.text():
+    if text := response.quoted_text():
         await convo_obj.send_message(
-            text=f"**>\n•><**\n{text}",
-            reply_to_id=reply_to_id,
-            parse_mode=ParseMode.MARKDOWN,
-            disable_preview=True,
+            text=f"**>•><**\n{text}", reply_to_id=reply_to_id, parse_mode=ParseMode.MARKDOWN, disable_preview=True
         )
 
     if response.image:
@@ -147,10 +141,3 @@ async def send_and_get_resp(
         )
 
     return await convo_obj.get_response()
-
-
-async def export_history(chat: AsyncChat, message: Message):
-    doc = BytesIO(pickle.dumps(chat._curated_history))
-    doc.name = "AI_Chat_History.pkl"
-    caption = Response(await chat.send_message("Summarize our Conversation into one line.")).text()
-    await bot.send_document(chat_id=message.from_user.id, document=doc, caption=caption)
