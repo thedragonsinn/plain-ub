@@ -1,6 +1,7 @@
 import asyncio
 import os
 import random
+import shutil
 import time
 from io import BytesIO
 from pathlib import Path
@@ -31,7 +32,7 @@ async def save_sticker(file: Path | BytesIO) -> str:
     )
 
     if isinstance(file, Path) and file.is_file():
-        file.parent.unlink(missing_ok=True)
+        shutil.rmtree(file, ignore_errors=True)
 
     return sent_file.document.file_id
 
@@ -133,8 +134,7 @@ async def get_sticker_set(client: BOT, user: User) -> tuple[str, str, bool, raw_
         try:
             sticker_set: BaseStickerSet = await client.invoke(
                 functions.messages.GetStickerSet(
-                    stickerset=raw_types.InputStickerSetShortName(short_name=shortname),
-                    hash=0,
+                    stickerset=raw_types.InputStickerSetShortName(short_name=shortname), hash=0
                 )
             )
             sticker_set = sticker_set.set
@@ -160,9 +160,7 @@ async def kang_sticker(client: BOT, media_file_id: str, emoji: str = None, user:
     retry_count = 0
     while retry_count < 2:
         document = raw_types.InputDocument(
-            access_hash=file_id.access_hash,
-            id=file_id.media_id,
-            file_reference=file_id.file_reference,
+            access_hash=file_id.access_hash, id=file_id.media_id, file_reference=file_id.file_reference
         )
 
         set_item = raw_types.InputStickerSetItem(document=document, emoji=emoji or random.choice(EMOJIS))
@@ -224,8 +222,7 @@ async def kang(bot: BOT, message: Message):
     try:
         stickers = await kang_sticker(bot, file_id, emoji, user=message.from_user)
         await response.edit(
-            text=f"Kanged: <a href='t.me/addstickers/{stickers.set.short_name}'>here</a>",
-            disable_preview=True,
+            text=f"Kanged: <a href='t.me/addstickers/{stickers.set.short_name}'>here</a>", disable_preview=True
         )
     except Exception as e:
         await response.edit(str(e))
