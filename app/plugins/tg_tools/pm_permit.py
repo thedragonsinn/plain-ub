@@ -17,6 +17,8 @@ RECENT_MESSAGE_COUNT: dict = defaultdict(int)
 async def init_task():
     guard = (await SETTINGS.find_one({"_id": "guard_switch"})) or {}
     extra_config.PM_GUARD = guard.get("value", False)
+    guard_text = (await SETTINGS.find_one({"_id": "guard_text"})) or {}
+    extra_config.PM_GUARD_TEXT = guard_text.get("value1", "You are not authorised to PM.")
     [ALLOWED_USERS.add(user_id["_id"]) async for user_id in PM_USERS.find()]
 
 
@@ -68,7 +70,7 @@ async def handle_new_pm(bot: BOT, message: Message):
         )
         return
     if RECENT_MESSAGE_COUNT[user_id] % 2:
-        await message.reply("You are not authorised to PM.")
+        await message.reply(text=f"{extra_config.PM_GUARD_TEXT}")
 
 
 @bot.on_message(PERMIT_FILTER & filters.outgoing, group=2)
@@ -98,6 +100,25 @@ async def pm_guard(bot: BOT, message: Message):
     await asyncio.gather(
         SETTINGS.add_data({"_id": "guard_switch", "value": value}),
         message.reply(text=f"PM Guard is enabled: <b>{value}</b>!", del_in=8),
+    )
+
+@bot.add_cmd(cmd="pmsg")
+async def pmsg(bot: BOT, message: Message):
+    """
+    CMD: PMSG
+    INFO: Show/Change PM GUARD MESSAGE.
+    USAGE:
+        .pmsg | .pmsg New Message
+    """
+    SET_REPLY = message.input.strip()
+
+    if not SET_REPLY:
+        await message.reply(text=f"PM Guard text: <b>{extra_config.PM_GUARD_TEXT}</b>!", del_in=8)
+        return
+    extra_config.PM_GUARD_TEXT = SET_REPLY
+    await asyncio.gather(
+        SETTINGS.add_data({"_id": "guard_text", "value1": SET_REPLY}),
+        message.reply(text=f"PM Guard text: <b>{SET_REPLY}</b>!", del_in=8),
     )
 
 
