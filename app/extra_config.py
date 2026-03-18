@@ -32,11 +32,11 @@ PM_GUARD: bool = False
 
 PM_LOGGER: bool = False
 
-PM_LOGGER_THREAD_ID: int = int(getenv("PM_LOGGER_THREAD_ID", 0)) or None
+PM_LOGGER_THREAD_ID: int = int(getenv("PM_LOGGER_THREAD_ID") or getenv("LOG_CHAT_THREAD_ID") or 0) or None
 
 TAG_LOGGER: bool = False
 
-TAG_LOGGER_THREAD_ID: int = int(getenv("TAG_LOGGER_THREAD_ID", 0)) or None
+TAG_LOGGER_THREAD_ID: int = int(getenv("TAG_LOGGER_THREAD_ID") or getenv("LOG_CHAT_THREAD_ID") or 0) or None
 
 UPSTREAM_REPO: str = getenv("UPSTREAM_REPO", "https://github.com/thedragonsinn/plain-ub")
 
