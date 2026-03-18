@@ -1,12 +1,11 @@
 import asyncio
 import io
-import os
 import pathlib
 
 import pyrogram
 from google.genai.types import File, Part
 from ub_core import BOT, LOGGER, Message, ub_core_dirname
-from ub_core.utils import MediaExtensions
+from ub_core.utils import MediaExtensions, bytes_to_mb
 
 from app import extra_config
 from app.plugins.ai.gemini import (
@@ -19,7 +18,7 @@ from app.plugins.ai.gemini import (
     utils,
 )
 
-PYRO_PATH = pathlib.Path(os.path.dirname(pyrogram.__file__)).resolve()
+PYRO_PATH = pathlib.Path(pyrogram.__file__).parent.resolve()
 
 CODEBASE_PATHS = [pathlib.Path(ub_core_dirname).resolve(), pathlib.Path("app").resolve()]
 EXTRA_MODULES = pathlib.Path("app/modules").resolve()
@@ -105,7 +104,11 @@ async def upload_codebase(refresh: bool = False) -> File:
     global CODEBASE_INDEX_FILE
 
     if CODEBASE_INDEX_FILE and not refresh:
-        return CODEBASE_INDEX_FILE
+        try:
+            await async_client.files.get(name=CODEBASE_INDEX_FILE.name)
+            return CODEBASE_INDEX_FILE
+        except Exception as e:
+            LOGGER.error(f"Error accessing uploaded codebase file: {e}\nAuto Refreshing...")
 
     codebase_parts = []
 
@@ -136,8 +139,20 @@ async def upload_codebase(refresh: bool = False) -> File:
 
     CODEBASE_INDEX_FILE = await utils.upload_file(codebase, codebase.name)
 
-    LOGGER.info(f"Codebase indexed successfully: {len(joined_codebase)}")
+    LOGGER.info(
+        f"Codebase indexed successfully: [{bytes_to_mb(len(codebase.getvalue()))} MBs] [{len(joined_codebase)} chars]"
+    )
     return CODEBASE_INDEX_FILE
+
+
+@BOT.add_cmd("acr")
+async def refresh_codebase(bot: BOT, message: Message):
+    """
+    CMD: AI CODEBASE REFRESH
+    INFO: re-builds and re-uploads codebase
+    """
+    await upload_codebase(refresh=True)
+    await message.reply("Codebase refreshed...")
 
 
 @BOT.add_cmd("acode")
