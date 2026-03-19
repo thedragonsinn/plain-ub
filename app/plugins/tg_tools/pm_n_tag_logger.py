@@ -42,7 +42,7 @@ async def log_filter(_, bot: BOT, message: Message) -> bool:
     if chat.id == bot.me.id:
         return False
     # skip bot messages
-    if message.from_user.is_bot:
+    if message.from_user and message.from_user.is_bot:
         return False
     # skip your own messages
     if message.from_user and (message.from_user.is_self or message.outgoing):
@@ -160,6 +160,7 @@ async def log_message(message: Message) -> None:
     await asyncio.sleep(1)
     sent_message = await message.copy(chat_id=extra_config.MESSAGE_LOGGER_CHAT, message_thread_id=thread_id)
     await sent_message.reply("This message was deleted by sender.")
+
 
 @bot.add_cmd(cmd=["taglogger", "pmlogger"])
 async def logger_switch(bot: BOT, message: Message):
