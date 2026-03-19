@@ -10,14 +10,31 @@ from app import BOT, CustomDB, Message, bot, extra_config
 PM_USERS = CustomDB["PM_USERS"]
 SETTINGS = CustomDB["COMMON_SETTINGS"]
 
+SETTING_KEY = "pm_permit_info"
+OLD_KEY = "guard_switch"
+
 ALLOWED_USERS: set[int] = set()
 RECENT_MESSAGE_COUNT: dict = defaultdict(int)
 
 
 async def init_task():
-    guard = (await SETTINGS.find_one({"_id": "guard_switch"})) or {}
+    await migrate_keys()
+    guard = (await SETTINGS.find_one({"_id": SETTING_KEY})) or {}
     extra_config.PM_GUARD = guard.get("value", False)
+    extra_config.PM_GUARD_TEXT = guard.get("warn_message", "You are not authorised to PM.")
+
     [ALLOWED_USERS.add(user_id["_id"]) async for user_id in PM_USERS.find()]
+
+
+async def migrate_keys():
+    guard = await SETTINGS.find_one({"_id": OLD_KEY})
+
+    if not guard:
+        return
+
+    guard["_id"] = SETTING_KEY
+    await SETTINGS.add_data(guard)
+    await SETTINGS.delete_data({"_id": OLD_KEY})
 
 
 async def pm_permit_filter(_, __, message: Message):
@@ -68,7 +85,7 @@ async def handle_new_pm(bot: BOT, message: Message):
         )
         return
     if RECENT_MESSAGE_COUNT[user_id] % 2:
-        await message.reply("You are not authorised to PM.")
+        await message.reply(text=f"{extra_config.PM_GUARD_TEXT}")
 
 
 @bot.on_message(PERMIT_FILTER & filters.outgoing, group=2)
@@ -93,11 +110,35 @@ async def pm_guard(bot: BOT, message: Message):
     if "-c" in message.flags:
         await message.reply(text=f"PM Guard is enabled: <b>{extra_config.PM_GUARD}</b>", del_in=8)
         return
+
     value = not extra_config.PM_GUARD
     extra_config.PM_GUARD = value
+
     await asyncio.gather(
-        SETTINGS.add_data({"_id": "guard_switch", "value": value}),
+        SETTINGS.add_data({"_id": SETTING_KEY, "value": value}),
         message.reply(text=f"PM Guard is enabled: <b>{value}</b>!", del_in=8),
+    )
+
+
+@bot.add_cmd(cmd="pmsg")
+async def pmsg(bot: BOT, message: Message):
+    """
+    CMD: PMSG
+    INFO: Show/Change PM GUARD MESSAGE.
+    USAGE:
+        .pmsg | .pmsg New Message
+    """
+    warn_message = message.input.strip()
+
+    if not warn_message:
+        await message.reply(text=f"PM Guard text: <b>{extra_config.PM_GUARD_TEXT}</b>!", del_in=8)
+        return
+
+    extra_config.PM_GUARD_TEXT = warn_message
+
+    await asyncio.gather(
+        SETTINGS.add_data({"_id": SETTING_KEY, "warn_message": warn_message}),
+        message.reply(text=f"PM Guard text: <b>{warn_message}</b>!", del_in=8),
     )
 
 

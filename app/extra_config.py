@@ -30,6 +30,8 @@ MESSAGE_LOGGER_CHAT: int = int(getenv("MESSAGE_LOGGER_CHAT") or getenv("LOG_CHAT
 
 PM_GUARD: bool = False
 
+PM_GUARD_TEXT: str = "You are not authorised to PM."
+
 PM_LOGGER: bool = False
 
 PM_LOGGER_THREAD_ID: int = int(getenv("PM_LOGGER_THREAD_ID") or getenv("LOG_CHAT_THREAD_ID") or 0) or None
