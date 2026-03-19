@@ -10,16 +10,31 @@ from app import BOT, CustomDB, Message, bot, extra_config
 PM_USERS = CustomDB["PM_USERS"]
 SETTINGS = CustomDB["COMMON_SETTINGS"]
 
+SETTING_KEY = "pm_permit_info"
+OLD_KEY = "guard_switch"
+
 ALLOWED_USERS: set[int] = set()
 RECENT_MESSAGE_COUNT: dict = defaultdict(int)
 
 
 async def init_task():
-    guard = (await SETTINGS.find_one({"_id": "guard_switch"})) or {}
+    await migrate_keys()
+    guard = (await SETTINGS.find_one({"_id": SETTING_KEY})) or {}
     extra_config.PM_GUARD = guard.get("value", False)
-    guard_text = (await SETTINGS.find_one({"_id": "guard_text"})) or {}
-    extra_config.PM_GUARD_TEXT = guard_text.get("value1", "You are not authorised to PM.")
+    extra_config.PM_GUARD_TEXT = guard.get("warn_message", "You are not authorised to PM.")
+
     [ALLOWED_USERS.add(user_id["_id"]) async for user_id in PM_USERS.find()]
+
+
+async def migrate_keys():
+    guard = await SETTINGS.find_one({"_id": OLD_KEY})
+
+    if not guard:
+        return
+
+    guard["_id"] = SETTING_KEY
+    await SETTINGS.add_data(guard)
+    await SETTINGS.delete_data({"_id": OLD_KEY})
 
 
 async def pm_permit_filter(_, __, message: Message):
@@ -95,12 +110,15 @@ async def pm_guard(bot: BOT, message: Message):
     if "-c" in message.flags:
         await message.reply(text=f"PM Guard is enabled: <b>{extra_config.PM_GUARD}</b>", del_in=8)
         return
+
     value = not extra_config.PM_GUARD
     extra_config.PM_GUARD = value
+
     await asyncio.gather(
-        SETTINGS.add_data({"_id": "guard_switch", "value": value}),
+        SETTINGS.add_data({"_id": SETTING_KEY, "value": value}),
         message.reply(text=f"PM Guard is enabled: <b>{value}</b>!", del_in=8),
     )
+
 
 @bot.add_cmd(cmd="pmsg")
 async def pmsg(bot: BOT, message: Message):
@@ -110,15 +128,17 @@ async def pmsg(bot: BOT, message: Message):
     USAGE:
         .pmsg | .pmsg New Message
     """
-    SET_REPLY = message.input.strip()
+    warn_message = message.input.strip()
 
-    if not SET_REPLY:
+    if not warn_message:
         await message.reply(text=f"PM Guard text: <b>{extra_config.PM_GUARD_TEXT}</b>!", del_in=8)
         return
-    extra_config.PM_GUARD_TEXT = SET_REPLY
+
+    extra_config.PM_GUARD_TEXT = warn_message
+
     await asyncio.gather(
-        SETTINGS.add_data({"_id": "guard_text", "value1": SET_REPLY}),
-        message.reply(text=f"PM Guard text: <b>{SET_REPLY}</b>!", del_in=8),
+        SETTINGS.add_data({"_id": SETTING_KEY, "warn_message": warn_message}),
+        message.reply(text=f"PM Guard text: <b>{warn_message}</b>!", del_in=8),
     )
 
 
