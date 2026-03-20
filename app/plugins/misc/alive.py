@@ -1,3 +1,4 @@
+import subprocess
 from sys import version_info
 
 from pyrogram import __version__ as pyro_version
@@ -17,7 +18,6 @@ from ub_core.version import __version__ as core_version
 from app import BOT, Config, Message, bot, extra_config
 
 PY_VERSION = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
-
 
 @bot.add_cmd(cmd="alive")
 async def alive(bot: BOT, message: Message):
@@ -72,15 +72,23 @@ if _bot.is_bot:
         await inline_query.answer(results=[result_type], cache_time=300)
 
 
+async def get_commit_hash() -> str: 
+    commit_hash: str = ""
+    commit_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+    return commit_hash
+
+
 async def get_alive_text() -> str:
     user_info = await bot.get_users(user_ids=Config.OWNER_ID)
+    commit_hash: str = await get_commit_hash()
     return (
         f"<b><a href='{Config.UPSTREAM_REPO}'>Plain-UB</a></b>, "
         f"A simple Telegram User-Bot by Meliodas.\n"
         f"\n › User            :   <code>{user_info.first_name}</code>"
-        f"\n › Python        :   <code>v{PY_VERSION}</code>"
+        f"\n › Python       :   <code>v{PY_VERSION}</code>"
         f"\n › Pyrogram   :   <code>v{pyro_version}</code>"
         f"\n › Core            :   <code>v{core_version}</code>"
+        f"\n › Commit      :   <code>{commit_hash}</code>"
     )
 
 
