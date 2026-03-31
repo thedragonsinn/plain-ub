@@ -3,7 +3,7 @@ from pyrogram.types import InputMediaAudio, InputMediaPhoto
 from ub_core import BOT, Message, bot, utils
 
 from app.plugins.ai.gemini import Response, async_client, get_model_config
-from app.plugins.ai.gemini.code import upload_codebase
+from app.plugins.ai.gemini.indexing import upload_codebase
 from app.plugins.ai.gemini.utils import create_prompts, run_basic_check
 
 

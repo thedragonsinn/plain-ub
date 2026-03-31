@@ -3,11 +3,9 @@ import io
 import pathlib
 
 import pyrogram
-from google.genai.types import File, Part
-from ub_core import BOT, LOGGER, Message, ub_core_dirname
-from ub_core.utils import MediaExtensions, bytes_to_mb
+from google.genai.types import Part
+from ub_core import BOT, Message
 
-from app import extra_config
 from app.plugins.ai.gemini import (
     AIConfig,
     Models,
@@ -17,57 +15,9 @@ from app.plugins.ai.gemini import (
     send_message_with_retry_delay_guard,
     utils,
 )
+from app.plugins.ai.gemini.indexing import shrink_file, upload_codebase
 
 PYRO_PATH = pathlib.Path(pyrogram.__file__).parent.resolve()
-
-CODEBASE_PATHS = [pathlib.Path(ub_core_dirname).resolve(), pathlib.Path("app").resolve()]
-EXTRA_MODULES = pathlib.Path("app/modules").resolve()
-
-if extra_config.INDEX_EXTRA_MODULES:
-    CODEBASE_PATHS.append(EXTRA_MODULES)
-
-CODEBASE_INDEX_FILE = None
-
-
-def replace_indents(line: str, char: str = "@") -> str:
-    de_indented_line = line.lstrip(" ")
-    total_indents = len(line) - len(de_indented_line)
-    return char * total_indents + de_indented_line.rstrip()
-
-
-def shrink_indents(line: str, size: int = 4, char="@") -> str:
-    indents = len(line) - len(line.lstrip(" "))
-    if indents == 0:
-        return line.strip()
-    depth = (indents + size - 1) // size
-    return char * depth + line.strip()
-
-
-def shrink_file(
-    file: pathlib.Path,
-    comments: bool = False,
-    de_indent: bool = False,
-    indent_size: int = 4,
-    replace_indent: bool = True,
-) -> str:
-    parts = []
-    for line in file.read_text(encoding="utf-8", errors="ignore").splitlines():
-        _line = line.strip()
-
-        if not _line:
-            continue
-
-        if comments and _line.startswith("#"):
-            continue
-
-        if de_indent:
-            line = shrink_indents(line, size=indent_size)
-        elif replace_indent:
-            line = replace_indents(line)
-
-        parts.append(line)
-
-    return "\n".join(parts)
 
 
 @declare_in_tools(tools_list=[AIConfig.CODE_CONFIG.tools])
@@ -84,75 +34,12 @@ def get_pyro_file_contents(file_paths: list[str]) -> str:
 
     for file in file_paths:
         if file.is_relative_to(PYRO_PATH):
-            contents.append(shrink_file(file, comments=True, de_indent=True))
+            contents.append(shrink_file(file, strip_comments=True))
         else:
             contents.append(f"Error: path {file} is not relative to {PYRO_PATH}: Access denied.")
         contents.append(f"\n ### {file.name} ### \n")
 
     return "".join(contents)
-
-
-async def upload_codebase(refresh: bool = False) -> File:
-    """
-    info:
-        Upload project context to file storage
-    args:
-        refresh: set to True to force re-upload of context.
-    returns:
-        uploaded file
-    """
-    global CODEBASE_INDEX_FILE
-
-    if CODEBASE_INDEX_FILE and not refresh:
-        try:
-            await async_client.files.get(name=CODEBASE_INDEX_FILE.name)
-            return CODEBASE_INDEX_FILE
-        except Exception as e:
-            LOGGER.error(f"Error accessing uploaded codebase file: {e}\nAuto Refreshing...")
-
-    codebase_parts = []
-
-    for root in CODEBASE_PATHS:
-        for file in sorted(root.rglob("*")):
-            file = file.resolve()
-
-            if not file.is_file():
-                continue
-
-            if not extra_config.INDEX_EXTRA_MODULES and file.is_relative_to(EXTRA_MODULES):
-                continue
-
-            if file.suffix in MediaExtensions.CODE:
-                try:
-                    codebase_parts.append(shrink_file(file))
-                except Exception as e:
-                    codebase_parts.append(str(e))
-
-                codebase_parts.append(f"\n##### {file} #####\n")
-
-    codebase_parts.append(f"\n\n\nPyrogram file path tree:\n{sorted(PYRO_PATH.rglob('*py'))}")
-
-    joined_codebase = "".join(codebase_parts)
-
-    codebase = io.BytesIO(bytes(joined_codebase, encoding="utf-8"))
-    codebase.name = "codebase_index.txt"
-
-    CODEBASE_INDEX_FILE = await utils.upload_file(codebase, codebase.name)
-
-    LOGGER.info(
-        f"Codebase indexed successfully: [{bytes_to_mb(len(codebase.getvalue()))} MBs] [{len(joined_codebase)} chars]"
-    )
-    return CODEBASE_INDEX_FILE
-
-
-@BOT.add_cmd("acr")
-async def refresh_codebase(bot: BOT, message: Message):
-    """
-    CMD: AI CODEBASE REFRESH
-    INFO: re-builds and re-uploads codebase
-    """
-    await upload_codebase(refresh=True)
-    await message.reply("Codebase refreshed...")
 
 
 @BOT.add_cmd("acode")
