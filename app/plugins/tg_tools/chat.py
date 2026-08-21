@@ -1,6 +1,6 @@
 import os
 
-from pyrogram.errors import BadRequest
+from pyrogram.errors import BadRequest, InviteRequestSent
 from ub_core.utils import get_name
 
 from app import BOT, Message
@@ -33,6 +33,9 @@ async def join_chat(bot: BOT, message: Message) -> None:
     chat: str = message.input
     try:
         await bot.join_chat(chat)
+    except InviteRequestSent:
+        await message.reply("`Join request sent!`")
+        return
     except (KeyError, BadRequest):
         try:
             await bot.join_chat(os.path.basename(chat).strip())
