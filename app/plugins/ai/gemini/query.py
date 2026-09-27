@@ -2,7 +2,8 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import InputMediaAudio, InputMediaPhoto
 from ub_core import BOT, Message, bot, utils
 
-from app.plugins.ai.gemini import Response, async_client, get_model_config
+from app.plugins.ai.gemini import AIConfig, Models, Response, async_client, get_model_config
+from app.plugins.ai.gemini.code_sync import get_codebase_store
 from app.plugins.ai.gemini.utils import create_prompts, run_basic_check
 
 
@@ -19,7 +20,6 @@ async def question(bot: BOT, message: Message):
             -m: male voice
             -f: female voice
         -sp: to create speech between two people
-        -wc: uploads ub repo and core and extra modules [ if set ] to ai for context
 
     USAGE:
         .ai what is the meaning of life.
@@ -37,7 +37,7 @@ async def question(bot: BOT, message: Message):
     """
 
     reply = message.replied
-    quoted_prompt = utils.wrap_in_block_quote(f"•> {message.filtered_input.strip()}", "**>", "<**")
+    quoted_prompt = utils.wrap_in_block_quote(f"•> {message.filtered_input.strip()}", expandable=True)
 
     if reply and reply.media:
         resp_str = "<code>Processing... this may take a while.</code>"
@@ -83,3 +83,22 @@ async def question(bot: BOT, message: Message):
         parse_mode=ParseMode.MARKDOWN,
         disable_preview=True,
     )
+
+
+@BOT.add_cmd("cai")
+@run_basic_check
+async def code_question(bot: BOT, message: Message):
+    if get_codebase_store().active_documents_count == 0:
+        await message.reply("Codebase store empty...")
+        raise
+
+    status = await message.reply("<code>Thinking...</code>")
+    response = await async_client.models.generate_content(
+        model=Models.CODE_MODEL, config=AIConfig.CODE, contents=await create_prompts(message)
+    )
+
+    response = Response(response)
+    prompt_text = utils.wrap_in_block_quote(message.input, expandable=True)
+    resp_text = utils.wrap_in_block_quote(response.text, expandable=True)
+
+    await status.edit(text="\n".join((prompt_text, resp_text)), parse_mode=ParseMode.MARKDOWN, disable_preview=True)

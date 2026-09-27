@@ -86,8 +86,8 @@ async def chat_gpt(bot: BOT, message: Message):
     )
 
     response = chat_completion.choices[0].message.content
-    quoted_prompt = utils.wrap_in_block_quote(prompt, "**>", "<**")
-    quoted_response = utils.wrap_in_block_quote(response, "**>", "<**")
+    quoted_prompt = utils.wrap_in_block_quote(prompt, True)
+    quoted_response = utils.wrap_in_block_quote(response, True)
     await message.reply(text="\n".join((quoted_prompt, quoted_response)), parse_mode=ParseMode.MARKDOWN)
 
 
@@ -159,6 +159,6 @@ async def dall_e(bot: BOT, message: Message):
 
     await response.edit_media(
         InputMediaPhoto(
-            media=image_io, caption=utils.wrap_in_block_quote(prompt, "**>", "<**"), has_spoiler="-s" in message.flags
+            media=image_io, caption=utils.wrap_in_block_quote(prompt, True), has_spoiler="-s" in message.flags
         )
     )

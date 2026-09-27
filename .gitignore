@@ -8,5 +8,5 @@ conf_backup/
 logs/
 .mypy_cache
 psutil
-app/temp
+app/temp/
 usage_record.txt

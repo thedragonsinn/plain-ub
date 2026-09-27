@@ -102,6 +102,6 @@ async def create_prompts(message: Message, is_chat: bool = False, check_size: bo
             file_part = Part.from_uri(file_uri=uploaded_file.uri, mime_type=uploaded_file.mime_type)
             return [text_part, file_part]
 
-        return [Part.from_text(text=input_prompt), Part.from_text(text=str(reply.text))]
+        return [Part.from_text(text=f"{reply.text}\n{input_prompt}")]
 
     return [Part.from_text(text=input_prompt)]

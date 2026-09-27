@@ -35,7 +35,6 @@ async def init_task():
 
     global CODEBASE_FILES_STORE
     CODEBASE_FILES_STORE = _store
-    configs.Tools.TEXT.file_search = types.FileSearch(file_search_store_names=[_store.name])
     configs.Tools.CODE.file_search = types.FileSearch(file_search_store_names=[_store.name])
 
 

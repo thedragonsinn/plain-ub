@@ -28,7 +28,7 @@ async def create_plugin(bot: BOT, message: Message, history=None):
         await message.reply("Codebase store not synced!\nCheck .help csync")
         return
 
-    chat = async_client.chats.create(model=Models.CODE_MODEL, config=configs.AIConfig.CODE_CONFIG, history=history)
+    chat = async_client.chats.create(model=Models.CODE_MODEL, config=configs.AIConfig.CODE_GENERATION, history=history)
     prompts = await create_prompts(message, is_chat=False)
 
     async with bot.Convo(
@@ -53,10 +53,10 @@ async def create_plugin(bot: BOT, message: Message, history=None):
                 text = ""
 
                 if data.error_text:
-                    text += wrap_in_block_quote(data.error_text, "**>", "<**")
+                    text += wrap_in_block_quote(data.error_text, expandable=True)
 
                 if data.response_text:
-                    text += wrap_in_block_quote(data.response_text, "**>", "<**")
+                    text += wrap_in_block_quote(data.response_text, expandable=True)
 
                 if text:
                     await tg_convo.send_message(text=text + REPLY_NOTICE)

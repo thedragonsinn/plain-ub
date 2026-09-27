@@ -14,39 +14,37 @@ from app.plugins.ai.gemini.response import FUNCTION_CALL_MAP
 logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
 
-SYSTEM_INSTRUCTION = f"""
+class Instructions:
+    SYSTEM = """\
+- Be concise and precise by default. Answer briefly unless the user explicitly asks for more details.
+- Avoid greetings, filler, or opinionated language. Follow the user's requested format exactly.
+"""
+
+    CODE_QUERY = """\
 ENVIRONMENT
 - Python: {platform.python_version()}
 - ub_core: {__version__}
 
-INSTRUCTIONS
-TEXT:
-    - Be concise and precise by default. Answer briefly unless the user explicitly asks for more details.
-    - Avoid greetings, filler, or opinionated language. Follow the user's requested format exactly.
+PRE CODE GENERATION STEPS:
+    CODEBASE FILE STORE:
+    - Ensure it's present and has files in it otherwise error out early and instruct user to check '.help csync'.
+    - if ub_core version in system prompt > ub_core version from FILE_STORE: instruct user to run '.csync -c' 
+    - Study all files from ub_core in depth to understand code structure, functions and usage.
+    - When possible prefer using existing structures over creating new code. 
+    - app is the bot i,e the main entry point. it is based on ub_core.
+    - study app/plugins roughly to understand how ub_ore is actually used in real world.
+    - you will be generating code for a new plugin in app/plugins.
 
-CODE:
-    if telegram bot plugin related:
-        PRE CODE GENERATION STEPS:
-            CODEBASE FILE STORE:
-            - Ensure it's present and has files in it otherwise error out early and instruct user to check '.help csync'.
-            - if ub_core version in system prompt > ub_core version from FILE_STORE: instruct user to run '.csync -c' 
-            - Study all files from ub_core in depth to understand code structure, functions and usage.
-            - When possible prefer using existing structures over creating new code. 
-            - app is the bot i,e the main entry point. it is based on ub_core.
-            - study app/plugins roughly to understand how ub_ore is actually used in real world.
-            - you will be generating code for a new plugin in app/plugins.
-
-    CODE OUTPUT CONSTRAINTS
-        - Only valid Python code
-        - No comments
-        - No explanations
-        - No markdown
-        - No extra text
-        - No excessive error handling
+CODE OUTPUT CONSTRAINTS:
+- Only valid Python code
+- No comments
+- No explanations
+- No markdown
+- No extra text
+- No excessive error handling
 """
 
-
-CODE_INSTRUCTION = f"""
+    CODE_GENERATION = f"""\
 You generate Python code for a Telegram bot project built on ub_core over pyrotgfork (a pyrogram fork).
 
 ENVIRONMENT
@@ -115,7 +113,7 @@ MULTI_SPEECH_CONFIG = types.SpeechConfig(
 class CodeResponseSchema(BaseModel):
     file_name: str = Field(description="full name with extension of the generated file ", default=None)
     file_content: str = Field(description="data to be written to file", default=None)
-    response_text: str = Field(description="[OPTIONAL] any non code text to be sent back on user request", default=None)
+    response_text: str = Field(description="any non code text to be sent back on user request", default=None)
     error_text: str = Field(description="'Error: reason' incase of failure complying user-request", default=None)
 
     # python_code_to_exec: str = Field(description="[Optional] python code to run live in current env.", default=None)
@@ -130,16 +128,16 @@ class Tools:
 
 
 class AIConfig:
-    TEXT_CONFIG = types.GenerateContentConfig(
+    TEXT = types.GenerateContentConfig(
         candidate_count=1,
         # max_output_tokens=1024,
         response_modalities=["Text"],
-        system_instruction=SYSTEM_INSTRUCTION,
+        system_instruction=Instructions.SYSTEM,
         temperature=0.69,
         tools=[Tools.TEXT],
     )
 
-    IMAGE_CONFIG = types.GenerateContentConfig(
+    IMAGE = types.GenerateContentConfig(
         candidate_count=1,
         # max_output_tokens=1024,
         response_modalities=["Text", "Image"],
@@ -147,17 +145,26 @@ class AIConfig:
         temperature=0.99,
     )
 
-    AUDIO_CONFIG = types.GenerateContentConfig(
+    AUDIO = types.GenerateContentConfig(
         temperature=1, response_modalities=["audio"], speech_config=FEMALE_SPEECH_CONFIG
     )
 
-    CODE_CONFIG = types.GenerateContentConfig(
+    CODE = types.GenerateContentConfig(
+        candidate_count=1,
+        # max_output_tokens=1024,
+        response_modalities=["Text"],
+        system_instruction=Instructions.CODE_QUERY,
+        temperature=0.69,
+        tools=[Tools.CODE],
+    )
+
+    CODE_GENERATION = types.GenerateContentConfig(
         automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         candidate_count=1,
         response_schema=CodeResponseSchema,
         response_mime_type="application/json",
         response_modalities=["Text"],
-        system_instruction=CODE_INSTRUCTION,
+        system_instruction=Instructions.CODE_GENERATION,
         temperature=1,
         tools=[Tools.CODE, Tools.CODE_FUNCTION_DECLARATIONS],
         tool_config=types.ToolConfig(
@@ -169,10 +176,10 @@ class AIConfig:
 
 def get_model_config(flags: list[str]) -> dict:
     if "-i" in flags:
-        return {"model": Models.IMAGE_MODEL, "config": AIConfig.IMAGE_CONFIG}
+        return {"model": Models.IMAGE_MODEL, "config": AIConfig.IMAGE}
 
     if "-a" in flags:
-        audio_config = AIConfig.AUDIO_CONFIG
+        audio_config = AIConfig.AUDIO
 
         if "-m" in flags:
             audio_config.speech_config = MALE_SPEECH_CONFIG
@@ -182,8 +189,8 @@ def get_model_config(flags: list[str]) -> dict:
         return {"model": Models.AUDIO_MODEL, "config": audio_config}
 
     if "-sp" in flags:
-        AIConfig.AUDIO_CONFIG.speech_config = MULTI_SPEECH_CONFIG
-        return {"model": Models.AUDIO_MODEL, "config": AIConfig.AUDIO_CONFIG}
+        AIConfig.AUDIO.speech_config = MULTI_SPEECH_CONFIG
+        return {"model": Models.AUDIO_MODEL, "config": AIConfig.AUDIO}
 
     for k, v in Tools.SEARCH.items():
         if "-s" in flags:
@@ -191,7 +198,7 @@ def get_model_config(flags: list[str]) -> dict:
         else:
             setattr(Tools.TEXT, k, None)
 
-    return {"model": Models.TEXT_MODEL, "config": AIConfig.TEXT_CONFIG}
+    return {"model": Models.TEXT_MODEL, "config": AIConfig.TEXT}
 
 
 def declare_in_tool(tools_list: list[list]):

@@ -23,7 +23,7 @@ def wrap_in_quote(text: str, mode: ParseMode = ParseMode.MARKDOWN):
             if "```" in _text:
                 return _text
             else:
-                return wrap_in_block_quote(text=_text, quote_delimiter="**>", end_delimiter="<**")
+                return wrap_in_block_quote(text=_text, expandable=True)
         case ParseMode.HTML:
             return f"<blockquote expandable=true>{_text}</blockquote>"
         case _:
