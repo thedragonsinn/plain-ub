@@ -8,4 +8,4 @@ echo -e '[global]\nextra-index-url = https://termux-user-repository.github.io/py
 
 ./scripts/install_ub_core.sh
 
-grep -Ev "^#|openai" req.txt | xargs -n 1 pip install
+grep -Ev "^#|openai" req.txt | xargs "$(type -p uv)" pip install

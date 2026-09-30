@@ -8,7 +8,7 @@ echo "Installing ${repo_name} to app/modules"
 
 git clone -q "$EXTRA_MODULES_REPO" "app/modules" || { echo "Failed to clone external repo"; exit; }
 
-pip -q install --no-cache-dir -r app/modules/req*.txt
+$(type -p uv) pip install --no-cache-dir -r app/modules/req*.txt
 
 echo "Done"
 
